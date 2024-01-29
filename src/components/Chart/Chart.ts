@@ -146,7 +146,7 @@ export default class Chart {
 			// stepIncreaseMult: .5,
 			...this.options.uiScaleX,
 			onChange: ( scaling, emitter ) => {
-				this.setScaleX( scaling.scaleIn );
+				this.setScaleX( scaling.scaleIn, { fromUI: true } );
 			},
 			onDoubleClick: ( scaling, emitter ) => {
 				this.autoScaleX();
@@ -436,6 +436,7 @@ export default class Chart {
 		if( resized ) {
 			this.width = resized.width;
 			this.height = resized.height;
+			this.scalingX.setDistInMax( this.width * this.tickStep );
 			this.mouseEnterElement.rect = this.mouseEnterElement.getBoundingClientRect();
 			this.uiScaleX.setScaleOut( { min: 0, max: resized.width } );
 			this.uiScaleY.setScaleOut( {
@@ -666,13 +667,14 @@ export default class Chart {
 		return this;
 	}
 
-	setScaleX( scale: Scale, render = true, force = false ){
+	setScaleX( scale: Scale, { render = true, force = false, fromUI = false } = {} ){
 
-		if ( this.scalingX.setScaleIn( scale ) ){
+		if ( !fromUI ){
 			this.uiScaleX.setScaleIn( scale );
 		}
 
-		this.tickWidth = this.scalingX.scaleTo( this.scalingX.scaleIn.min + this.tickStep );
+		this.tickWidth = Math.max( 1, this.scalingX.scaleTo( this.scalingX.scaleIn.min + this.tickStep ) );
+		// console.log('___ setScaleX', this.scalingX.scaleIn.min, this.tickStep, this.tickWidth );
 		this.tickWidthHalf = this.tickWidth / 2;
 		this.updateX( render, force );
 	}

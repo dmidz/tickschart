@@ -4,7 +4,7 @@ export function decimal( n: number ): number {
   return Math.pow( 10, Math.floor( log ) );
 }
 
-export function roundPrecision( _num: number | string, precision: number = 1 ): string{
+export function roundPrecision( _num: number | string, precision: number = 1 ): string {
   const num: number = typeof _num === 'string' ? +( _num as any ) : _num;
   const k = `${ precision }`.split( '.' );
   const res = Math.floor( num / precision ) * precision;
@@ -32,6 +32,7 @@ export type ScalingLinearOptions = {
   precisionOut?: number,
   precisionIn?: number,
   stringPrecision?: number,
+  debug?: boolean,
 }
 
 export class ScalingLinear {
@@ -46,7 +47,10 @@ export class ScalingLinear {
     precisionOut: 1,
     precisionIn: 1,
     stringPrecision: 1,
+    debug: false,
   };
+
+  private distInMax: number | null = null;
 
   constructor( scaleIn: Scale, scaleOut: Scale, options?: ScalingLinearOptions ){
     this.setScaleIn( scaleIn );
@@ -72,6 +76,15 @@ export class ScalingLinear {
     //   return false;
     // }
     this.distIn = this.scaleIn.max - this.scaleIn.min;
+    if( this.distInMax ){
+      let d = this.distIn - this.distInMax;
+      if( d > 0 ){
+        d /= 2;
+        this.scaleIn.min += d;
+        this.scaleIn.max -= d;
+        this.distIn = this.distInMax;
+      }
+    }
     this.update();
     return true;
   }
@@ -86,9 +99,13 @@ export class ScalingLinear {
     return true;
   }
   
-  private update(){
-    this.mult = this.distOut / this.distIn;
-    this.multInv = this.distIn / this.distOut;
+  setDistInMax ( value: number ){
+    if ( !value ){
+      console.warn( 'min must be > 0', value );
+      return;
+    }
+    this.distInMax = Math.abs( value );
+    this.setScaleIn( this.scaleIn );
   }
 
   scaleTo( value: number = 0, precision = this.options.precisionOut ){
@@ -107,34 +124,10 @@ export class ScalingLinear {
     }
     return res;
   }
-}
 
-export function ma ( values: number[], length: number ){
-  const res = [  values[ 0 ] ];
-  let sum = 0;
-  for ( let i = 0, max = values.length; i < max; i++ ){
-    sum += values[i];
-    // console.log('i', i, sum );
-    if( values[i-length] ){
-      sum -= values[ i - length ];
-    }
-    res[i] = sum / length;
-    // console.log( '  res', res[ i ], sum );
+  private update (){
+    this.mult = this.distOut / this.distIn;
+    this.multInv = this.distIn / this.distOut;
   }
-  return res;
-}
 
-export function emaArray ( values: number[], length: number ){
-  const alpha = 2 / ( length + 1 );
-  const res = [  values[ 0 ] ];
-  for ( let i = 1, max = values.length; i < max; i++ ){
-    res[i] = ema( alpha, values[i], res[i-1] );
-    // res[i] = values[ i ] * alpha + res[ i - 1 ] * alphaInv;
-  }
-  return res;
 }
-
-export function ema ( alpha: number, value: number, prevEma: number ){
-  return value * alpha + prevEma * ( 1 - alpha );
-}
-

@@ -11,7 +11,7 @@ export type Options = {
 	formatLabel?: ( v: number, precision?: number ) => string,
 	onChange?: ( scaling: ScalingLinear, emitter: UiScale ) => void,
 	onDoubleClick?: ( scaling: ScalingLinear, emitter: UiScale ) => void,
-	minScaleY?: number | null,
+	debug?: boolean,
 }
 
 export default class UiScale {
@@ -30,7 +30,7 @@ export default class UiScale {
 		},
 		onChange: () => {},
 		onDoubleClick: () => {},
-		minScaleY: null,
+		debug: false,
 	};
 	
 	private moveProp: 'movementX' | 'movementY';
@@ -40,14 +40,12 @@ export default class UiScale {
 	private firstValue = 1;
 	private lastValue = 1;
 	private isDirX = false;
-	
 	private drag = false;
 	
 	constructor ( parentElement: HTMLElement, dir: 'x' | 'y', scaling: ScalingLinear, options: Options = {} ){
 		this.dir = dir;
 		this.scaling = scaling;
 		this.options = merge( this.options, options );
-		// console.log('SCALE', dir, options, this.options );
 
 		if ( !this.options.stepsDecimal && !this.options.stepsRange ){
 			throw new Error('Either options.stepsDecimal or options.stepsRange must be set.' );
@@ -89,22 +87,8 @@ export default class UiScale {
 
 	}
 
-	beforeDestroy(){
-		this.element.removeEventListener( 'dblclick', this.onDoubleClick );
-		this.element.removeEventListener( 'mousedown', this.onMouseDown );
-		document.removeEventListener( 'mouseup', this.onMouseUp );
-		document.removeEventListener( 'mousemove', this.onMouseMove );
-		this.element.removeEventListener( 'keydown', this.onKeyDown );
-	}
-
 	setScaleIn( scale: Scale, emit = false ){
-		let _scale = scale;
-		if( this.options.minScaleY !== null ){
-			_scale = { ...scale, min: Math.max( scale.min, this.options.minScaleY ) };
-		}
-		if( !this.scaling.setScaleIn( _scale ) ){
-			return;
-		}
+		this.scaling.setScaleIn( scale );
 
 		this.update();
 		
@@ -114,10 +98,8 @@ export default class UiScale {
 	}
 	
 	setScaleOut( scale: Scale, emit = false ){
-		if( !this.scaling.setScaleOut( scale ) ){
-			return;
-		}
-
+		this.scaling.setScaleOut( scale );
+		
 		this.update();
 		
 		if( emit ){
@@ -126,27 +108,30 @@ export default class UiScale {
 	}
 	
 	increaseScale( deltaRatio: number, emit = false ){
-		// delta = ratio of distIn * multiplier
+		if( !deltaRatio ){ return;}
+		//__ delta = ratio of distIn * multiplier
 		const delta = this.scaling.distIn * deltaRatio * this.options.stepIncreaseMult;
 
 		// console.log('increaseScale', { delta, increaseStep: this.options.stepIncreaseMult, scaling: this.scaling });
 
-		// let min = this.scaling.scaleIn.min - delta;
-		// let max = this.scaling.scaleIn.max + delta;
-		// if( min < 0 ){
-		// 	min = 0;
-		// }
 		this.setScaleIn( {
 			min: this.scaling.scaleIn.min - delta,
 			max: this.scaling.scaleIn.max + delta,
 		}, emit );
 	}
 	
+	beforeDestroy (){
+		this.element.removeEventListener( 'dblclick', this.onDoubleClick );
+		this.element.removeEventListener( 'mousedown', this.onMouseDown );
+		document.removeEventListener( 'mouseup', this.onMouseUp );
+		document.removeEventListener( 'mousemove', this.onMouseMove );
+		this.element.removeEventListener( 'keydown', this.onKeyDown );
+	}
+
 	private update(){
 		this.step = this.findStep( this.options.minLabelDist / this.scaling.distOut * this.scaling.distIn );
 		this.firstValue = Math.ceil( this.scaling.scaleIn.max / this.step ) * this.step;
 		this.lastValue = Math.floor( this.scaling.scaleIn.min / this.step ) * this.step;
-		// console.log('update', this.step, this.firstValue );
 		this.render();
 	}
 

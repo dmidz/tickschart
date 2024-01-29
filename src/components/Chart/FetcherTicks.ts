@@ -1,10 +1,11 @@
 
 //_____
 export type Options = {
-	timeScaleMs?: number,// nb of records requested 
-	ticksPerLoad?: number,// nb of records requested 
+	timeScaleMs?: number,// nb ms per tick
+	ticksPerLoad?: number,// nb of records per request 
 	prefetchMargin?: number,// nb of prefetch loads ( before & after current view ) avoiding user seeing loads
 	cacheSize?: number,//__ nb of ticks loads to be kept im memory, out of currently viewed ones
+	debug?: boolean,
 }
 
 export type LoadedTimeRange = { min: number, max: number, [key: string]: any };
@@ -13,13 +14,12 @@ export type FetchTicks<FetchResult> = ( startTime: number, limit: number ) => Pr
 
 //______
 export default class FetcherTicks<Tick,FetchResult extends Record<string, Tick>, Range extends LoadedTimeRange = LoadedTimeRange> {
-	private defaultTick: Tick;
-	private fetch: FetchTicks<FetchResult>;
 	private options: Required<Options> = {
 		timeScaleMs: 1000 * 60 * 60,
 		ticksPerLoad: 200,
-		prefetchMargin: 1,//__ prefer minimum 1 so fast drag through screen width won't show loading
+		prefetchMargin: 1,//__ prefer minimum 1 so fast drag through entire screen width won't show loading
 		cacheSize: 2,
+		debug: false,
 	}
 	private timePerLoad = this.options.timeScaleMs * this.options.ticksPerLoad;
 	private loadedMin = Infinity;
@@ -29,9 +29,7 @@ export default class FetcherTicks<Tick,FetchResult extends Record<string, Tick>,
 	private mapTicks = new Map<number, FetchResult>();
 	private mapFetches = new Map<number, Promise<Range|null>>();
 
-	constructor( defaultTick: Tick, fetch: FetchTicks<FetchResult>, options: Options = {} ){
-		this.defaultTick = defaultTick;
-		this.fetch = fetch;
+	constructor( private defaultTick: Tick, private fetch: FetchTicks<FetchResult>, options: Options = {} ){
 		Object.assign( this.options, options );
 		this.setTimeScale( this.options.timeScaleMs );
 	}
@@ -44,7 +42,7 @@ export default class FetcherTicks<Tick,FetchResult extends Record<string, Tick>,
 	}
 
 	fetchTicks = ( timeStart: number, timeEnd: number, prefetch = true, onLoad?: ( loaded: Range, timeScaleMs: number ) => void ): Promise<Range|null>[] => {
-		const debug = false;
+		const debug = this.options.debug;
 
 		const res: Promise<Range|null>[] = [];
 		if ( timeEnd < timeStart ){
@@ -64,7 +62,7 @@ export default class FetcherTicks<Tick,FetchResult extends Record<string, Tick>,
 		const _timeEnd = Math.min( timeEnd, Date.now() );
 
 		while ( time <= _timeEnd ){
-			debug && console.log( 'time', time );
+			// debug && console.log( 'time', time );
 			const ticks = this.mapTicks.get( time );
 			if ( !ticks ){
 				let p = this.mapFetches.get( time );
@@ -134,12 +132,10 @@ export default class FetcherTicks<Tick,FetchResult extends Record<string, Tick>,
 		//__
 		return res;
 	}
-
-	getTick = ( time: number ): Tick => {
+	
+	getTick = ( time: number ): Tick => 	{
 		const t = Math.floor( +time / this.timePerLoad ) * this.timePerLoad;
 		const m = this.mapTicks.get( t );
-		// const d = new Date( time ).toLocaleString( undefined, { timeZone: 'UTC' } );
-		// console.log( 'getTick', d, time, m[ time ] );
 		return m?.[ time ]||this.defaultTick;
 	}
 
@@ -152,6 +148,7 @@ export default class FetcherTicks<Tick,FetchResult extends Record<string, Tick>,
 		this.mapFetches = new Map();
 	}
 
+	//__ clean cache
 	private releaseTicks = ( { loadedStart, loadedEnd }: { loadedStart: number, loadedEnd: number } ) => {
 		// console.log( 'releaseTicks', { size: mapTicks.size, loadedStart, loadedEnd, loadedMin, loadedMax } );
 		const cacheDist = this.options.cacheSize * this.timePerLoad;
@@ -160,7 +157,6 @@ export default class FetcherTicks<Tick,FetchResult extends Record<string, Tick>,
 			const timeStart = loadedStart - this.timePerLoad - cacheDist;
 			let time = timeStart;
 			while ( time >= this.loadedMin ){
-				// console.log('  release >=', { time, loadedMin } );
 				this.mapTicks.delete( time );
 				this.mapFetches.delete( time );
 				time -= this.timePerLoad;
@@ -171,13 +167,10 @@ export default class FetcherTicks<Tick,FetchResult extends Record<string, Tick>,
 		if ( this.loadedMax ){
 			const timeStart = loadedEnd + this.timePerLoad + cacheDist;
 			let time = timeStart;
-			// console.log('loadedMax', { time, loadedMax }, mapTicks.keys());
 			while ( time <= this.loadedMax ){
-				// console.log( '  release <=', { time, loadedMax } );
 				this.mapTicks.delete( time );
 				this.mapFetches.delete( time );
 				time += this.timePerLoad;
-
 			}
 			this.loadedMax = timeStart;
 		}
@@ -185,8 +178,7 @@ export default class FetcherTicks<Tick,FetchResult extends Record<string, Tick>,
 		if ( this.mapFetches.size > this.firstSize + 5 + this.options.cacheSize ){
 			console.warn( 'mapTicks.size growing', this.mapFetches.size );
 		}
+
 		// console.log( 'new size', mapFetches.size, mapTicks.keys() );
-
 	}
-
 }

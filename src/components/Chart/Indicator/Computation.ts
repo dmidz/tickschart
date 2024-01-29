@@ -3,7 +3,7 @@ import type { Base } from './index';
 export type ComputeFunc = ( index: number ) => number;
 
 //______
-export default class ComputeLib<ComputeKey extends string> {
+export default class Computation<ComputeKey extends string> {
 	
 	constructor(
 		private indicator: InstanceType<typeof Base>,
@@ -167,7 +167,7 @@ while( i < 10 ){
 	});
 }
 console.log('ticks', ticks );
-const cp = new ComputeLib<MyTick>('time', 1, ( index ) => ticks[index] );
+const cp = new Computation<MyTick>('time', 1, ( index ) => ticks[index] );
 const sumFct = cp.sum( 'volume' )
 const sum9 = sumFct( ticks[ticks.length-1]);
 const sum8 = sumFct( ticks[ticks.length-2]/!*, sum9*!/ );

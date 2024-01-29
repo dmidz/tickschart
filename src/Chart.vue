@@ -26,105 +26,71 @@ const props = withDefaults( defineProps<{
 	symbol: 'BTCUSDT',
 } );
 
-const emit = defineEmits( [ 'onChangeSymbol','onChangeInterval' ] );
-
-//__
-// const marketHistory = useMarketHistory();
-// const { timeScale } = storeToRefs( marketHistory );
-
-// const exchange = useExchange();
-// const { quoteAssetSymbolsReq } = exchange;
-// const assetQuote = ref<string>('USDT');
-// const assetBase = ref<string>();
-//
-// watch([() => assetQuote.value], () => {
-// 	if( !assetQuote.value ){  return;}
-// 	quoteAssetSymbolsReq.execute( {
-// 		query: {
-// 			assetQuote: assetQuote.value,
-// 		}
-// 	} );
-// }, { immediate: true });
-//
-// function handleChangeAssetBase( value: string, refresh = true ){
-// 	assetBase.value = value;
-// 	const symbol = `${ assetBase.value }${ assetQuote.value }`;
-// 	marketHistory.setSymbol( symbol, true );
-// 	if( refresh ){
-// 		chart.refresh();
-// 	}
-// 	emit( 'onChangeSymbol', symbol );
-// }
-
-//__ timeScale
-// const intervalOptions = Object.keys( intervalsMs ).map( key => ( {
-// 	value: key,
-// 	label: key
-// }) );
 const { m1, h1, d1 } = intervalsMs;
 const xOriginRatio = .75;
 const timeScaleMs = h1 * 4;
-
-// function handleChangeTimeScale( value: IntervalMs, refresh = true ){
-// 	const timeScaleMs = marketHistory.setTimeScale( value, true );
-// 	if( timeScaleMs ){
-// 		chart.setTickStep( timeScaleMs, { render: refresh, xOriginRatio } );
-// 		emit( 'onChangeInterval', value );
-// 	}
-// }
+const ticksPerLoad = 500;
 
 //__
-// const currentTime = ref( new Date( Date.now() ) );
-const currentTime = ref( new Date( Date.UTC( 2023, 10, 18 ) ) );
-// const currentTime = ref( new Date( Date.UTC( 2022, 9, 3, 0, 0, 0, 0 ) ) );
+const currentTime = ref( new Date( Date.UTC( 2023, 9, 10 ) ) );
 const refChartWrapper = ref<HTMLElement>();
-const refReplayToolbar = ref<HTMLElement>();
 let chart: Chart;
-// let player: Player;
-
-const dateFormat = new Intl.DateTimeFormat( undefined, { timeZone: 'UTC' } );
 
 const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, {
 	timeZone: 'UTC',
 	weekday: 'short', year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
 } );
 
-const fetcher = new FetcherTicks<CandleTick, DataTick>( defaultTick, ( startTime, limit ) => {
-	// if ( !symbol.value ){
-	// 	return Promise.reject( 'symbol is required.' );
-	// }
-	// if ( !timeScale.value ){
-	// 	return Promise.reject( 'timeScale is required.' );
-	// }
+const sampleTicksURL = `${ window.location.origin }/data/ticks_BTC_4h/1692000000000.json`;
+let sampleTicks: DataTick | null = null;
+
+const fetcher = new FetcherTicks<CandleTick, DataTick>( defaultTick, async ( startTime, limit ) => {
+	/*__ this example uses a unique local json file ( 500 ticks ) served in dev mode, replace this by an API call
+	 with passed params such startTime & limit + other such symbol & timeScale string ( 15m / 4h / d1... ) */
+
+	if( sampleTicks ){ return sampleTicks;}
+
+	const url = new URL( sampleTicksURL );
 	
-	return Promise.resolve( {});
-	// return ticksReq.execute( {
-	// 	query: {
-	// 		symbol: symbol.value,
-	// 		interval: timeScale.value,
-	// 		startTime: `${ startTime }`,
-	// 		limit: `${ limit }`,
-	// 	},
-	// } );
+	url.search = new URLSearchParams( {// sample of params for API, useless here with local json fetch 
+		symbol: 'BTCUSDT',
+		interval: '4h',// if API requires interval as a string choice, of course it must corresponds to timeScaleMs value
+		startTime: `${startTime}`,
+		limit: `${limit}`,
+	} ).toString();
+	
+	const response = await fetch( new Request( url, {  method: 'GET' } ) );
+	
+	if( response.ok ){
+		try {
+			sampleTicks = await response.json();
+		}catch( err ){
+			console.error( err );
+		}
+	}
+	return sampleTicks;
 }, {
 	timeScaleMs,
-	ticksPerLoad: 500,
+	ticksPerLoad,
 	prefetchMargin: 1,
 	cacheSize: 2,
+	// debug: true,
 } );
 
+const rangeLoadMs = ticksPerLoad * timeScaleMs;
 onMounted( async () => {
 	if( !refChartWrapper.value /*|| !refReplayToolbar.value*/ ){ return;}
 	let init = false;//__ using to prevent fetching until chart fully initialized ( timeScale, symbol, etc )
 	
-	chart = new Chart( refChartWrapper.value, timeScaleMs, fetcher.getTick, {
-		// tickWidth: 35,
+	chart = new Chart( refChartWrapper.value, timeScaleMs, ( index: number ) => {
+		/*__ one would normally pass fetcher.getTick directly, but for the only one file sample
+					we can bypass it to always return a tick from the file ( 1692000000000 ) time range */
+		return fetcher.getTick( 1692000000000 + index % rangeLoadMs );
+	}, {
 		onScalingXChange: async ( scalingX ) => {
-			// console.log( '_onScalingXChange', marketHistory.symbol );
-			if( !init ){  return;}
-			// console.log('onScalingXChange', dateFormatCrossHair.format( new Date( scalingX.scaleIn.min ) ) );
-			// const fetches = marketHistory.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max );
-			// return Promise.all( fetches );
+			if( !init ){  return;}//__ avoid any fetch during initialization
+			const fetches = fetcher.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max );
+			return Promise.all( fetches );
 		},
 		crossHairLabelX: ( value ) => {
 			const d = new Date( value );
@@ -132,7 +98,7 @@ onMounted( async () => {
 		},
 		uiScaleX: {
 			stepsRange: [ m1, m1 * 5, m1 * 10, m1 * 15, m1 * 30, h1, h1 * 1.5, h1 * 3, h1 * 6, h1 * 12, d1 ],
-			formatLabel: ( value: number, precision?: number ): string => {
+			formatLabel: ( value: number ): string => {
 				const d = new Date( value );
 				if ( !( value % d1 ) ){
 					return `${ d.getUTCDate() }`;
@@ -141,7 +107,7 @@ onMounted( async () => {
 			},
 		},
 		scaleY: {
-			precisionIn: .001,//__ TODO: should be set from symbol infos
+			precisionIn: .001,//__ might be set from current symbol properties
 		},
 		autoScaleY: true,
 	} );
@@ -175,6 +141,48 @@ onBeforeUnmount( () => {
 	// player?.beforeDestroy();
 });
 
+
+//__
+// const emit = defineEmits( [ 'onChangeSymbol', 'onChangeInterval' ] );
+// const refReplayToolbar = ref<HTMLElement>();
+// let player: Player;
+// const marketHistory = useMarketHistory();
+// const { timeScale } = storeToRefs( marketHistory );
+// const exchange = useExchange();
+// const { quoteAssetSymbolsReq } = exchange;
+// const assetQuote = ref<string>('USDT');
+// const assetBase = ref<string>();
+//
+// watch([() => assetQuote.value], () => {
+// 	if( !assetQuote.value ){  return;}
+// 	quoteAssetSymbolsReq.execute( {
+// 		query: {
+// 			assetQuote: assetQuote.value,
+// 		}
+// 	} );
+// }, { immediate: true });
+//
+// function handleChangeAssetBase( value: string, refresh = true ){
+// 	assetBase.value = value;
+// 	const symbol = `${ assetBase.value }${ assetQuote.value }`;
+// 	marketHistory.setSymbol( symbol, true );
+// 	if( refresh ){
+// 		chart.refresh();
+// 	}
+// 	emit( 'onChangeSymbol', symbol );
+// }
+//__ timeScale
+// const intervalOptions = Object.keys( intervalsMs ).map( key => ( {
+// 	value: key,
+// 	label: key
+// }) );
+// function handleChangeTimeScale( value: IntervalMs, refresh = true ){
+// 	const timeScaleMs = marketHistory.setTimeScale( value, true );
+// 	if( timeScaleMs ){
+// 		chart.setTickStep( timeScaleMs, { render: refresh, xOriginRatio } );
+// 		emit( 'onChangeInterval', value );
+// 	}
+// }
 // function onDateChange( value: Date ){
 // 	// console.log('onDateChange', value );
 // 	if ( !value ){
@@ -182,22 +190,19 @@ onBeforeUnmount( () => {
 // 	}
 // 	chart.setX( value.getTime(), { render: true, xOriginRatio } );
 // }
-
 //__ player
-/*
-const replayMode = ref( false );
-
-function setReplayMode( mode: boolean | 'toggle' ){
-	replayMode.value = mode === 'toggle' ? !replayMode.value : mode;
-	if( replayMode.value ){
-		player.startSession();
-	}else{
-		player.endSession();
-	}
-}
-
-const isPlaying = ref( false );
-*/
+// const replayMode = ref( false );
+//
+// function setReplayMode( mode: boolean | 'toggle' ){
+// 	replayMode.value = mode === 'toggle' ? !replayMode.value : mode;
+// 	if( replayMode.value ){
+// 		player.startSession();
+// 	}else{
+// 		player.endSession();
+// 	}
+// }
+//
+// const isPlaying = ref( false );
 
 </script>
 
@@ -209,13 +214,32 @@ const isPlaying = ref( false );
 <style lang="scss" scoped>
 .chart {
 	flex: 1 1;
-	color: #ddd;
-	background-color: #242424;
+	background-color: #191919;
 	border: 1px solid #333333;
+	color: #cccccc;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
 	position: relative;
+
+	/*__ override :focus-visible ( keyboard focus ) */
+	:deep(*) {
+		&:focus-visible {
+			outline: none;
+			position: relative;
+			&:after {
+				content: "";
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				border: 1px solid #999999;
+				z-index: 100;
+			}
+
+		}
+	}
 }
 
 </style>

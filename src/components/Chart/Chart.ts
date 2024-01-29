@@ -53,8 +53,8 @@ export default class Chart {
 		},
 		candle: {
 			color: {
-				up: '#ffffff',//'#00ff00',
-				down: '#409eff',//'#ff0000',
+				up: '#0080c5',//'#409eff',
+				down: '#ffffff',
 			},
 		},
 		onScalingXChange: () => {},
@@ -521,15 +521,6 @@ export default class Chart {
 				borderLeft: this.border,
 			}
 		} );
-		//____ mouse area: main without yScale
-		// this.elements.mouseArea = createElement( 'div', this.elements.main, {
-		// 	className: 'mouse-move-area',
-		// 	style: {
-		// 		display: 'block', zIndex: '90', position: 'absolute', cursor: 'crosshair',
-		// 		left: '0', top: '0', bottom: '0', right: this.elements.scaleY.style.width,
-		// 	}
-		// } );
-		// this.elements.mouseArea.tabIndex = 0;
 		//__ cross
 		const crossBorder = '1px solid #ffffff33';
 		this.elements.cross = createElement( 'div', this.elements.main, {
@@ -559,7 +550,7 @@ export default class Chart {
 		} );
 		//_______ cross labels
 		const crossLabelStyle = {
-			display: 'none', background: '#262626', color: '#ffffff'/*, color: '#409eff'*/, padding: '0 8px', overflow: 'hidden', zIndex: '96',
+			display: 'none', background: '#2C2C2C', color: '#ffffff', padding: '0 8px', overflow: 'hidden', zIndex: '96',
 			fontWeight: '400',
 			position: 'absolute', top: '0',
 		};
@@ -584,7 +575,7 @@ export default class Chart {
 			className: 'infos',
 			style: {
 				background: '#161616cc', padding: '0 8px',
-				position: 'absolute', left: '0', top: '0', zIndex: '96',
+				position: 'absolute', left: '1px', top: '1px', zIndex: '96',
 				display: 'flex', flexDirection: 'row', gap: '8px', justifyContent: 'flex-start',
 			}
 		} );
@@ -693,11 +684,9 @@ export default class Chart {
 		let changed = false;
 		const xMin = Math.floor( this.scalingX.scaleIn.min / this.tickStep ) * this.tickStep;
 		const xMax = Math.ceil( this.scalingX.scaleIn.max / this.tickStep ) * this.tickStep;
-		// console.log('updateX', { _xMin: this.xMin, xMin, _xMax: this.xMax, xMax})
 		if ( xMin !== this.xMin || xMax !== this.xMax ){
 			this.xMin = xMin;
 			this.xMax = xMax;
-			// console.log('NbTicks', Math.ceil((this.xMax-this.xMin)/this.tickStep));
 			changed = true;
 		}
 
@@ -720,7 +709,7 @@ export default class Chart {
 
 		const p = this.options.onScalingXChange( this.scalingX );
 
-		if ( ( p as Promise<void> ).then ){
+		if ( ( p as Promise<void> )?.then ){
 			p.then( after );
 		} else {
 			after();
@@ -824,7 +813,7 @@ export default class Chart {
 		let x = _xMin;
 		while ( x <= _xMax ){
 			tick = this.getTick( x );
-			xPos = this.scalingX.scaleTo( tick.time );
+			xPos = this.scalingX.scaleTo( x );
 			for ( let i = 0, max = rows.length; i < max; i++ ){
 				rows[ i ].drawTick( tick, xPos, this.tickWidth, x );
 			}

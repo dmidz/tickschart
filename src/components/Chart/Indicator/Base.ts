@@ -1,7 +1,7 @@
 
 import { ScalingLinear } from '@/utils/math';
 import { defaultTick, type GetTick, type CandleTick as Tick } from '../_shared';
-import ComputeLib, { type ComputeFunc } from './ComputeLib';
+import Computation, { type ComputeFunc } from './Computation.ts';
 
 type TK = KeyOfValue<Tick, number>;
 
@@ -42,7 +42,7 @@ export default abstract class Base<Options extends Record<string,any>,
 	private cacheDist = 0;
 	private cacheSizeMax = 0;
 	private readonly computeKeys: Map<CK,true> = new Map();
-	protected lib: ComputeLib<TCK>;
+	protected lib: Computation<TCK>;
 
 	private drawing = {
 		x: 0,
@@ -64,12 +64,12 @@ export default abstract class Base<Options extends Record<string,any>,
 		(Object.keys( this.defaultComputed ) as CK[]).forEach( (key: CK) => {
 			this.computeKeys.set( key, true );
 		} );
-		this.lib = new ComputeLib<TCK>( this );
+		this.lib = new Computation<TCK>( this );
 		this.compute = this.computeSetup( this.lib );
 	}
 	
 	abstract draw(): void;
-	abstract computeSetup( lib: ComputeLib<TCK> ): ({ [key in keyof Computed]: ComputeFunc });
+	abstract computeSetup( lib: Computation<TCK> ): ({ [key in keyof Computed]: ComputeFunc });
 	
 	setContext( getTick: GetTick, canvasContext: CanvasRenderingContext2D, scalingY: ScalingLinear ){
 		this.getTick = getTick;
@@ -197,7 +197,7 @@ export default abstract class Base<Options extends Record<string,any>,
 			const tick = this.getTick( _index );
 			value = tick[ prop as keyof Tick ];
 		}
-		return ComputeLib.asNumber( value );
+		return Computation.asNumber( value );
 	}
 
 	eachTick ( from: number, length: number, op: ( v: number, i: number ) => number, initial = 0 ): number{

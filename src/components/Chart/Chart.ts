@@ -34,17 +34,19 @@ export type Options = {
 	autoScaleY?: boolean,
 	autoScaleYMargin?: number,
 	yScaleWidth?: number,
+	readonly tickIndexMax?: ( () => number | null ),
 }
 
 export default class Chart {
-	
+
+	private _getTick: GetTick;
 	private elements: Record<string,HTMLElement> = {};
 	private canvas: HTMLCanvasElement;
 	width: number = 100;
 	height: number = 100;
 	scalingX: ScalingLinear;
 	scalingY: ScalingLinear;
-	options: Required<Options> = {
+	private options: Required<Options> = {
 		tickWidth: 5,
 		canvas: {
 			imageSmoothingEnabled: false,
@@ -76,6 +78,9 @@ export default class Chart {
 		autoScaleY: true,
 		autoScaleYMargin: 10,// px
 		yScaleWidth: 100,
+		tickIndexMax: () => {
+			return Math.ceil( Date.now() / this.tickStep ) * this.tickStep;
+		},
 	};
 
 	private ctxTicks: CanvasRenderingContext2D;
@@ -84,8 +89,8 @@ export default class Chart {
 
 	private tickWidth = 3;
 	private tickWidthHalf = 2.5;
-	private xMin = 0;
-	private xMax = 100;
+	private xStart = 0;
+	private xEnd = 100;
 	private drag = false;
 	private cx = 1;
 	private cy = 1;
@@ -106,9 +111,10 @@ export default class Chart {
 
 	constructor ( private parentElement: HTMLElement,
 								public tickStep: number,
-								private getTick: GetTick,
+								getTick: GetTick,
 								options: Options = {} ){
 
+		this._getTick = getTick;
 		this.options = merge( this.options, options );
 		
 		//__ build dom elements
@@ -134,10 +140,9 @@ export default class Chart {
 		//__ scales
 		this.tickWidth = this.options.tickWidth;
 		this.tickWidthHalf = this.tickWidth / 2;
-		const maxX = Math.ceil( (Date.now() - this.tickStep)/this.tickStep) * this.tickStep;
 		this.scalingX = new ScalingLinear( { min: 0, max: 100 }, { min: 0, max: this.width }, {
 			precisionIn: this.tickStep,
-			scaleInMax: () => maxX,
+			scaleInMax: this.options.tickIndexMax
 		} );
 		this.scalingY = new ScalingLinear( { min: 0, max: 100 },
 			{ min: this.height-this.options.autoScaleYMargin, max: this.options.autoScaleYMargin },
@@ -167,7 +172,6 @@ export default class Chart {
 			},
 			// labelPrecision: .01,
 		} );
-
 		
 		//___ events
 		this.mouseEnterElement = this.elements.candles;
@@ -185,7 +189,7 @@ export default class Chart {
 		//__
 		return this;
 	}
-	
+
 	getElement( key: keyof Chart['elements'] ){
 		return this.elements[key];
 	}
@@ -626,6 +630,14 @@ export default class Chart {
 	}
 
 	//__ x
+	getTick = ( index: number ) => {
+		const indexMax = this.options.tickIndexMax();
+		if ( indexMax !== null && index > indexMax ){
+			return defaultTick;
+		}
+		return this._getTick( index );
+	}
+
 	setTickStep( tickStep: number, { render = true, xOriginRatio = 0 } ){
 		this.tickStep = tickStep;
 		this.scalingX.setOption( 'precisionIn', this.tickStep );
@@ -686,22 +698,22 @@ export default class Chart {
 		this.cx = this.scalingX.distIn / this.scalingX.distOut;
 
 		let changed = false;
-		const xMin = Math.floor( this.scalingX.scaleIn.min / this.tickStep ) * this.tickStep;
-		const xMax = Math.ceil( this.scalingX.scaleIn.max / this.tickStep ) * this.tickStep;
-		if ( xMin !== this.xMin || xMax !== this.xMax ){
-			this.xMin = xMin;
-			this.xMax = xMax;
+		const xStart = Math.floor( this.scalingX.scaleIn.min / this.tickStep ) * this.tickStep;
+		const xEnd = Math.ceil( this.scalingX.scaleIn.max / this.tickStep ) * this.tickStep;
+		if ( xStart !== this.xStart || xEnd !== this.xEnd ){
+			this.xStart = xStart;
+			this.xEnd = xEnd;
 			changed = true;
 		}
 
-		// console.log( 'updateX', this.xMin, this.options.crossHairLabelX( this.xMin ), scale, this.options.crossHairLabelX( scale.min ) );
+		// console.log( 'updateX', this.xStart, this.options.crossHairLabelX( this.xStart ), scale, this.options.crossHairLabelX( scale.min ) );
 
 		const after = () => {
 			if ( changed || force ){
 				this.autoScaleY( false );
-				// console.log('### updateX', new Date( this.xMin).toUTCString(), new Date( this.xMax ).toUTCString() );
+				// console.log('### updateX', new Date( this.xStart).toUTCString(), new Date( this.xEnd ).toUTCString() );
 				this.chartRows.forEach( row => {
-					row.setViewXMinMax( this.xMin, this.xMax );
+					row.setViewXMinMax( this.xStart, this.xEnd );
 					row.autoScaleY();
 				} );
 			}
@@ -759,10 +771,10 @@ export default class Chart {
 
 		let min: number = Infinity;
 		let max: number = -Infinity;
-		let t = this.xMin;
+		let t = this.xStart;
 		let tick: ReturnType<GetTick>;
 
-		while( t <= this.xMax ){
+		while( t <= this.xEnd ){
 			tick = this.getTick( t );
 			if( tick !== defaultTick ){
 				min = Math.min( min, +tick.low );
@@ -775,7 +787,7 @@ export default class Chart {
 		if( max === -Infinity ){		max = 10;}
 		if( max - min === 0 ){			max += 10;}
 
-		// console.log( '//_________ getMinMaxY', { min, max }, new Date( this.xMin ).toUTCString() );
+		// console.log( '//_________ getMinMaxY', { min, max }, new Date( this.xStart ).toUTCString() );
 
 		return { min, max };
 	}
@@ -785,19 +797,19 @@ export default class Chart {
 		Object.assign( this.ctxTicks, options );
 	}
 	
-	render( xMin: number = this.xMin, xMax: number = this.xMax, row?: ChartRow ){
-		if( xMax < this.xMin || xMin > this.xMax ){ return;}
-		const _xMin = Math.max( xMin, this.xMin );
-		let _xMax = Math.min( xMax, this.xMax );
+	render( xStart: number = this.xStart, xEnd: number = this.xEnd, row?: ChartRow ){
+		if( xEnd < this.xStart || xStart > this.xEnd ){ return;}
+		const _xStart = Math.max( xStart, this.xStart );
+		let _xEnd = Math.min( xEnd, this.xEnd );
 		
-		const xPx = this.scalingX.scaleTo( _xMin );
-		let wPx = ( _xMax-_xMin ) / this.scalingX.distIn * this.scalingX.distOut;
+		const xPx = this.scalingX.scaleTo( _xStart );
+		let wPx = ( _xEnd-_xStart ) / this.scalingX.distIn * this.scalingX.distOut;
 
-		// console.log( 'render', { xMin, _xMin, xMax, _xMax, xPx, wPx,
+		// console.log( 'render', { xStart, _xStart, xEnd, _xEnd, xPx, wPx,
 		// 	scaleXMin: this.scalingX.scaleIn.min, scaleXMax: this.scalingX.scaleIn.max, distIn: this.scalingX.distIn } );
 
 		if ( this.maxDisplayX ){
-			_xMax = this.maxDisplayX;
+			_xEnd = this.maxDisplayX;
 			wPx = this.width - xPx;
 		}
 
@@ -813,15 +825,17 @@ export default class Chart {
 			row.clearRect( xPx, wPx );
 		} );
 
-		// console.log( '//_________ render', { _xMin: new Date( _xMin ).toUTCString(), xMin: new Date( xMin ).toUTCString(), thisxMin: new Date( this.xMin ).toUTCString() } );
+		// console.log( '//_________ render', { _xStart: new Date( _xStart ).toUTCString(), xStart: new Date( xStart ).toUTCString(), thisxStart: new Date( this.xStart ).toUTCString() } );
 		let tick: ReturnType<GetTick>;
 		let xPos: number;
-		let x = _xMin;
-		while ( x <= _xMax ){
+		let x = _xStart;
+		while ( x <= _xEnd ){
 			tick = this.getTick( x );
-			xPos = this.scalingX.scaleTo( x );
-			for ( let i = 0, max = rows.length; i < max; i++ ){
-				rows[ i ].drawTick( tick, xPos, this.tickWidth, x );
+			if( tick !== defaultTick ){
+				xPos = this.scalingX.scaleTo( x );
+				for ( let i = 0, max = rows.length; i < max; i++ ){
+					rows[ i ].drawTick( tick, xPos, this.tickWidth, x );
+				}
 			}
 			x += this.tickStep;
 		}

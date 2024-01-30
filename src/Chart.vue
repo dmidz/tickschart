@@ -87,12 +87,10 @@ onMounted( async () => {
 	chart = new Chart( refChartWrapper.value, timeScaleMs, ( index: number ) => {
 		/*__ one would normally pass fetcher.getTick directly, but for the only one file sample
 					we can bypass it to always return a tick from the file ( 1692000000000 ) time range */
-		if( index > Date.now() ){ return defaultTick;}
 		return fetcher.getMapTicks( index )?.[ 1692000000000 + index % rangeLoadMs ] || defaultTick;
 	}, {
 		onScalingXChange: async ( scalingX ) => {
 			if( !init ){  return;}//__ avoid any fetch during initialization
-			if( scalingX.scaleIn.min > Date.now() ){  return;}//__ avoid fetch any date over now
 			const fetches = fetcher.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max );
 			return Promise.all( fetches );
 		},

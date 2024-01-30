@@ -167,7 +167,7 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 		this.indicator.reset();
 	}
 
-	beforeDestroy = () => {
+	beforeDestroy(){
 		const mouseArea = this.elements.get( 'mouseArea' );
 
 		if( mouseArea ){

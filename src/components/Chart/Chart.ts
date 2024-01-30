@@ -134,8 +134,10 @@ export default class Chart {
 		//__ scales
 		this.tickWidth = this.options.tickWidth;
 		this.tickWidthHalf = this.tickWidth / 2;
+		const maxX = Math.ceil( (Date.now() - this.tickStep)/this.tickStep) * this.tickStep;
 		this.scalingX = new ScalingLinear( { min: 0, max: 100 }, { min: 0, max: this.width }, {
 			precisionIn: this.tickStep,
+			scaleInMax: () => maxX,
 		} );
 		this.scalingY = new ScalingLinear( { min: 0, max: 100 },
 			{ min: this.height-this.options.autoScaleYMargin, max: this.options.autoScaleYMargin },
@@ -653,7 +655,7 @@ export default class Chart {
 		scale.max -= d;
 		this.uiScaleX.setScaleIn( scale );
 
-		// console.warn( 'setX', { x, scale, scalingX: this.scalingX, xOriginRatio, render, force }/*, new Error('zzz')*/ );
+		// console.log( 'setX', { x, scale, scalingX: this.scalingX, xOriginRatio, render, force } );
 
 		this.updateX( render, force );
 
@@ -759,6 +761,7 @@ export default class Chart {
 		let max: number = -Infinity;
 		let t = this.xMin;
 		let tick: ReturnType<GetTick>;
+
 		while( t <= this.xMax ){
 			tick = this.getTick( t );
 			if( tick !== defaultTick ){
@@ -767,9 +770,10 @@ export default class Chart {
 			}
 			t += this.tickStep;
 		}
-		if( max - min === 0 ){
-			max += 10;
-		}
+
+		if( min === Infinity ){			min = 0;}
+		if( max === -Infinity ){		max = 10;}
+		if( max - min === 0 ){			max += 10;}
 
 		// console.log( '//_________ getMinMaxY', { min, max }, new Date( this.xMin ).toUTCString() );
 

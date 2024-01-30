@@ -32,6 +32,7 @@ export type ScalingLinearOptions = {
   precisionOut?: number,
   precisionIn?: number,
   stringPrecision?: number,
+  scaleInMax?: (() => number) | null,
   debug?: boolean,
 }
 
@@ -47,6 +48,7 @@ export class ScalingLinear {
     precisionOut: 1,
     precisionIn: 1,
     stringPrecision: 1,
+    scaleInMax: null,
     debug: false,
   };
 
@@ -76,7 +78,7 @@ export class ScalingLinear {
     //   return false;
     // }
     this.distIn = this.scaleIn.max - this.scaleIn.min;
-    if( this.distInMax ){
+    if( this.distInMax !== null ){
       let d = this.distIn - this.distInMax;
       if( d > 0 ){
         d /= 2;
@@ -85,6 +87,11 @@ export class ScalingLinear {
         this.distIn = this.distInMax;
       }
     }
+
+    if ( this.options.scaleInMax ){
+      this.scaleIn.min = Math.min( this.scaleIn.min, this.options.scaleInMax() );
+    }
+
     this.update();
     return true;
   }

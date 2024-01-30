@@ -1,6 +1,6 @@
 
 import merge from '@/utils/merge';
-import type { Chart } from './Chart';
+import type Chart from './Chart';
 
 //______
 export type PlayerOptions = {
@@ -167,18 +167,18 @@ export class Player {
 		mouseElement.removeEventListener( 'mouseup', this.onMouseUp );
 	}
 
-	private onMouseEnterLeave = ( inside: boolean, event: MouseEvent ) => {
+	private onMouseEnterLeave = ( inside: boolean/*, event: MouseEvent*/ ) => {
 		if( this.timeSelection ){
 			// console.log('mouseEnterLeave', inside );
 			this.elements.timeSelect.style.display = inside ? 'block' : 'none';
 		}
 	}
 
-	private onMouseDown = ( event: MouseEvent ) => {
+	private onMouseDown = ( /*event: MouseEvent*/ ) => {
 		this.moved = false;
 	}
 
-	private onMouseMove = ( x: number, y: number, time: number, event: MouseEvent ) => {
+	private onMouseMove = ( x: number, y: number, time: number/*, event: MouseEvent*/ ) => {
 		if( this.timeSelection ){
 			// console.log( 'mouseMove', { x, y }, new Date( time ).toUTCString() );
 			this.mouseTime = time;
@@ -187,7 +187,7 @@ export class Player {
 		}
 	}
 
-	private onMouseUp = ( event: MouseEvent ) => {
+	private onMouseUp = ( /*event: MouseEvent*/ ) => {
 		if ( this.timeSelection && !this.moved ){
 			this.enableTimeStartSelection( false );
 			this.time = this.mouseTime;

@@ -32,9 +32,9 @@ const timeScaleMs = h1 * 4;
 const ticksPerLoad = 500;
 
 //__
-const currentTime = ref( new Date() );
+// const currentTime = ref( new Date() );
 // const currentTime = ref( new Date( Date.UTC( 2024, 1, 15 ) ) );
-// const currentTime = ref( new Date( Date.UTC( 2023, 9, 10 ) ) );
+const currentTime = ref( new Date( Date.UTC( 2023, 9, 10 ) ) );
 const refChartWrapper = ref<HTMLElement>();
 let chart: Chart;
 

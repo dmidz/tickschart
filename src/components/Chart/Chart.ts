@@ -394,7 +394,9 @@ export default class Chart {
 					yValue = this.scalingY.scaleToInv( yPos );
 				}
 				this.elements.crossY.style.transform = `translateY(${ yPos }px)`;
-				this.elements.labelY.innerText = ( this.options.crossHairLabelY || this.uiScaleY.options.formatLabel )( yValue );
+				this.elements.labelY.innerText = isNaN( yValue )
+					? '--'
+					: ( this.options.crossHairLabelY || this.uiScaleY.options.formatLabel )( yValue );
 				this.elements.labelY.style.transform = `translateY(${ Math.round( yLabel ) }px)`;
 
 				this.mouseMoveListeners.forEach( callback => {
@@ -783,8 +785,8 @@ export default class Chart {
 			t += this.tickStep;
 		}
 
-		if( min === Infinity ){			min = 0;}
-		if( max === -Infinity ){		max = 10;}
+		// if( min === Infinity ){			min = 0;}
+		// if( max === -Infinity ){		max = 10;}
 		if( max - min === 0 ){			max += 10;}
 
 		// console.log( '//_________ getMinMaxY', { min, max }, new Date( this.xStart ).toUTCString() );

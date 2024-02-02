@@ -21,14 +21,14 @@
     "noFallthroughCasesInSwitch": true,
 
     /*__ */
-//    "baseUrl": "./",
-      "allowJs": true,
+    "baseUrl": ".",
+    "allowJs": true,
     "paths": {
       "@/*": [
         "./src/*"
       ]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue","demo/**/*.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

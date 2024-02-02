@@ -1,11 +1,13 @@
 {
   "name": "@dmidz/tickschart",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "author": "David MARTIN",
   "description": "Js Interactive Ticks Chart",
   "license": "GPLv3",
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

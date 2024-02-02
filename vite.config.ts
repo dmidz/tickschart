@@ -17,7 +17,7 @@ export default defineConfig({
     dts({// gently generates *.d.ts files at build :)
       pathsToAliases: false,
       rollupTypes: true,
-      include: [ 'src/lib/**/*.ts' ],
+      include: [ 'src/lib/**/*.ts', 'src/types.d.ts' ],
     }),
   ],
   build: {

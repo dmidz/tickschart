@@ -25,7 +25,6 @@ export default defineConfig({
     lib: {
       entry: {
         index: res( 'src/lib/index.ts' ),
-        // utils: res( 'src/utils/index.ts' ),
       },
       name: 'TicksChart',
       formats: [ 'es' ],

@@ -2,7 +2,7 @@
   "name": "@dmidz/tickschart",
   "version": "0.0.0",
   "author": "David MARTIN",
-  "description": "Js lib for interactive chart of ticks",
+  "description": "Js Interactive Ticks Chart",
   "license": "GPLv3",
   "type": "module",
   "files": ["dist"],

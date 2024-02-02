@@ -1,5 +1,5 @@
 
-import type { Base } from './index';
+import type { Base } from './index.ts';
 export type ComputeFunc = ( index: number ) => number;
 
 //______

@@ -1,7 +1,7 @@
 
-import { ScalingLinear } from '@/utils/math';
-import { defaultTick, type GetTick, type CandleTick as Tick } from '../_shared';
-import Computation, { type ComputeFunc } from './Computation.ts';
+import { ScalingLinear } from '../utils/math';
+import { defaultTick, type GetTick, type CandleTick as Tick } from '../index';
+import Computation, { type ComputeFunc } from './Computation';
 
 type TK = KeyOfValue<Tick, number>;
 

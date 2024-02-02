@@ -13,7 +13,7 @@ export type LoadedTimeRange = { min: number, max: number, [key: string]: any };
 export type FetchTicks<FetchResult> = ( startTime: number, limit: number ) => Promise<FetchResult|null>;
 
 //______
-export default class FetcherTicks<Tick,FetchResult extends Record<string, Tick>, Range extends LoadedTimeRange = LoadedTimeRange> {
+export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Range extends LoadedTimeRange = LoadedTimeRange> {
 	private options: Required<Options> = {
 		timeScaleMs: 1000 * 60 * 60,
 		ticksPerLoad: 200,

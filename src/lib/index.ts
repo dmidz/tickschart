@@ -1,18 +1,20 @@
+export { default as Chart } from './Chart.ts';
+export { default as Fetcher } from './Fetcher.ts';
 
-export const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0, someString: 'aaa' };
+export const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0, someString: 'hello' };
 
 export type CandleTick = typeof defaultTick;
 
-export type GetTick<Tick extends CandleTick=CandleTick> = ( i: number ) => Tick;
+export type GetTick<Tick extends CandleTick = CandleTick> = ( i: number ) => Tick;
 
 export type ElementRect = HTMLElement & { rect?: ReturnType<Element['getBoundingClientRect']> };
 
 //__ utils
-export function sharpCanvasValue( value: number, add = 0 ){
+export function sharpCanvasValue ( value: number, add = 0 ){
 	return Math.floor( value ) + add;
 }
 
-export function resizeCanvas( canvas: HTMLCanvasElement | undefined ){
+export function resizeCanvas ( canvas: HTMLCanvasElement | undefined ){
 	let resized: false | { width: number, height: number } = false;
 
 	if ( !canvas ){
@@ -44,7 +46,7 @@ export function resizeCanvas( canvas: HTMLCanvasElement | undefined ){
 	return resized;
 }
 
-export function createElement( tagName: string, parentNode?: HTMLElement, options: {
+export function createElement ( tagName: string, parentNode?: HTMLElement, options: {
 	style?: Partial<CSSStyleDeclaration>,
 	className?: string
 } = {} ): HTMLElement{
@@ -61,18 +63,18 @@ export function createElement( tagName: string, parentNode?: HTMLElement, option
 	return el;
 }
 
-export function addListenerFactory<T = any>( listeners: T[] ){
+export function addListenerFactory<T = any> ( listeners: T[] ){
 	return ( callback: T ) => {
 		removeListener<T>( listeners, callback );
 		listeners.push( callback );
 	}
 }
 
-export function removeListenerFactory<T = any>( listeners: T[] ){
+export function removeListenerFactory<T = any> ( listeners: T[] ){
 	return ( callback: T ) => removeListener( listeners, callback );
 }
 
-export function removeListener<T = any>( listeners: T[], callback: T ){
+export function removeListener<T = any> ( listeners: T[], callback: T ){
 	const k: T[] = [ ...listeners ];
 	k.forEach( ( c, index ) => {
 		if ( c === callback ){
@@ -81,4 +83,13 @@ export function removeListener<T = any>( listeners: T[], callback: T ){
 	} );
 	return k;
 }
+
+//__ intervals
+const s1 = 1000;
+const m1 = s1 * 60;
+const h1 = m1 * 60;
+const d1 = h1 * 24;
+const w1 = d1 * 7;
+
+export const intervalsMs = { s1, m1, h1, d1, w1 };
 

@@ -1,6 +1,6 @@
 
-import merge from '@/utils/merge';
-import { decimal, roundPrecision, ScalingLinear, type Scale } from '@/utils/math';
+import merge from './utils/merge.ts';
+import { decimal, roundPrecision, ScalingLinear, type Scale } from './utils/math.ts';
 
 //__
 export type Options = {
@@ -25,7 +25,6 @@ export default class UiScale {
 		stepsRange: null,//__ or fixed steps range, over last, last one will incr last + last until valid ( ex: for timescale )
 		stepIncreaseMult: .2,
 		formatLabel: ( value: number, precision = this.scaling.getOption('precisionIn') ) => {
-			// console.log('formatLabel', { value, precision } );
 			return roundPrecision( value, precision )
 		},
 		onChange: () => {},
@@ -109,11 +108,7 @@ export default class UiScale {
 	
 	increaseScale( deltaRatio: number, emit = false ){
 		if( !deltaRatio ){ return;}
-		//__ delta = ratio of distIn * multiplier
 		const delta = this.scaling.distIn * deltaRatio * this.options.stepIncreaseMult;
-
-		// console.log('increaseScale', { delta, increaseStep: this.options.stepIncreaseMult, scaling: this.scaling });
-
 		this.setScaleIn( {
 			min: this.scaling.scaleIn.min - delta,
 			max: this.scaling.scaleIn.max + delta,
@@ -143,8 +138,7 @@ export default class UiScale {
 	}
 
 	private onKeyDown = ( event: KeyboardEvent ) => {
-		const v = .02;
-		// console.log('onKeyDown', event.keyCode, event );
+		const v = .02;// TODO: add option keyboardArrowDeltaRatio
 		if( this.isDirX ){
 			switch ( event.keyCode ){
 				default:
@@ -186,9 +180,8 @@ export default class UiScale {
 	}
 
 	private onMouseMove = ( event: MouseEvent )=> {
+		// TODO: use requestAnimationFrame for best perf ( like in Chart mousemove )
 		if( !this.drag ){ return;}
-		// const { offsetX, offsetY, movementX, movementY } = event;
-		// console.log( 'mousemove', { offsetX, offsetY, movementX, movementY } );
 		this.increaseScale( event[this.moveProp]/100, true );
 	}
 
@@ -250,7 +243,6 @@ export default class UiScale {
 			}
 
 			res = p;
-			// console.log( 'findStep stepsRange', { dist, res }, this.scaling.scaleIn );
 		}else if( this.options.stepsDecimal ){
 			
 			const dec = decimal( dist );
@@ -276,16 +268,6 @@ export default class UiScale {
 			}
 
 			res = p * dec;
-
-			// console.log( 'findStep stepsDecimal', { dist, dec, k, p, res }, this.scaling.scaleIn );
-
-			/*__ ex: 150 -> 1.5 -> 2 ---- log(150) = 2.17 --- floor(2.17) = 2 -- pow(10, 2) = 100 -- 150/100 = 1.5*/
-			// const step2 = this.findStep( 150 );
-			// const step3 = this.findStep( 15 );
-			// const step4 = this.findStep( 1.5 );
-			// const step5 = this.findStep( .15 );
-			// const step6 = this.findStep( .015 );
-			// const step7 = this.findStep( .0015 );
 		}
 
 		return res;

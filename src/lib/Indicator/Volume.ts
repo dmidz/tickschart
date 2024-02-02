@@ -1,6 +1,6 @@
 
-import Base, { type BaseOptions, type BarStyle, type LineStyle } from './Base';
-import type { CandleTick as Tick } from '@/components/Chart/_shared';
+import Base, { type BaseOptions, type BarStyle, type LineStyle } from './Base.ts';
+import type { CandleTick as Tick } from '../index.ts';
 
 //______
 export type Options = Partial<BaseOptions> & {

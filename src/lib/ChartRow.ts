@@ -1,9 +1,9 @@
 
-import merge from '@/utils/merge';
-import { ScalingLinear, type Scale } from '@/utils/math';
-import UiScale, { type Options as UiScaleOptions } from './UiScale';
-import type { Indicator } from './Indicator/index';
-import { defaultTick, createElement, resizeCanvas, type GetTick, type ElementRect, type CandleTick } from './_shared';
+import merge from './utils/merge.ts';
+import { ScalingLinear, type Scale } from './utils/math.ts';
+import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
+import type { Indicator } from './Indicator/index.ts';
+import { defaultTick, createElement, resizeCanvas, type GetTick, type ElementRect, type CandleTick } from './index';
 
 //______
 export type Options = {

@@ -1,11 +1,11 @@
 
-import merge from '@/utils/merge';
-import { ScalingLinear, type Scale, type ScalingLinearOptions } from '@/utils/math';
-import UiScale, { type Options as UiScaleOptions } from './UiScale';
+import merge from './utils/merge.ts';
+import { ScalingLinear, type Scale, type ScalingLinearOptions } from './utils/math.ts';
+import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
 import { addListenerFactory, removeListenerFactory, createElement, resizeCanvas, sharpCanvasValue, defaultTick,
-	type CandleTick, type GetTick, type ElementRect } from './_shared';
-import indicators, { type List, type IOptions } from './Indicator/index';
-import ChartRow from './ChartRow';
+	type CandleTick, type GetTick, type ElementRect } from './index.ts';
+import indicators, { type List, type IOptions } from './Indicator/index.ts';
+import ChartRow from './ChartRow.ts';
 
 //______
 export type Options = {
@@ -39,15 +39,10 @@ export type Options = {
 
 export default class Chart {
 
+	private parentElement: HTMLElement;
 	private _getTick: GetTick;
-	private elements: Record<string,HTMLElement> = {};
-	private canvas: HTMLCanvasElement;
-	width: number = 100;
-	height: number = 100;
-	scalingX: ScalingLinear;
-	scalingY: ScalingLinear;
 	private options: Required<Options> = {
-		tickWidth: 5,
+		tickWidth: 4,
 		canvas: {
 			imageSmoothingEnabled: false,
 			lineWidth: 1,
@@ -59,15 +54,12 @@ export default class Chart {
 				down: '#ffffff',
 			},
 		},
-		onScalingXChange: () => {},
-		scaleY: {
+		onScalingXChange: () => {
 		},
-		scaleX: {
-		},
-		uiScaleY: {
-		},
-		uiScaleX: {
-		},
+		scaleY: {},
+		scaleX: {},
+		uiScaleY: {},
+		uiScaleX: {},
 		crossHairLabelX: ( value ) => {
 			return `${ value }`;
 		},
@@ -83,10 +75,15 @@ export default class Chart {
 		},
 	};
 
+	private elements: Record<string,HTMLElement> = {};
+	private canvas: HTMLCanvasElement;
+	private width: number = 100;
+	private height: number = 100;
+	private scalingX: ScalingLinear;
+	private scalingY: ScalingLinear;
 	private ctxTicks: CanvasRenderingContext2D;
 	private uiScaleX: UiScale;
 	private uiScaleY: UiScale;
-
 	private tickWidth = 3;
 	private tickWidthHalf = 2.5;
 	private xStart = 0;
@@ -95,25 +92,27 @@ export default class Chart {
 	private cx = 1;
 	private cy = 1;
 	private infosLabels: { [p in keyof CandleTick]?: string } = { open: 'O', high: 'H', low: 'L', close: 'C', vol: 'Vol' };
-
-
 	private mouseOverChart = false;
 	private resizing = false;
 	private enabledCrossHair = true;
 	private border = '1px solid #333333';
 	private maxDisplayX: number | null = null;
-
 	private chartRows: Map<string|number, ChartRow> = new Map();
 	private mouseEnterElement: ElementRect;
 	private mouseMoveElement: HTMLElement;
 	private mouseIndicator: ChartRow | null = null;
 	private mouseDragIndicator: ChartRow | null = null;
 
-	constructor ( private parentElement: HTMLElement,
+	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
 								getTick: GetTick,
 								options: Options = {} ){
+		
+		if( !parentElement ){
+			throw new Error('parentElement must be a valid HTMLElement');
+		}
 
+		this.parentElement = parentElement;
 		this._getTick = getTick;
 		this.options = merge( this.options, options );
 		
@@ -292,13 +291,11 @@ export default class Chart {
 		document.body.style.userSelect = 'auto';
 	}
 
-	private _moveEvent: MouseEvent | null = null;
+	private moveEvent: MouseEvent | null = null;
 	private position: { x: number, y: number } = { x: 0, y: 0};
 	private onMouseMove = ( event: MouseEvent ) => {
-		// if( !this._moveEvent ){
-			this._moveEvent = event;
-			requestAnimationFrame( this.update );
-		// }
+		this.moveEvent = event;
+		requestAnimationFrame( this.update );
 	}
 	private onKeyDown = ( event: KeyboardEvent ) => {
 		// console.log('onKeyDown', event.keyCode, event );
@@ -349,9 +346,9 @@ export default class Chart {
 			}
 		}
 
-		if( this._moveEvent ){
-			const event = this._moveEvent;
-			this._moveEvent = null;
+		if( this.moveEvent ){
+			const event = this.moveEvent;
+			this.moveEvent = null;
 
 			if ( this.mouseOverChart ){
 				//__ x

@@ -1,25 +1,15 @@
 
-export function decimal( n: number ): number {
-  const log = Math.log10( n );
+//__ provides the decimal floor of a number: ex: 43.75 -> 10, 7.44 -> 1, 518.28 -> 100, 0.00875 -> 0.001
+export function decimal( value: number ): number {
+  const log = Math.log10( value );
   return Math.pow( 10, Math.floor( log ) );
 }
 
-export function roundPrecision( _num: number | string, precision: number = 1 ): string {
-  const num: number = typeof _num === 'string' ? +( _num as any ) : _num;
+export function roundPrecision( value: number | string, precision: number = 1 ): string {
+  const num = +value;
   const k = `${ precision }`.split( '.' );
   const res = Math.floor( num / precision ) * precision;
-  // console.log('roundPrecision', { num, precision, digits: k[1].length, round: Math.round( num / precision ), res } );
   return res.toFixed( k.length > 1 ? k[ 1 ].length : 0 );
-}
-
-export function arrMin<T extends number | Object = number>( arr: T[], property: T extends Object ? keyof T : null ){
-  const g = property ? ( v: T ) => v[property as keyof T] : ( v: T ) => v;
-  return arr.reduce( ( a, b ) => Math.min( a, g( b ) as number ), +Infinity );
-}
-
-export function arrMax<T extends number | Object = number>( arr: T[], property: T extends Object ? keyof T : null ){
-  const g = property ? ( v: T ) => v[property as keyof T] : ( v: T ) => v;
-  return arr.reduce( ( a, b ) => Math.max( a, g( b ) as number ), -Infinity );
 }
 
 //___ Scale

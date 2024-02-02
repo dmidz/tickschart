@@ -1,5 +1,5 @@
-import type Base from './Base';
-import Volume, { type Options as VolumeOptions } from './Volume';
+import type Base from './Base.ts';
+import Volume, { type Options as VolumeOptions } from './Volume.ts';
 // import VolumeImpulse, { type Options as VolumeImpulseOptions } from './VolumeImpulse';
 
 const indicators = {

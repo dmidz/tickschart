@@ -200,5 +200,5 @@ async function run (
 }
 
 function step(/** @type {string} */ msg ){
-	return console.log( pico.bgGreen( pico.white( '»' ) ), pico.white( pico.bold( msg )) );
+	return console.log( pico.bgGreen( pico.black( '»' ) ), pico.white( pico.bold( msg )) );
 }

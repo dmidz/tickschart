@@ -86,8 +86,8 @@ async function main ( options = {} ){
 		/*__ Step: sync local develop from origin & derive new master */
 		if( !options.dry ){
 			step( 'Preparing local master...' );
-			await run( 'git', [ 'fetch', 'origin', 'develop:develop', '--recurse-submodules=no', '--prune' ] );
-			await run( 'git', [ 'fetch', 'origin', 'master:master', '--recurse-submodules=no', '--prune' ] );
+			await run( 'git', [ 'fetch', '-u', 'origin', 'develop:develop', '--recurse-submodules=no', '--prune' ] );
+			await run( 'git', [ 'fetch', '-u', 'origin', 'master:master', '--recurse-submodules=no', '--prune' ] );
 			await run( 'git', [ 'checkout', 'master' ] );
 			await run( 'git', [ 'merge', 'develop' ] );
 			//__ create release branch ?

@@ -68,23 +68,22 @@ export class ScalingLinear {
     // if ( scale.min === this.scaleIn.min && scale.max === this.scaleIn.max ){
     //   return false;
     // }
-    this.distIn = this.scaleIn.max - this.scaleIn.min;
+    const distIn = this.scaleIn.max - this.scaleIn.min;
     if( this.distInMax !== null ){
-      let d = this.distIn - this.distInMax;
+      let d = distIn - this.distInMax;
       if( d > 0 ){
         d /= 2;
         this.scaleIn.min += d;
         this.scaleIn.max -= d;
-        this.distIn = this.distInMax;
       }
     }
+    
     if( this.distInMin !== null ){
-      let d = this.distIn - this.distInMin;
+      let d = distIn - this.distInMin;
       if( d < 0 ){
         d /= 2;
         this.scaleIn.min += d;
         this.scaleIn.max -= d;
-        this.distIn = this.distInMin;
       }
     }
 
@@ -92,6 +91,9 @@ export class ScalingLinear {
     if ( scaleInMax !== null ){
       this.scaleIn.min = Math.min( this.scaleIn.min, scaleInMax );
     }
+    
+    // this.options.debug && console.warn('distIn', scale, this.distIn, distIn, this.scaleIn.max - this.scaleIn.min );
+    this.distIn = this.scaleIn.max - this.scaleIn.min;
 
     this.update();
     return true;

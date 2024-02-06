@@ -143,7 +143,7 @@ export default class Chart {
 		this.tickWidthHalf = this.tickWidth / 2;
 		this.scalingX = new ScalingLinear( { min: 0, max: 100 }, { min: 0, max: this.width }, {
 			precisionIn: this.tickStep,
-			scaleInMax: this.options.tickIndexMax
+			scaleInMax: this.options.tickIndexMax,
 		} );
 		this.scalingY = new ScalingLinear( { min: 0, max: 100 },
 			{ min: this.height-this.options.autoScaleYMargin, max: this.options.autoScaleYMargin },
@@ -711,7 +711,7 @@ export default class Chart {
 			this.uiScaleX.setScaleIn( scale );
 		}
 
-		this.tickWidth = Math.max( 1, this.scalingX.scaleTo( this.scalingX.scaleIn.min + this.tickStep ) );
+		this.tickWidth = Math.max( 1, this.scalingX.scaleTo( this.scalingX.scaleIn.min + this.tickStep, 0 ) );
 		// console.log('___ setScaleX', this.scalingX.scaleIn.min, this.tickStep, this.tickWidth );
 		this.tickWidthHalf = this.tickWidth / 2;
 		this.updateX( render, force );

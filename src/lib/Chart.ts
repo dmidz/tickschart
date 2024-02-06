@@ -9,40 +9,43 @@ import ChartRow from './ChartRow.ts';
 
 //______
 export type Options = {
-	tickWidth?: number,
-	canvas?: {
+	tickWidth: number,
+	canvas: {
 		imageSmoothingEnabled: boolean,
 		lineWidth: number,
 		// strokeStyle: string,
 	},
-	candle?: {
+	candle: {
 		color: {
 			up: string,
 			down: string,
 		}
 	},
-	onScalingXChange?: ( scalingX: ScalingLinear ) => OrPromise<any>,
-	scaleY?: ScalingLinearOptions,
-	scaleX?: ScalingLinearOptions,
-	uiScaleY?: UiScaleOptions,
-	uiScaleX?: UiScaleOptions,
-	crossHairLabelX?: ( value: number ) => string;
-	crossHairLabelY?: null | ( ( value: number ) => string );
-	keyboard?: {
+	onScalingXChange: ( scalingX: ScalingLinear ) => OrPromise<any>,
+	scaleY: ScalingLinearOptions,
+	scaleX: ScalingLinearOptions,
+	uiScaleY: UiScaleOptions,
+	uiScaleX: UiScaleOptions,
+	crossHairLabelX: ( value: number ) => string;
+	crossHairLabelY: null | ( ( value: number ) => string );
+	keyboard: {
 		vx: number,
 	},
-	autoScaleY?: boolean,
-	autoScaleYMargin?: number,
-	yScaleWidth?: number,
-	wheelScroll?: boolean,
-	readonly tickIndexMax?: ( () => number | null ),
+	autoScaleY: boolean,
+	autoScaleYMargin: number,
+	yScaleWidth: number,
+	wheelScroll: boolean,
+	readonly tickIndexMax: ( () => number | null ),
+	uiElements: {
+		buttonGoMaxX?: boolean | HTMLElement,
+	}
 }
 
 export default class Chart {
 
 	private parentElement: HTMLElement;
 	private _getTick: GetTick;
-	private options: Required<Options> = {
+	private options: Options = {
 		tickWidth: 4,
 		canvas: {
 			imageSmoothingEnabled: false,
@@ -74,6 +77,9 @@ export default class Chart {
 		wheelScroll: true,
 		tickIndexMax: () => {
 			return Math.ceil( Date.now() / this.tickStep ) * this.tickStep;
+		},
+		uiElements: {
+			buttonGoMaxX: true,
 		},
 	};
 
@@ -108,7 +114,7 @@ export default class Chart {
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
 								getTick: GetTick,
-								options: Options = {} ){
+								options: Partial<Options> = {} ){
 		
 		if( !parentElement ){
 			throw new Error('parentElement must be a valid HTMLElement');
@@ -605,7 +611,6 @@ export default class Chart {
 				display: 'flex', flexDirection: 'row', gap: '8px', justifyContent: 'flex-start',
 			}
 		} );
-
 		Object.entries( this.infosLabels ).forEach( ( [key,label] ) => {
 			const k = `info-${ key }`;
 			this.elements[k] = createElement( 'div', this.elements.infos, {
@@ -623,6 +628,24 @@ export default class Chart {
 			} );
 		});
 
+		//__ options elements
+		if( this.options.uiElements.buttonGoMaxX ){
+			if( this.options.uiElements.buttonGoMaxX === true ){
+				this.elements.buttonGoMaxX = createElement( 'button', this.elements.candles, {
+					style: {
+						position: 'absolute', bottom: '16px', right: '16px', color: '#222222', display: 'none',
+					}
+				} );
+				this.elements.buttonGoMaxX.innerText = '>>';
+				this.elements.buttonGoMaxX.title = 'Scroll X to max';
+					// console.log('insert buttonGoMaxX', this.elements.buttonGoMaxX );
+			}else{
+				this.elements.buttonGoMaxX = this.elements.candles.appendChild( this.options.uiElements.buttonGoMaxX );
+			}
+			this.elements.buttonGoMaxX.addEventListener('click', () => {
+				this.setX( Date.now(), { render: true, xOriginRatio: .75 } );
+			});
+		}
 	}
 
 	beforeDestroy(){
@@ -729,6 +752,8 @@ export default class Chart {
 			this.xEnd = xEnd;
 			changed = true;
 		}
+
+		this.elements.buttonGoMaxX.style.display = this.scalingX.scaleIn.max < Date.now() ? 'inline-block' : 'none'; 
 
 		// console.log( 'updateX', this.xStart, this.options.crossHairLabelX( this.xStart ), scale, this.options.crossHairLabelX( scale.min ) );
 

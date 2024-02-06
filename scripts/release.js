@@ -100,6 +100,15 @@ async function main ( options = {} ){
 
 		step( 'Generating changelog...' );
 		await run( `npm`, [ 'run', 'changelog' ] );
+		/** @type {{ yes: boolean }} */
+		const { yes: changelogOk } = await prompt( {
+			type: 'confirm',
+			name: 'yes',
+			message: `Changelog generated. Does it look good ?`,
+		} )
+		if( !changelogOk ){
+			return
+		}
 		
 		step( 'Publishing...' );
 		const publishFlags = [];

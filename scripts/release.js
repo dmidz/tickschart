@@ -83,14 +83,11 @@ async function main ( options = {} ){
 		// 	return;
 		// }
 
-		/*__ Step: sync local develop from origin & derive new master */
-		if( !options.dry ){
-			step( 'Syncing local develop with origin...' );
-			await run( 'git', [ 'fetch', '-u', 'origin', 'develop:develop', '--recurse-submodules=no', '--prune' ] );
-			await run( 'git', [ 'checkout', 'develop' ] );
-			//__ create release branch ?
-			// await run( 'git', [ 'checkout','-b',`release/v${targetVersion}` ] );
-		}
+		step( 'Syncing local develop with origin...' );
+		await run( 'git', [ 'fetch', '-u', 'origin', 'develop:develop', '--recurse-submodules=no', '--prune' ] );
+		await run( 'git', [ 'checkout', 'develop' ] );
+		//__ create release branch ?
+		// await run( 'git', [ 'checkout','-b',`release/v${targetVersion}` ] );
 
 		// step( 'Running tests...' );
 

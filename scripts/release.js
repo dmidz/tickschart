@@ -110,7 +110,7 @@ async function main ( options = {} ){
 			return
 		}
 		
-		step( 'Publishing...' );
+		step( `Publishing ${options.dry?'dry':''}...` );
 		const publishFlags = [];
 		if( options.dry ){
 			publishFlags.push( '--dry-run' );

@@ -112,6 +112,10 @@ async function main ( options = {} ){
 		const publishFlags = [];
 		if( options.dry ){
 			publishFlags.push( '--dry-run' );
+		}else{
+			if( options.otp ){
+				publishFlags.push( `--otp=${ options.otp }` );
+			}
 		}
 		await publish( publishFlags );
 
@@ -128,14 +132,15 @@ async function main ( options = {} ){
 
 		if( !options.dry ){
 			step( 'Pushing master commits & tag...' );
-			await run( 'git', [ 'push' ] );
+			// await run( 'git', [ 'push' ] );
 			await run( 'git', [ 'tag', `v${ targetVersion }` ] );
 			await run( 'git', [ 'push', `refs/tags/v${ targetVersion }` ] );
-			// await run( 'git', [ 'push', 'origin', 'master' `--tags` ] );
+			// await run( 'git', [ 'push',`--tags` ] );
 
-			step( 'Pushing develop commits & tag...' );
+			step( 'Merging master in develop...' );
 			await run( 'git', [ 'checkout', 'develop' ] );
 			await run( 'git', [ 'merge', 'master' ] );
+			// await run( 'git', [ 'push' ] );//_ might do this manually
 		}else{
 			console.log( `Dry run finished, running git diff to see package changes...` );
 			// const { stdout } = await run( 'git', [ 'diff' ], { stdio: 'pipe' } );

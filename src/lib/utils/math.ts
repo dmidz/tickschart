@@ -43,6 +43,7 @@ export class ScalingLinear {
   };
 
   private distInMax: number | null = null;
+  private distInMin: number | null = null;
 
   constructor( scaleIn: Scale, scaleOut: Scale, options?: ScalingLinearOptions ){
     this.setScaleIn( scaleIn );
@@ -77,6 +78,15 @@ export class ScalingLinear {
         this.distIn = this.distInMax;
       }
     }
+    if( this.distInMin !== null ){
+      let d = this.distIn - this.distInMin;
+      if( d < 0 ){
+        d /= 2;
+        this.scaleIn.min += d;
+        this.scaleIn.max -= d;
+        this.distIn = this.distInMin;
+      }
+    }
 
     const scaleInMax = this.options.scaleInMax();
     if ( scaleInMax !== null ){
@@ -98,11 +108,20 @@ export class ScalingLinear {
   }
   
   setDistInMax ( value: number ){
-    if ( !value ){
-      console.warn( 'min must be > 0', value );
+    if ( value <= 0 ){
+      console.warn( 'value must be > 0', value );
       return;
     }
-    this.distInMax = Math.abs( value );
+    this.distInMax = value;
+    this.setScaleIn( this.scaleIn );
+  }
+
+  setDistInMin ( value: number ){
+    if ( value <= 0 ){
+      console.warn( 'value must be > 0', value );
+      return;
+    }
+    this.distInMin = value;
     this.setScaleIn( this.scaleIn );
   }
 

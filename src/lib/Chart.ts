@@ -441,7 +441,9 @@ export default class Chart {
 		if( resized ) {
 			this.width = resized.width;
 			this.height = resized.height;
-			this.scalingX.setDistInMax( this.width * this.tickStep );
+			const dw = this.width * this.tickStep;
+			this.scalingX.setDistInMax( dw );// force min tick width 1px
+			this.scalingX.setDistInMin( dw / 50 );// force max tick width px ( divider ) 
 			this.mouseEnterElement.rect = this.mouseEnterElement.getBoundingClientRect();
 			this.uiScaleX.setScaleOut( { min: 0, max: resized.width } );
 			this.uiScaleY.setScaleOut( {
@@ -640,6 +642,9 @@ export default class Chart {
 	setTickStep( tickStep: number, { render = true, xOriginRatio = 0 } ){
 		this.tickStep = tickStep;
 		this.scalingX.setOption( 'precisionIn', this.tickStep );
+		const dw = this.width * this.tickStep;
+		this.scalingX.setDistInMax( dw );// force min tick width 1px
+		this.scalingX.setDistInMin( dw / 50 );// force max tick width px ( divider ) 
 		this.chartRows.forEach( row => {
 			row.getIndicator().setTickStep( this.tickStep );
 		});

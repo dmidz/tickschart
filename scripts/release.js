@@ -124,7 +124,7 @@ async function main ( options = {} ){
 			const { stdout } = await run( 'git', [ 'diff' ], { stdio: 'pipe' } );
 			if( stdout ){
 				await run( 'git', [ 'add', '-A' ] );
-				await run( 'git', [ 'commit', '-m', `release: v${ targetVersion }` ] );
+				await run( 'git', [ 'commit', '-m', `release v${ targetVersion }` ] );
 			} else {
 				console.log( 'No changes to commit.' );
 			}

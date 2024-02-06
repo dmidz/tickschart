@@ -34,6 +34,7 @@ export type Options = {
 	autoScaleY?: boolean,
 	autoScaleYMargin?: number,
 	yScaleWidth?: number,
+	wheelScroll?: boolean,
 	readonly tickIndexMax?: ( () => number | null ),
 }
 
@@ -70,6 +71,7 @@ export default class Chart {
 		autoScaleY: true,
 		autoScaleYMargin: 10,// px
 		yScaleWidth: 100,
+		wheelScroll: true,
 		tickIndexMax: () => {
 			return Math.ceil( Date.now() / this.tickStep ) * this.tickStep;
 		},
@@ -180,6 +182,7 @@ export default class Chart {
 		this.mouseMoveElement.tabIndex = 0;
 		this.mouseMoveElement.addEventListener( 'mousedown', this.onMouseDown );
 		this.mouseMoveElement.addEventListener( 'keydown', this.onKeyDown );
+		this.mouseMoveElement.addEventListener( 'wheel', this.onMouseWheel );
 		document.addEventListener( 'mouseup', this.onMouseUp );
 		document.addEventListener( 'mousemove', this.onMouseMove );
 		window.addEventListener('resize', this.onResize );
@@ -293,10 +296,25 @@ export default class Chart {
 
 	private moveEvent: MouseEvent | null = null;
 	private position: { x: number, y: number } = { x: 0, y: 0};
+
 	private onMouseMove = ( event: MouseEvent ) => {
 		this.moveEvent = event;
 		requestAnimationFrame( this.update );
 	}
+
+	private onMouseWheel = ( event: WheelEvent ) => {
+		if( !this.options.wheelScroll ){ return;}
+		event.preventDefault();
+		const scale = { ...this.scalingX.scaleIn };
+		const dx = event.deltaX * this.tickStep * .5;
+		scale.min += dx;
+		scale.max += dx;
+		const dy = event.deltaY * this.scalingX.distIn * .0001;
+		scale.min -= dy;
+		scale.max += dy;
+		this.setScaleX( scale );
+	}
+
 	private onKeyDown = ( event: KeyboardEvent ) => {
 		// console.log('onKeyDown', event.keyCode, event );
 		let v = this.options.keyboard.vx;
@@ -614,6 +632,7 @@ export default class Chart {
 		this.mouseEnterElement.removeEventListener( 'mouseleave', this.onMouseLeaveChart );
 		this.mouseMoveElement.removeEventListener( 'mousedown', this.onMouseDown );
 		this.mouseMoveElement.removeEventListener( 'keydown', this.onKeyDown );
+		this.mouseMoveElement.removeEventListener( 'wheel', this.onMouseWheel );
 		document.removeEventListener( 'mouseup', this.onMouseUp );
 		document.removeEventListener( 'mousemove', this.onMouseMove );
 		window.removeEventListener( 'resize', this.onResize );
@@ -660,6 +679,7 @@ export default class Chart {
 	}
 	
 	translateX( delta: number, options?: { render?: boolean, xOriginRatio?: number, force?: boolean } ){
+		if( !delta ){ return;}
 		this.setX( this.scalingX.scaleIn.min + delta, options );
 		return this;
 	}
@@ -740,6 +760,7 @@ export default class Chart {
 
 	//__ y
 	translateY( delta: number, options?: { render?: boolean, yOriginRatio?: number } ){
+		if ( !delta ){	return;}
 		this.setY( this.scalingY.scaleIn.min + delta, options );
 		return this;
 	}

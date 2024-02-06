@@ -23,7 +23,7 @@ export default class UiScale {
 		minLabelDist: 35,
 		stepsDecimal: [ 1, 2, 2.5, 4, 5 ],//__ steps between 1 - 10, recursive on decimal range
 		stepsRange: null,//__ or fixed steps range, over last, last one will incr last + last until valid ( ex: for timescale )
-		stepIncreaseMult: .2,
+		stepIncreaseMult: .02,
 		formatLabel: ( value: number, precision = this.scaling.getOption('precisionIn') ) => {
 			return roundPrecision( value, precision )
 		},
@@ -40,6 +40,8 @@ export default class UiScale {
 	private lastValue = 1;
 	private isDirX = false;
 	private drag = false;
+	private keyCodeIncr: number;
+	private keyCodeDecr: number;
 	
 	constructor ( parentElement: HTMLElement, dir: 'x' | 'y', scaling: ScalingLinear, options: Options = {} ){
 		this.dir = dir;
@@ -51,6 +53,13 @@ export default class UiScale {
 		}
 
 		this.isDirX = this.dir === 'x';
+		if( this.isDirX ){
+			this.keyCodeDecr = 37;
+			this.keyCodeIncr = 39;
+		}else{
+			this.keyCodeDecr = 38;
+			this.keyCodeIncr = 40;
+		}
 		
 		if( this.isDirX ){
 			this.moveProp = 'movementX';
@@ -108,7 +117,7 @@ export default class UiScale {
 	
 	increaseScale( deltaRatio: number, emit = false ){
 		if( !deltaRatio ){ return;}
-		const delta = this.scaling.distIn * deltaRatio * this.options.stepIncreaseMult;
+		const delta = this.scaling.distIn * deltaRatio;
 		this.setScaleIn( {
 			min: this.scaling.scaleIn.min - delta,
 			max: this.scaling.scaleIn.max + delta,
@@ -138,32 +147,17 @@ export default class UiScale {
 	}
 
 	private onKeyDown = ( event: KeyboardEvent ) => {
-		const v = .02;// TODO: add option keyboardArrowDeltaRatio
-		if( this.isDirX ){
-			switch ( event.keyCode ){
-				default:
-					break;
-				case 37:{//_ left
-					this.increaseScale( -v, true );
-					break;
-				}
-				case 39:{//_ right
-					this.increaseScale( v, true );
-					break;
-				}
+		const v = this.options.stepIncreaseMult;
+		switch ( event.keyCode ){
+			default:
+				break;
+			case this.keyCodeDecr:{
+				this.increaseScale( -v, true );
+				break;
 			}
-		}else{
-			switch ( event.keyCode ){
-				default:
-					break;
-				case 38:{//_ up
-					this.increaseScale( -v, true );
-					break;
-				}
-				case 40:{//_ down
-					this.increaseScale( v, true );
-					break;
-				}
+			case this.keyCodeIncr:{
+				this.increaseScale( v, true );
+				break;
 			}
 		}
 	}
@@ -179,10 +173,15 @@ export default class UiScale {
 		this.drag = false;
 	}
 
+	private moveEvent: MouseEvent | null = null;
 	private onMouseMove = ( event: MouseEvent )=> {
-		// TODO: use requestAnimationFrame for best perf ( like in Chart mousemove )
 		if( !this.drag ){ return;}
-		this.increaseScale( event[this.moveProp]/100, true );
+		this.moveEvent = event;
+		requestAnimationFrame( this.animationFrame );
+	}
+
+	private animationFrame = () => {
+		this.moveEvent && this.increaseScale( this.moveEvent[this.moveProp]/100, true );
 	}
 
 	private render(){

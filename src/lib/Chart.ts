@@ -9,39 +9,43 @@ import ChartRow from './ChartRow.ts';
 
 //______
 export type Options = {
-	tickWidth?: number,
-	canvas?: {
+	tickWidth: number,
+	canvas: {
 		imageSmoothingEnabled: boolean,
 		lineWidth: number,
 		// strokeStyle: string,
 	},
-	candle?: {
+	candle: {
 		color: {
 			up: string,
 			down: string,
 		}
 	},
-	onScalingXChange?: ( scalingX: ScalingLinear ) => OrPromise<any>,
-	scaleY?: ScalingLinearOptions,
-	scaleX?: ScalingLinearOptions,
-	uiScaleY?: UiScaleOptions,
-	uiScaleX?: UiScaleOptions,
-	crossHairLabelX?: ( value: number ) => string;
-	crossHairLabelY?: null | ( ( value: number ) => string );
-	keyboard?: {
+	onScalingXChange: ( scalingX: ScalingLinear ) => OrPromise<any>,
+	scaleY: ScalingLinearOptions,
+	scaleX: ScalingLinearOptions,
+	uiScaleY: UiScaleOptions,
+	uiScaleX: UiScaleOptions,
+	crossHairLabelX: ( value: number ) => string;
+	crossHairLabelY: null | ( ( value: number ) => string );
+	keyboard: {
 		vx: number,
 	},
-	autoScaleY?: boolean,
-	autoScaleYMargin?: number,
-	yScaleWidth?: number,
-	readonly tickIndexMax?: ( () => number | null ),
+	autoScaleY: boolean,
+	autoScaleYMargin: number,
+	yScaleWidth: number,
+	wheelScroll: boolean,
+	readonly tickIndexMax: ( () => number | null ),
+	uiElements: {
+		buttonGoMaxX?: boolean | HTMLElement,
+	}
 }
 
 export default class Chart {
 
 	private parentElement: HTMLElement;
 	private _getTick: GetTick;
-	private options: Required<Options> = {
+	private options: Options = {
 		tickWidth: 4,
 		canvas: {
 			imageSmoothingEnabled: false,
@@ -70,8 +74,12 @@ export default class Chart {
 		autoScaleY: true,
 		autoScaleYMargin: 10,// px
 		yScaleWidth: 100,
+		wheelScroll: true,
 		tickIndexMax: () => {
 			return Math.ceil( Date.now() / this.tickStep ) * this.tickStep;
+		},
+		uiElements: {
+			buttonGoMaxX: true,
 		},
 	};
 
@@ -106,7 +114,7 @@ export default class Chart {
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
 								getTick: GetTick,
-								options: Options = {} ){
+								options: Partial<Options> = {} ){
 		
 		if( !parentElement ){
 			throw new Error('parentElement must be a valid HTMLElement');
@@ -141,7 +149,7 @@ export default class Chart {
 		this.tickWidthHalf = this.tickWidth / 2;
 		this.scalingX = new ScalingLinear( { min: 0, max: 100 }, { min: 0, max: this.width }, {
 			precisionIn: this.tickStep,
-			scaleInMax: this.options.tickIndexMax
+			scaleInMax: this.options.tickIndexMax,
 		} );
 		this.scalingY = new ScalingLinear( { min: 0, max: 100 },
 			{ min: this.height-this.options.autoScaleYMargin, max: this.options.autoScaleYMargin },
@@ -180,6 +188,7 @@ export default class Chart {
 		this.mouseMoveElement.tabIndex = 0;
 		this.mouseMoveElement.addEventListener( 'mousedown', this.onMouseDown );
 		this.mouseMoveElement.addEventListener( 'keydown', this.onKeyDown );
+		this.mouseMoveElement.addEventListener( 'wheel', this.onMouseWheel );
 		document.addEventListener( 'mouseup', this.onMouseUp );
 		document.addEventListener( 'mousemove', this.onMouseMove );
 		window.addEventListener('resize', this.onResize );
@@ -293,10 +302,25 @@ export default class Chart {
 
 	private moveEvent: MouseEvent | null = null;
 	private position: { x: number, y: number } = { x: 0, y: 0};
+
 	private onMouseMove = ( event: MouseEvent ) => {
 		this.moveEvent = event;
 		requestAnimationFrame( this.update );
 	}
+
+	private onMouseWheel = ( event: WheelEvent ) => {
+		if( !this.options.wheelScroll ){ return;}
+		event.preventDefault();
+		const scale = { ...this.scalingX.scaleIn };
+		const dx = event.deltaX * this.tickStep * .5;
+		scale.min += dx;
+		scale.max += dx;
+		const dy = event.deltaY * this.scalingX.distIn * .0001;
+		scale.min -= dy;
+		scale.max += dy;
+		this.setScaleX( scale );
+	}
+
 	private onKeyDown = ( event: KeyboardEvent ) => {
 		// console.log('onKeyDown', event.keyCode, event );
 		let v = this.options.keyboard.vx;
@@ -441,7 +465,9 @@ export default class Chart {
 		if( resized ) {
 			this.width = resized.width;
 			this.height = resized.height;
-			this.scalingX.setDistInMax( this.width * this.tickStep );
+			const dw = this.width * this.tickStep;
+			this.scalingX.setDistInMax( dw );// force min tick width 1px
+			this.scalingX.setDistInMin( dw / 50 );// force max tick width px ( divider ) 
 			this.mouseEnterElement.rect = this.mouseEnterElement.getBoundingClientRect();
 			this.uiScaleX.setScaleOut( { min: 0, max: resized.width } );
 			this.uiScaleY.setScaleOut( {
@@ -585,7 +611,6 @@ export default class Chart {
 				display: 'flex', flexDirection: 'row', gap: '8px', justifyContent: 'flex-start',
 			}
 		} );
-
 		Object.entries( this.infosLabels ).forEach( ( [key,label] ) => {
 			const k = `info-${ key }`;
 			this.elements[k] = createElement( 'div', this.elements.infos, {
@@ -603,6 +628,24 @@ export default class Chart {
 			} );
 		});
 
+		//__ options elements
+		if( this.options.uiElements.buttonGoMaxX ){
+			if( this.options.uiElements.buttonGoMaxX === true ){
+				this.elements.buttonGoMaxX = createElement( 'button', this.elements.candles, {
+					style: {
+						position: 'absolute', bottom: '16px', right: '16px', color: '#222222', display: 'none',
+					}
+				} );
+				this.elements.buttonGoMaxX.innerText = '>>';
+				this.elements.buttonGoMaxX.title = 'Scroll X to max';
+					// console.log('insert buttonGoMaxX', this.elements.buttonGoMaxX );
+			}else{
+				this.elements.buttonGoMaxX = this.elements.candles.appendChild( this.options.uiElements.buttonGoMaxX );
+			}
+			this.elements.buttonGoMaxX.addEventListener('click', () => {
+				this.setX( Date.now(), { render: true, xOriginRatio: .75 } );
+			});
+		}
 	}
 
 	beforeDestroy(){
@@ -612,6 +655,7 @@ export default class Chart {
 		this.mouseEnterElement.removeEventListener( 'mouseleave', this.onMouseLeaveChart );
 		this.mouseMoveElement.removeEventListener( 'mousedown', this.onMouseDown );
 		this.mouseMoveElement.removeEventListener( 'keydown', this.onKeyDown );
+		this.mouseMoveElement.removeEventListener( 'wheel', this.onMouseWheel );
 		document.removeEventListener( 'mouseup', this.onMouseUp );
 		document.removeEventListener( 'mousemove', this.onMouseMove );
 		window.removeEventListener( 'resize', this.onResize );
@@ -640,6 +684,9 @@ export default class Chart {
 	setTickStep( tickStep: number, { render = true, xOriginRatio = 0 } ){
 		this.tickStep = tickStep;
 		this.scalingX.setOption( 'precisionIn', this.tickStep );
+		const dw = this.width * this.tickStep;
+		this.scalingX.setDistInMax( dw );// force min tick width 1px
+		this.scalingX.setDistInMin( dw / 50 );// force max tick width px ( divider ) 
 		this.chartRows.forEach( row => {
 			row.getIndicator().setTickStep( this.tickStep );
 		});
@@ -655,6 +702,7 @@ export default class Chart {
 	}
 	
 	translateX( delta: number, options?: { render?: boolean, xOriginRatio?: number, force?: boolean } ){
+		if( !delta ){ return;}
 		this.setX( this.scalingX.scaleIn.min + delta, options );
 		return this;
 	}
@@ -686,7 +734,7 @@ export default class Chart {
 			this.uiScaleX.setScaleIn( scale );
 		}
 
-		this.tickWidth = Math.max( 1, this.scalingX.scaleTo( this.scalingX.scaleIn.min + this.tickStep ) );
+		this.tickWidth = Math.max( 1, this.scalingX.scaleTo( this.scalingX.scaleIn.min + this.tickStep, 0 ) );
 		// console.log('___ setScaleX', this.scalingX.scaleIn.min, this.tickStep, this.tickWidth );
 		this.tickWidthHalf = this.tickWidth / 2;
 		this.updateX( render, force );
@@ -704,6 +752,8 @@ export default class Chart {
 			this.xEnd = xEnd;
 			changed = true;
 		}
+
+		this.elements.buttonGoMaxX.style.display = this.scalingX.scaleIn.max < Date.now() ? 'inline-block' : 'none'; 
 
 		// console.log( 'updateX', this.xStart, this.options.crossHairLabelX( this.xStart ), scale, this.options.crossHairLabelX( scale.min ) );
 
@@ -735,6 +785,7 @@ export default class Chart {
 
 	//__ y
 	translateY( delta: number, options?: { render?: boolean, yOriginRatio?: number } ){
+		if ( !delta ){	return;}
 		this.setY( this.scalingY.scaleIn.min + delta, options );
 		return this;
 	}

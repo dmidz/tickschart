@@ -85,15 +85,11 @@ async function main ( options = {} ){
 
 		/*__ Step: sync local develop from origin & derive new master */
 		if( !options.dry ){
-			step( 'Preparing local master...' );
+			step( 'Syncing local develop with origin...' );
 			await run( 'git', [ 'fetch', '-u', 'origin', 'develop:develop', '--recurse-submodules=no', '--prune' ] );
-			await run( 'git', [ 'fetch', '-u', 'origin', 'master:master', '--recurse-submodules=no', '--prune' ] );
-			await run( 'git', [ 'checkout', 'master' ] );
-			await run( 'git', [ 'merge', 'develop' ] );
+			await run( 'git', [ 'checkout', 'develop' ] );
 			//__ create release branch ?
 			// await run( 'git', [ 'checkout','-b',`release/v${targetVersion}` ] );
-
-			// await run( 'git', [ 'checkout', 'develop' ] );
 		}
 
 		// step( 'Running tests...' );
@@ -124,24 +120,43 @@ async function main ( options = {} ){
 			const { stdout } = await run( 'git', [ 'diff' ], { stdio: 'pipe' } );
 			if( stdout ){
 				await run( 'git', [ 'add', '-A' ] );
-				await run( 'git', [ 'commit', '-m', `release: v${ targetVersion }` ] );
+				await run( 'git', [ 'commit', '-m', `release v${ targetVersion }` ] );
+				await run( 'git', [ 'tag', `v${ targetVersion }` ] );
 			} else {
 				console.log( 'No changes to commit.' );
+				return;
 			}
-		}
+			/** @type {{ yes: boolean }} */
+			const { pushOriginDev } = await prompt( {
+				type: 'confirm',
+				name: 'pushOriginDev',
+				message: 'Push origin develop ?',
+			} )
 
-		if( !options.dry ){
-			step( 'Pushing master commits & tag...' );
-			// await run( 'git', [ 'push' ] );
-			await run( 'git', [ 'tag', `v${ targetVersion }` ] );
-			await run( 'git', [ 'push', 'origin',`refs/tags/v${ targetVersion }` ] );
-			// await run( 'git', [ 'push',`--tags` ] );
+			if( pushOriginDev ){
+				step( 'Pushing origin develop...' );
+				await run( 'git', [ 'push' ] );
+				await run( 'git', [ 'push', 'origin', `refs/tags/v${ targetVersion }` ] );
+				// await run( 'git', [ 'push', `--tags` ] );
+			}
 
-			step( 'Merging master in develop...' );
-			await run( 'git', [ 'checkout', 'develop' ] );
-			await run( 'git', [ 'merge', 'master' ] );
-			// await run( 'git', [ 'push' ] );//_ might do this manually
-		}else{
+			step( 'Merging local develop into local master...' );
+			await run( 'git', [ 'fetch', '-u', 'origin', 'master:master', '--recurse-submodules=no', '--prune' ] );
+			await run( 'git', [ 'checkout', 'master' ] );
+			await run( 'git', [ 'merge', 'develop' ] );
+
+			const { pushOriginMaster } = await prompt( {
+				type: 'confirm',
+				name: 'pushOriginMaster',
+				message: 'Push origin master ?',
+			} );
+
+			if( pushOriginMaster ){
+				step( 'Push origin master...' );
+				await run( 'git', [ 'push' ] );
+			}
+			
+		} else {
 			console.log( `Dry run finished, running git diff to see package changes...` );
 			// const { stdout } = await run( 'git', [ 'diff' ], { stdio: 'pipe' } );
 			// console.log( stdout );

@@ -46,11 +46,11 @@ export function resizeCanvas ( canvas: HTMLCanvasElement | undefined ){
 	return resized;
 }
 
-export function createElement ( tagName: string, parentNode?: HTMLElement, options: {
+export function createElement ( tagName: string = 'div', parentNode?: HTMLElement, options: {
 	style?: Partial<CSSStyleDeclaration>,
 	className?: string
 } = {} ): HTMLElement{
-	const el = document.createElement( 'div' );
+	const el = document.createElement( tagName );
 	if ( options.className ){
 		el.className = options.className;
 	}

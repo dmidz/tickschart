@@ -43,6 +43,7 @@ export class ScalingLinear {
   };
 
   private distInMax: number | null = null;
+  private distInMin: number | null = null;
 
   constructor( scaleIn: Scale, scaleOut: Scale, options?: ScalingLinearOptions ){
     this.setScaleIn( scaleIn );
@@ -67,14 +68,22 @@ export class ScalingLinear {
     // if ( scale.min === this.scaleIn.min && scale.max === this.scaleIn.max ){
     //   return false;
     // }
-    this.distIn = this.scaleIn.max - this.scaleIn.min;
+    const distIn = this.scaleIn.max - this.scaleIn.min;
     if( this.distInMax !== null ){
-      let d = this.distIn - this.distInMax;
+      let d = distIn - this.distInMax;
       if( d > 0 ){
         d /= 2;
         this.scaleIn.min += d;
         this.scaleIn.max -= d;
-        this.distIn = this.distInMax;
+      }
+    }
+    
+    if( this.distInMin !== null ){
+      let d = distIn - this.distInMin;
+      if( d < 0 ){
+        d /= 2;
+        this.scaleIn.min += d;
+        this.scaleIn.max -= d;
       }
     }
 
@@ -82,6 +91,9 @@ export class ScalingLinear {
     if ( scaleInMax !== null ){
       this.scaleIn.min = Math.min( this.scaleIn.min, scaleInMax );
     }
+    
+    // this.options.debug && console.warn('distIn', scale, this.distIn, distIn, this.scaleIn.max - this.scaleIn.min );
+    this.distIn = this.scaleIn.max - this.scaleIn.min;
 
     this.update();
     return true;
@@ -98,11 +110,20 @@ export class ScalingLinear {
   }
   
   setDistInMax ( value: number ){
-    if ( !value ){
-      console.warn( 'min must be > 0', value );
+    if ( value <= 0 ){
+      console.warn( 'value must be > 0', value );
       return;
     }
-    this.distInMax = Math.abs( value );
+    this.distInMax = value;
+    this.setScaleIn( this.scaleIn );
+  }
+
+  setDistInMin ( value: number ){
+    if ( value <= 0 ){
+      console.warn( 'value must be > 0', value );
+      return;
+    }
+    this.distInMin = value;
     this.setScaleIn( this.scaleIn );
   }
 

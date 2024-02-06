@@ -85,28 +85,40 @@ async function main ( options = {} ){
 
 		/*__ Step: sync local develop from origin & derive new master */
 		if( !options.dry ){
-			step( 'Sync local develop...' );
-			await run( 'git', [ 'fetch', 'origin', 'develop:develop', '--recurse-submodules=no', '--prune' ] );
-			await run( 'git', [ 'checkout', 'develop' ] );
+			step( 'Preparing local master...' );
+			await run( 'git', [ 'fetch', '-u', 'origin', 'develop:develop', '--recurse-submodules=no', '--prune' ] );
+			await run( 'git', [ 'fetch', '-u', 'origin', 'master:master', '--recurse-submodules=no', '--prune' ] );
+			await run( 'git', [ 'checkout', 'master' ] );
+			await run( 'git', [ 'merge', 'develop' ] );
+			//__ create release branch ?
+			// await run( 'git', [ 'checkout','-b',`release/v${targetVersion}` ] );
+
+			// await run( 'git', [ 'checkout', 'develop' ] );
 		}
 
-		/*__ Step: run tests */
 		// step( 'Running tests...' );
 
-		/*__ Step: update package version */
 		step( 'Update version...' );
 		updatePackageVersion( targetVersion );
 		versionUpdated = true;
 
-		/*__ Step: build */
 		step( 'Building...' );
 		await run( 'npm', [ 'run', 'build' ] );
 
-		/*__ Step: generate changelog */
 		step( 'Generating changelog...' );
 		await run( `npm`, [ 'run', 'changelog' ] );
 		
-		/*__ Step: git add & commit */
+		step( 'Publishing...' );
+		const publishFlags = [];
+		if( options.dry ){
+			publishFlags.push( '--dry-run' );
+		}else{
+			if( options.otp ){
+				publishFlags.push( `--otp=${ options.otp }` );
+			}
+		}
+		await publish( publishFlags );
+
 		if( !options.dry ){
 			step( 'Commiting changes...' );
 			const { stdout } = await run( 'git', [ 'diff' ], { stdio: 'pipe' } );
@@ -118,31 +130,17 @@ async function main ( options = {} ){
 			}
 		}
 
-		/*__ Step: update local master from develop */
 		if( !options.dry ){
-			step( 'Merge develop into master...' );
-			await run( 'git', [ 'fetch', 'origin', 'master:master', '--recurse-submodules=no', '--prune' ] );
-			await run( 'git', [ 'checkout', 'master' ] );
-			await run( 'git', [ 'merge', 'develop' ] );
-			//__ create release branch ?
-			// await run( 'git', [ 'checkout','-b',`release/v${targetVersion}` ] );
-		}
-
-		/*__ Step: npm publish */
-		step( 'Publishing...' );
-		const publishFlags = [];
-		if( options.dry ){
-			publishFlags.push( '--dry-run' );
-		}
-		await publish( publishFlags );
-
-		/*__ Step: git push & push tags */
-		if( !options.dry ){
-			step( 'Pushing commits & tag...' );
-			await run( 'git', [ 'push', 'origin', 'master' ] );
+			step( 'Pushing master commits & tag...' );
+			// await run( 'git', [ 'push' ] );
 			await run( 'git', [ 'tag', `v${ targetVersion }` ] );
-			await run( 'git', [ 'push', 'origin', 'master', `refs/tags/v${ targetVersion }` ] );
-			// await run( 'git', [ 'push', 'origin', 'master' `--tags` ] );
+			await run( 'git', [ 'push', 'origin',`refs/tags/v${ targetVersion }` ] );
+			// await run( 'git', [ 'push',`--tags` ] );
+
+			step( 'Merging master in develop...' );
+			await run( 'git', [ 'checkout', 'develop' ] );
+			await run( 'git', [ 'merge', 'master' ] );
+			// await run( 'git', [ 'push' ] );//_ might do this manually
 		}else{
 			console.log( `Dry run finished, running git diff to see package changes...` );
 			// const { stdout } = await run( 'git', [ 'diff' ], { stdio: 'pipe' } );
@@ -207,5 +205,5 @@ async function run (
 }
 
 function step(/** @type {string} */ msg ){
-	return console.log( pico.green( '»' ), msg );
+	return console.log( pico.bgGreen( pico.black( '»' ) ), pico.white( pico.bold( msg )) );
 }

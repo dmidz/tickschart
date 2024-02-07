@@ -64,7 +64,7 @@ export default abstract class Base<Options extends Record<string,any>,
 		(Object.keys( this.defaultComputed ) as CK[]).forEach( (key: CK) => {
 			this.computeKeys.set( key, true );
 		} );
-		this.lib = new Computation<TCK>( this );
+		this.lib = new Computation<TCK>( this.tickStep, this.computed.bind( this ) );
 		this.compute = this.computeSetup( this.lib );
 	}
 	
@@ -80,8 +80,8 @@ export default abstract class Base<Options extends Record<string,any>,
 	setTickStep( tickStep: number ){
 		if( tickStep === this.tickStep ){ return;}
 		// console.log('setTickStep', this.tickStep );
-		this.tickStep = tickStep;
-		// this.compute = this.computeSetup( this.lib );
+		this.tickStep = Math.max( 1, tickStep );
+		this.lib.setTickStep( tickStep );
 		this.reset();
 		// this.setViewXMinMax( this.xMin, this.xMax, false );
 	}
@@ -189,26 +189,16 @@ export default abstract class Base<Options extends Record<string,any>,
 		let value;
 		if ( isComputeKey ){
 			value = this.cacheGet( _index, pc );
-			if( typeof value === 'undefined' ){
-				value = this.compute[pc]( _index );
-				this.cacheSet( _index, pc, value );
+			if( typeof value !== 'undefined' ){
+				return value;
 			}
+			value = Computation.asNumber( this.compute[ pc ]( _index, this.cacheGet( _index-this.tickStep, pc ) ) );
+			this.cacheSet( _index, pc, value );
 		} else {
 			const tick = this.getTick( _index );
-			value = tick[ prop as keyof Tick ];
+			value = Computation.asNumber( tick[ prop as keyof Tick ] );
 		}
-		return Computation.asNumber( value );
-	}
-
-	eachTick ( from: number, length: number, op: ( v: number, i: number ) => number, initial = 0 ): number{
-		let i = -Math.abs( length );
-		let res = initial;
-		// console.log( 'eachTick', from );
-		while ( i++ < 0 ){
-			// console.log( 'i', i, from + i * this.tickStep );
-			res = op( res, from + i * this.tickStep );
-		}
-		return res;
+		return value;
 	}
 
 	//__________

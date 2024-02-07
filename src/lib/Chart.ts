@@ -636,7 +636,7 @@ export default class Chart {
 			if( this.options.uiElements.buttonGoMaxX === true ){
 				this.elements.buttonGoMaxX = createElement( 'button', this.elements.candles, {
 					style: {
-						position: 'absolute', bottom: '16px', right: '16px', color: '#222222', display: 'none',
+						position: 'absolute', bottom: '4px', right: '4px', color: '#222222', display: 'none',
 					}
 				} );
 				this.elements.buttonGoMaxX.innerText = '>>';

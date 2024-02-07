@@ -21,7 +21,7 @@ start & end index. Checkout examples on `/scr/Chart.vue` or `/demo` directory.
 ## Preview or Dev base
 // TODO: online demo
 
-This repo is based on Vite, a great environment for smooth JS dev, just clone
+This repo is based on [Vite, a wonderful environment for smooth JS dev](https://vitejs.dev/), just clone
 this repo and run:
 
       npm install

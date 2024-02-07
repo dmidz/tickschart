@@ -1,33 +1,83 @@
 
-import type { Base } from './index.ts';
-export type ComputeFunc = ( index: number ) => number;
+export type ComputeFunc = ( index: number, prevValue?: number ) => number;
 
 //______
 export default class Computation<ComputeKey extends string> {
 	
 	constructor(
-		private indicator: InstanceType<typeof Base>,
+		private tickStep: number,
+		private computed: ( index: number, prop: ComputeKey, delta?: number ) => number,
 	){
 	}
 	
-	sma( prop: ComputeKey, length: number = 3 ): ComputeFunc {
-		if ( !length ){
-			throw new Error( 'length must be != 0');
-		}
-
-		const sum = this.sum( prop, length );
-		return ( index ) => sum( index ) / length;
+	setTickStep( tickStep: number ){
+		this.tickStep = tickStep;
 	}
 
-	sum( prop: ComputeKey, length: number = 3 ): ComputeFunc {
-		if ( !length ){
-			throw new Error( 'length must be != 0' );
+	ema( prop: ComputeKey, length: number = 3, debug = false ): ComputeFunc {
+		if ( length <= 0 ){
+			throw new Error( 'length must be > 0' );
 		}
 		
-		return ( index ): number => {
-			return this.indicator.eachTick( index, length,
-				( value, i ) => value + this.indicator.computed( i, prop ) );
+		const alpha = 2 / ( length + 1 );
+		const inv = 1 - alpha;
+		const sma = this.sma( prop, length, debug );
+
+		return ( index, prevValue ) => {
+			let prevEma = prevValue;
+			if( typeof prevEma === 'undefined' ){
+				prevEma = sma( index - this.tickStep );
+			}
+			return this.computed( index, prop ) * alpha + prevEma * inv;
 		};
+
+	}
+
+	sma( prop: ComputeKey, length: number = 3, debug = false ): ComputeFunc {
+		if ( length <= 0 ){
+			throw new Error( 'length must be > 0');
+		}
+
+		const sum = this.sum( prop, length, debug );
+
+		return ( index, prevValue ) => {
+			let res: number;
+			// debug && console.log( '_ sma', prop, index );
+			if( typeof prevValue === 'undefined'){
+				res = sum( index ) / length;
+			}else{
+				res = ( prevValue * length - this.computed( index, prop, length ) + this.computed( index, prop ) ) / length;
+			}
+			// debug && console.log( 'sma res', res );
+			return res;
+		}
+	}
+
+	sum( prop: ComputeKey, length: number = 3, debug = false ): ComputeFunc {
+		if ( length <= 0 ){
+			throw new Error( 'length must be > 0' );
+		}
+		
+		return ( index, prevValue ): number => {
+			// debug && console.log( '_ sum', index, prevValue );
+			let res: number;
+			if ( typeof prevValue === 'undefined' ){
+				res = this.reduce( index, length, ( value, i ) => value + this.computed( i, prop ) );
+			}else{
+				res = prevValue - this.computed( index, prop, length ) + this.computed( index, prop );
+			}
+			// debug && console.log( 'sum res', res );
+			return res;
+		};
+	}
+
+	reduce ( from: number, length: number, op: ( v: number, i: number ) => number, initial = 0 ): number{
+		let i = -Math.abs( length );
+		let res = initial;
+		while ( i++ < 0 ){
+			res = op( res, from + i * this.tickStep );
+		}
+		return res;
 	}
 
 	static asNumber( value?: any, _default = 0 ): number {

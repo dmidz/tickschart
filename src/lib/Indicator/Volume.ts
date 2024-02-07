@@ -7,7 +7,7 @@ export type Options = Partial<BaseOptions> & {
 	showSales: boolean,
 	styleBars: BarStyle,
 	styleMa: LineStyle,
-	maProp: 'sma' | 'ema',// | false,
+	maType: 'sma' | 'ema' | false,
 	maLength: number,
 }
 
@@ -32,7 +32,7 @@ export default class Volume extends Base<Options, Computed> {
 			styleMa: {
 				color: '#0080c5'
 			},
-			maProp: 'sma',
+				maType: 'sma',
 			maLength: 10,
 			...options,
 		} );
@@ -43,14 +43,14 @@ export default class Volume extends Base<Options, Computed> {
 	draw(){
 		this.plotBar( 'vol', this.options.styleBars );
 		//__ sma / ema
-		if ( this.options.maProp ){
+		if ( this.options.maType ){
 			this.plot( 'ma', this.options.styleMa );
 		}
 	}
 	
 	computeSetup(){
 		return {
-			ma: this.lib.sma( 'vol', this.options.maLength ),
+			ma: this.lib[this.options.maType||'sma']( 'vol', this.options.maLength ),
 		};
 	}
 	

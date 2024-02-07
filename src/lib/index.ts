@@ -5,7 +5,7 @@ export const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0
 
 export type CandleTick = typeof defaultTick;
 
-export type GetTick<Tick extends CandleTick = CandleTick> = ( i: number ) => Tick;
+export type GetTick<Tick extends object = CandleTick> = ( i: number ) => Tick;
 
 export type ElementRect = HTMLElement & { rect?: ReturnType<Element['getBoundingClientRect']> };
 

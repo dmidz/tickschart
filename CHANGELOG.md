@@ -1,3 +1,13 @@
+## [0.0.6](https://github.com/dmidz/tickschart/compare/v0.0.5...v0.0.6) (2024-02-07)
+
+
+### Features
+
+* **computation:** [TC-5] indicator ema + optim sma ([#6](https://github.com/dmidz/tickschart/issues/6)) ([2d5ee68](https://github.com/dmidz/tickschart/commit/2d5ee68fab381ed93a49f84528664760128e2c66))
+* **dx:** script release: add prompt for otp code ([#7](https://github.com/dmidz/tickschart/issues/7)) ([820ce71](https://github.com/dmidz/tickschart/commit/820ce71a6ec516c2bcbdcac5645183ec668f9155))
+
+
+
 ## [0.0.5](https://github.com/dmidz/tickschart/compare/v0.0.4...v0.0.5) (2024-02-06)
 
 
@@ -12,9 +22,6 @@
 * **dx:** release script: add dry value on step publishing ([400ab4f](https://github.com/dmidz/tickschart/commit/400ab4f3d07e4150ee93669db58bd0d801a726f8))
 * **dx:** release script: add prompt check changelog ([a353632](https://github.com/dmidz/tickschart/commit/a3536328955b87a67859e63a3b5a4d01ff3880a7))
 
-
-
-## [0.0.4](https://github.com/dmidz/tickschart/compare/v0.0.2...v0.0.4) (2024-02-06)
 
 
 

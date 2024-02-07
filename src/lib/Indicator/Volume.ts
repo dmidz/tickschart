@@ -1,5 +1,5 @@
 
-import Base, { type BaseOptions, type BarStyle, type LineStyle } from './Base.ts';
+import Base, { type BaseOptions, type BarStyle, type LineStyle/*, type KeyOfTick*/ } from './Base.ts';
 import type { CandleTick as Tick } from '../index.ts';
 
 //______
@@ -7,6 +7,7 @@ export type Options = Partial<BaseOptions> & {
 	showSales: boolean,
 	styleBars: BarStyle,
 	styleMa: LineStyle,
+	maProperty: Parameters<Base<BaseOptions, Computed>['computed']>[1],
 	maType: 'sma' | 'ema' | false,
 	maLength: number,
 }
@@ -21,23 +22,25 @@ type Computed = typeof defaultComputed;
 
 export default class Volume extends Base<Options, Computed> {
 
-	constructor ( key: Base<Options, Computed>['key'], options: Partial<Options> = {} ){
-		
-		super( key, defaultComputed,
-			{
-			showSales: false,
-			styleBars: {
-				fillColor: '#444444',
-			},
-			styleMa: {
-				color: '#0080c5'
-			},
-				maType: 'sma',
-			maLength: 10,
-			...options,
-		} );
+	constructor ( options: Partial<Options> = {} ){
 
-		this.options.maLength = Math.max( 1, Math.round( this.options.maLength ));
+		super( defaultComputed,
+			{
+				showSales: false,
+				styleBars: {
+					fillColor: '#444444',
+				},
+				styleMa: {
+					color: '#0080c5'
+				},
+				maProperty: 'vol',
+				// maProperty: 'vol',
+				maType: 'sma',
+				maLength: 10,
+				...options,
+			} );
+
+		this.options.maLength = Math.max( 1, Math.round( this.options.maLength ) );
 	}
 	
 	draw(){

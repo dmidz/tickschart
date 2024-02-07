@@ -41,8 +41,6 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 	private readonly canvas: HTMLCanvasElement;
 	private readonly ctx: CanvasRenderingContext2D;
 	private elements: Map<string,HTMLElement> = new Map();
-	private xMin = 0;
-	private xMax = 0;
 	private validXMinMax = false;
 	scalingY: ScalingLinear;
 
@@ -50,7 +48,7 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 	cy = 1;
 	mouseArea: ElementRect;
 
-	constructor ( private indicator: Indicator, private getTick: GetTick, 
+	constructor ( private key: string|number, private indicator: Indicator, private getTick: GetTick, 
 								parentElement: HTMLElement,
 								private onScaleY: ( scaling: ScalingLinear, emitter: ChartRow ) => void,
 								options: Options = {} ){
@@ -82,29 +80,24 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 			// labelPrecision: .01,
 		} );
 
-		this.indicator.setContext( getTick, this.ctx, this.scalingY );
+		this.setIndicator( indicator, getTick );
 	}
 
-	setIndicator( indicator: ChartRow['indicator'] ){
+	setIndicator( indicator: ChartRow['indicator'], getTick: GetTick ){
 		this.indicator = indicator;
+		this.indicator.setContext( getTick, this.ctx, this.scalingY );
 	}
 
 	getIndicator(){
 		return this.indicator;
 	}
 
-	setViewXMinMax( min = this.xMin, max = this.xMax, force = false ){
+	setViewXMinMax( min: number, max: number, force = false ){
 		const tick = this.getTick( min );
 		this.validXMinMax = !!min && !!tick && tick !== defaultTick;
 		if( !this.validXMinMax ){ return;}
-		if ( !force && min === this.xMin && max === this.xMax ){		return;}
-		if ( max < min ){
-			console.warn( 'min < max !' );
-			return;
-		}
-		this.xMin = min;
-		this.xMax = max;
-		this.indicator.setViewXMinMax( min, max );
+		this.indicator.setViewXMinMax( min, max, force );
+		this.autoScaleY();
 	}
 
 	translateY( delta: number, options?: { yOriginRatio?: number } ){
@@ -136,10 +129,6 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 		return this;
 	}
 
-	getElement( key: string ){
-		return this.elements.get( key );
-	}
-
 	resizeCanvas(){
 
 		const resized = resizeCanvas( this.canvas );
@@ -159,14 +148,6 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 		this.ctx.clearRect( x, 0, w, this.canvas.height );
 	}
 
-	drawTick( tick: Tick, x: number, width: number, index: number ){
-		this.indicator.drawTick( tick, x, width, index );
-	}
-	
-	reset(){
-		this.indicator.reset();
-	}
-
 	beforeDestroy(){
 		const mouseArea = this.elements.get( 'mouseArea' );
 
@@ -178,9 +159,8 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 	}
 
 	private createElements( parentElement: HTMLElement ): { canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, mouseArea: HTMLElement }{
-		const { key } = this.indicator;
 		const row = createElement( 'div', parentElement, {
-			className: `row-indctr-${ key }`,
+			className: `row-indctr-${ this.key }`,
 			style: {
 				position: 'relative',
 				height: `${this.options.height}px`,
@@ -194,7 +174,7 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 		this.elements.set('row', row );
 
 		const draw = createElement( 'div', row, {
-			className: `indctr-${ key }`,
+			className: `indctr-${ this.key }`,
 			style: { flex: '1 1', overflow: 'hidden', cursor: 'crosshair' }
 		} );
 		this.elements.set( 'draw', draw );

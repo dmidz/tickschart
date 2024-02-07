@@ -51,8 +51,7 @@ export default abstract class Base<Options extends Record<string,any>,
 		tick: defaultTick,
 	}
 
-	constructor ( public key: string,
-								private readonly defaultComputed: Computed,
+	constructor ( private readonly defaultComputed: Computed,
 								options: Options ){
 
 		this.options = Object.assign( {
@@ -75,6 +74,7 @@ export default abstract class Base<Options extends Record<string,any>,
 		this.getTick = getTick;
 		this.ctx = canvasContext;
 		this.scalingY = scalingY;
+		this.reset();
 	}
 
 	setTickStep( tickStep: number ){
@@ -83,7 +83,6 @@ export default abstract class Base<Options extends Record<string,any>,
 		this.tickStep = Math.max( 1, tickStep );
 		this.lib.setTickStep( tickStep );
 		this.reset();
-		// this.setViewXMinMax( this.xMin, this.xMax, false );
 	}
 	
 	reset(){
@@ -91,8 +90,15 @@ export default abstract class Base<Options extends Record<string,any>,
 		this.cacheIntern = new Map();
 	}
 	
-	setViewXMinMax( min = this.xMin, max = this.xMax, clear = true ){
+	setViewXMinMax( min = this.xMin, max = this.xMax, force = false, clear = true ){
 		if( !min ){  return;}
+		if ( !force && min === this.xMin && max === this.xMax ){
+			return;
+		}
+		if ( max < min ){
+			console.warn( 'min < max !' );
+			return;
+		}
 
 		this.xMin = min;
 		this.xMax = max;

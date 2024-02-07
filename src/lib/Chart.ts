@@ -5,7 +5,7 @@ import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
 import { addListenerFactory, removeListenerFactory, createElement, resizeCanvas, sharpCanvasValue, defaultTick,
 	type CandleTick, type GetTick, type ElementRect } from './index.ts';
 import indicators, { type List, type IOptions } from './Indicator/index.ts';
-import ChartRow from './ChartRow.ts';
+import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
 
 //______
 export type Options = {
@@ -38,7 +38,8 @@ export type Options = {
 	readonly tickIndexMax: ( () => number | null ),
 	uiElements: {
 		buttonGoMaxX?: boolean | HTMLElement,
-	}
+	},
+	chartRow: ChartRowOptions,
 }
 
 export default class Chart {
@@ -81,6 +82,7 @@ export default class Chart {
 		uiElements: {
 			buttonGoMaxX: true,
 		},
+		chartRow: {},
 	};
 
 	private elements: Record<string,HTMLElement> = {};
@@ -229,6 +231,7 @@ export default class Chart {
 				}, 
 			{
 				// height: 240,
+				...this.options.chartRow,
 			onMouseEnter: ( event, chartRow ) => {
 				this.mouseIndicator = chartRow;
 				this.onMouseEnterChart( event );

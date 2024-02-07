@@ -1,18 +1,64 @@
-# Vue 3 + TypeScript + Vite
+# TicksChart
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Modern Javascript Lib of interactive Chart with ticks ( TradingView like ).
 
-## Recommended IDE Setup
+![Chart preview!](/doc/img/chart-screenshot.png "Chart preview")
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+Provides a set of classe such `Chart.ts` & `Fectcher.ts`, so they can be used in vanilla project or Vuejs or else,
+by providing a dom NodeElement at Chart instanciation.
 
-## Type Support For `.vue` Imports in TS
+It is also decoupled from the data fetching, you provides a fetch function called with
+start & end index. Checkout examples on `/scr/Chart.vue` or `/demo` directory.
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
+## Features
+- Efficient horizontablly scrollable chart drawn with HTML Canvas
+- Resizable scales to zoom in / out
+- Crosshair displaying current ticks infos
+- Indicators system easy to expand ( only under chart for now, soon on chart )
+- Fetcher helper to easily connect to an API
+- many more to come :)
 
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
+## Preview or Dev base
+// TODO: online demo
 
-1. Disable the built-in TypeScript Extension
-   1. Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-   2. Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+This repo is based on Vite, a great environment for smooth JS dev, just clone
+this repo and run:
+
+      npm install
+      npm run dev
+ 
+You should be immediately able to browse the provided local address such `http://localhost:5173/` and see the Chart in action.
+
+The data comes from a unique file of real past 500 BTC H4 ticks used in loop for the dev ( this why you will see 
+ gap at joins ) but it is very easy to plug it to a real API.
+
+## Installation ( as 3rd party )
+Install package
+
+      npm install @dmidz/tickschart
+
+## Usage
+### Vanilla TS
+You can check and copy this example [demo/vanilla-ts](https://github.com/dmidz/tickschart/tree/develop/demo/vanilla-ts).
+
+Also download a copy of [the sample data file](https://github.com/dmidz/tickschart/blob/develop/public/data/ticks_BTC_4h/1692000000000.json)
+into your local public directory such `/my-project/public/data/1692000000000.json`
+
+      //_ main.ts
+      // update first line source of import to:
+      import { Chart, Fetcher, defaultTick, intervalsMs, type CandleTick } from '@dmidz/tickschart';
+      ...
+      // update this line with your local public sample data URL:
+      const sampleTicksURL = `${ window.location.origin }/data/1692000000000.json`;
+
+Serve the html page, you should see a chart with BTC H4 ticks.
+
+Once running correctly, you can customize the fetch so it binds to your ticks API.
+
+
+### Vanilla JS
+( Same than Vanilla TS, use js file and remove TS parts )
+
+// TODO: demo/vanilla-js
+
+

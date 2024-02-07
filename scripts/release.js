@@ -45,10 +45,10 @@ async function main ( options = {} ){
 	
 	if( !targetVersion ){
 		// no explicit version, offer suggestions
-		/** @type {{ release: string }} */
-		const { release } = await prompt( {
+		/** @type {{ yes: string }} */
+		const { yes: release } = await prompt( {
 			type: 'select',
-			name: 'release',
+			name: 'yes',
 			message: 'Select release type',
 			choices: versionIncrements
 				.map( i => `${ i } (${ inc( i ) })` )
@@ -107,7 +107,7 @@ async function main ( options = {} ){
 			message: `Changelog generated. Does it look good ?`,
 		} )
 		if( !changelogOk ){
-			return
+			return;
 		}
 		
 		step( `Publishing ${options.dry?'dry':''}...` );
@@ -115,8 +115,15 @@ async function main ( options = {} ){
 		if( options.dry ){
 			publishFlags.push( '--dry-run' );
 		}else{
-			if( options.otp ){
-				publishFlags.push( `--otp=${ options.otp }` );
+			/** @type {{ otp: string }} */
+			const { otp = '' } = await prompt( {
+				type: 'input',
+				name: 'otp',
+				message: `Please enter otp code (leave blank if not required by the npm registry target):`,
+			} );
+
+			if( otp?.length ){
+				publishFlags.push( `--otp=${ otp }` );
 			}
 		}
 		await publish( publishFlags );
@@ -133,9 +140,9 @@ async function main ( options = {} ){
 				return;
 			}
 			/** @type {{ yes: boolean }} */
-			const { pushOriginDev } = await prompt( {
+			const { yes: pushOriginDev } = await prompt( {
 				type: 'confirm',
-				name: 'pushOriginDev',
+				name: 'yes',
 				message: 'Push origin develop ?',
 			} )
 
@@ -151,9 +158,10 @@ async function main ( options = {} ){
 			await run( 'git', [ 'checkout', 'master' ] );
 			await run( 'git', [ 'merge', 'develop' ] );
 
-			const { pushOriginMaster } = await prompt( {
+			/** @type {{ yes: boolean }} */
+			const { yes: pushOriginMaster } = await prompt( {
 				type: 'confirm',
-				name: 'pushOriginMaster',
+				name: 'yes',
 				message: 'Push origin master ?',
 			} );
 

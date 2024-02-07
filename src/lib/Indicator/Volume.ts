@@ -1,15 +1,13 @@
 
-import Base, { type BaseOptions, type BarStyle, type LineStyle/*, type KeyOfTick*/ } from './Base.ts';
-import type { CandleTick as Tick } from '../index.ts';
+import Base, { type BaseOptions, type BarStyle, type LineStyle } from './Base.ts';
 
 //______
 export type Options = Partial<BaseOptions> & {
-	showSales: boolean,
-	styleBars: BarStyle,
-	styleMa: LineStyle,
 	maProperty: Parameters<Base<BaseOptions, Computed>['computed']>[1],
 	maType: 'sma' | 'ema' | false,
 	maLength: number,
+	styleBars: BarStyle,
+	styleMa: LineStyle,
 }
 
 //__ would never be used, its purpose is to define properties set in computeSetup
@@ -26,17 +24,15 @@ export default class Volume extends Base<Options, Computed> {
 
 		super( defaultComputed,
 			{
-				showSales: false,
+				maProperty: 'vol',
+				maType: 'sma',
+				maLength: 10,
 				styleBars: {
 					fillColor: '#444444',
 				},
 				styleMa: {
 					color: '#0080c5'
 				},
-				maProperty: 'vol',
-				// maProperty: 'vol',
-				maType: 'sma',
-				maLength: 10,
 				...options,
 			} );
 
@@ -44,7 +40,7 @@ export default class Volume extends Base<Options, Computed> {
 	}
 	
 	draw(){
-		this.plotBar( 'vol', this.options.styleBars );
+		this.plotBar( this.options.maProperty, this.options.styleBars );
 		//__ sma / ema
 		if ( this.options.maType ){
 			this.plot( 'ma', this.options.styleMa );
@@ -53,16 +49,16 @@ export default class Volume extends Base<Options, Computed> {
 	
 	computeSetup(){
 		return {
-			ma: this.lib[this.options.maType||'sma']( 'vol', this.options.maLength ),
+			ma: this.lib[this.options.maType||'sma']( this.options.maProperty, this.options.maLength ),
 		};
 	}
 	
-	getMinY( tick: Tick, index: number ): number {
+	getMinY( index: number ): number {
 		return 0;
 	}
 
-	getMaxY( tick: Tick, index: number ): number {
-		return tick.vol;
+	getMaxY( index: number ): number {
+		return this.computed( index, this.options.maProperty );
 	}
 }
 

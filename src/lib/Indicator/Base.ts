@@ -123,25 +123,23 @@ export default abstract class Base<Options extends Record<string,any>,
 	
 	getMinMaxY(): MinMax {
 		const res = { min: Infinity, max: -Infinity };
-		let tick: Tick;
 		let current = this.xMin;
 		// this.debug('_____ getMinMaxY START' );
 		while ( current <= this.xMax ){
-			tick = this.getTick( current );
 			// this.debug( '__ getMinMaxY', tick.time, new Date( tick.time ).toUTCString() );
-			res.min = Math.min( res.min, this.getMinY( tick, current ) );
-			res.max = Math.max( res.max, this.getMaxY( tick, current ) );
+			res.min = Math.min( res.min, this.getMinY( current ) );
+			res.max = Math.max( res.max, this.getMaxY( current ) );
 			current += this.tickStep;
 		}
 
 		return res;
 	}
 
-	getMinY( tick: Tick, index: number ): number {
+	getMinY( index: number ): number {
 		return 0;
 	}
 
-	getMaxY( tick: Tick, index: number ): number {
+	getMaxY( index: number ): number {
 		return 0;
 	}
 

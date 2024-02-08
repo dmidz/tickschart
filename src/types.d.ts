@@ -13,3 +13,6 @@ declare type MinMax = { min: number, max: number };
 
 declare type PickOptional<T extends object> = { [K in keyof T as ( undefined extends T[K] ? K : never )]: T[K] }
 
+declare type PickRequired<T extends object> = { [K in keyof T as ( undefined extends T[K] ? never : K )]: T[K] }
+
+declare type ReverseRequired<T extends object> = Required<PickOptional<T>> & Partial<PickRequired<T>>;

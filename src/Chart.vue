@@ -91,13 +91,16 @@ onMounted( async () => {
 			precisionIn: .001,//__ might be set from current symbol properties
 		},
 		autoScaleY: true,
-		chartRow: {
-			// height: 300,
-		}
+		// tickWidth: 15,
+		// chartRow: {
+		// 	height: 200,
+		// }
 	} );
 	
 	chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 'sma' } );
-	chart.addIndicator( 'MA', 'layer', { maProperty: 'close', maLength: 50, maType: 'sma' } );
+	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
+	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
+	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 	
 	//__ can now apply the initial time & render
 	init = true;

@@ -4,10 +4,10 @@ import Base, { type BaseOptions, type LineStyle } from './Base.ts';
 
 //______
 export type Options = {
-	maProperty: Parameters<Base<BaseOptions, Computed>['computed']>[1],
-	maType?: 'sma' | 'ema',
-	maLength?: number,
-	styleMa?: LineStyle,
+	property: Parameters<Base<BaseOptions, Computed>['computed']>[1],
+	type?: 'sma' | 'ema',
+	length?: number,
+	style?: LineStyle,
 }
 
 //__ would not be used, its purpose is to define properties used by drawing & set in computeSetup
@@ -22,27 +22,27 @@ export default class MA extends Base<Required<Options>, Computed> {
 
 	constructor ( options: Options & Partial<BaseOptions> ){
 		
-		const _options: Required<PickOptional<Options>> = {
-			maType: 'sma',
-			maLength: 10,
-			styleMa: {
-				color: '#0080c5'
+		const _options: ReverseRequired<Options> = {
+			type: 'sma',
+			length: 10,
+			style: {
+				color: '#40e9ff'
 			},
 		};
 		
 		super( defaultComputed, merge( _options, options ) );
 
-		this.options.maLength = Math.max( 1, Math.round( this.options.maLength ) );
+		this.options.length = Math.max( 1, Math.round( this.options.length ) );
 	}
 	
 	draw(){
 		//__ sma / ema
-		this.plot( 'ma', this.options.styleMa );
+		this.plot( 'ma', this.options.style );
 	}
 	
 	computeSetup(){
 		return {
-			ma: this.lib[this.options.maType||'sma']( this.options.maProperty, this.options.maLength, true ),
+			ma: this.lib[this.options.type||'sma']( this.options.property, this.options.length, true ),
 		};
 	}
 	
@@ -51,7 +51,7 @@ export default class MA extends Base<Required<Options>, Computed> {
 	}
 
 	getMaxY( index: number ): number {
-		return this.computed( index, this.options.maProperty );
+		return this.computed( index, this.options.property );
 	}
 }
 

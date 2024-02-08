@@ -140,7 +140,7 @@ export default abstract class Base<Options extends object,
 	}
 
 	getMaxY( index: number ): number {
-		return 0;
+		return 100;
 	}
 
 	//__ drawing

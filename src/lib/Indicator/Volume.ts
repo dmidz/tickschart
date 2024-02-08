@@ -2,7 +2,7 @@
 import merge from '../utils/merge.ts';
 import Base, { type BaseOptions, type BarStyle, type LineStyle } from './Base.ts';
 
-//______
+//__ contract of constructor arg options
 export type Options = {
 	maProperty: Parameters<Base<BaseOptions, Computed>['computed']>[1],
 	maType?: 'sma' | 'ema' | false,
@@ -22,8 +22,9 @@ type Computed = typeof defaultComputed;
 export default class Volume extends Base<Required<Options>, Computed> {
 
 	constructor ( options: Options & Partial<BaseOptions> ){
-		
-		const _options: Required<PickOptional<Options>> = {
+
+		/*__ force optional constructor options to be set here */
+		const _options: ReverseRequired<Options> = {
 			maType: 'sma',
 			maLength: 10,
 			styleBars: {

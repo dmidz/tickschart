@@ -55,12 +55,18 @@ const fetcher = new Fetcher<CandleTick, DataTick>( defaultTick, async ( startTim
 	ticksPerLoad,
 	prefetchMargin: 1,
 	cacheSize: 2,
+	onLoad: ( time, mightRefresh ) => {
+		//__ refresh when new loaded so long indicators ( ex: ma 200 ) have their data progressively without waiting whole loaded
+		if ( mightRefresh ){
+			chart.refresh();
+		}
+	},
 	// debug: true,
 } );
 
 const rangeLoadMs = ticksPerLoad * timeScaleMs;
 onMounted( async () => {
-	if( !refChartWrapper.value /*|| !refReplayToolbar.value*/ ){ return;}
+	if( !refChartWrapper.value ){ return;}
 	let init = false;//__ using to prevent fetching until chart fully initialized ( timeScale, symbol, etc )
 	
 	chart = new Chart( refChartWrapper.value, timeScaleMs, ( index: number ) => {
@@ -68,10 +74,9 @@ onMounted( async () => {
 					we can bypass it to always return a tick from the file ( 1692000000000 ) time range */
 		return fetcher.getMapTicks( index )?.[ 1692000000000 + index % rangeLoadMs ] || defaultTick;
 	}, {
-		// tickWidth: 35,
 		onScalingXChange: async ( scalingX ) => {
 			if( !init ){  return;}//__ avoid any fetch during initialization
-			const fetches = fetcher.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max );
+			const fetches = fetcher.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max, true );
 			return Promise.all( fetches );
 		},
 		crossHairLabelX: ( value ) => {
@@ -92,12 +97,16 @@ onMounted( async () => {
 			precisionIn: .001,//__ might be set from current symbol properties
 		},
 		autoScaleY: true,
-		chartRow: {
-			// height: 300,
-		}
+		// tickWidth: 15,
+		// chartRow: {
+		// 	height: 200,
+		// }
 	} );
 	
-	chart.addIndicator( 'Volume', 'vol-1', { maLength: 14, maType: 'ema' } );
+	chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 'sma' } );
+	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
+	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
+	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 	
 	//__ can now apply the initial time & render
 	init = true;

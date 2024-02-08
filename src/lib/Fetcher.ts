@@ -5,6 +5,11 @@ export type Options = {
 	ticksPerLoad?: number,// nb of records per request 
 	prefetchMargin?: number,// nb of prefetch loads ( before & after current view ) avoiding user seeing loads
 	cacheSize?: number,//__ nb of ticks loads to be kept im memory, out of currently viewed ones
+	/* __ fetchOnDemand will auto magically call a fetch when any mapTicks[time] not available yet
+			necessary for long indicators ( ex MA 200 periods ) needing data far left of current view */
+	fetchOnDemand?: boolean,
+	/*__ onLoad gives opportunity to refresh display ( called only on true new load finish ) */
+	onLoad?: ( time: number, mightRefresh?: boolean, isPrefetch?: boolean ) => void,
 	debug?: boolean,
 }
 
@@ -19,6 +24,8 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 		ticksPerLoad: 200,
 		prefetchMargin: 1,//__ prefer minimum 1 so fast drag through entire screen width won't show loading
 		cacheSize: 2,
+		fetchOnDemand: true,
+		onLoad: () => {},
 		debug: false,
 	}
 	private timePerLoad = this.options.timeScaleMs * this.options.ticksPerLoad;
@@ -41,7 +48,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 		return timeScaleMs;
 	}
 
-	fetchTicks( timeStart: number, timeEnd: number, prefetch = true, onLoad?: ( loaded: Range, timeScaleMs: number ) => void ): Promise<Range|null>[]{
+	fetchTicks( timeStart: number, timeEnd: number, opts: { prefetch?: boolean, mightRefresh?: boolean } = {} ): Promise<Range|null>[]{
 		const debug = this.options.debug;
 
 		const res: Promise<Range|null>[] = [];
@@ -73,10 +80,10 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 								if ( !r ){
 									return Promise.reject( 'response is null' );
 								}
-								debug && console.log( 'loaded', time, Object.keys( r ).length );
+								debug && console.log( 'loaded', time, new Date( time ).toUTCString(), Object.keys( r ).length );
 								this.mapTicks.set( time, r );
 								const res: LoadedTimeRange = { min: time, max: time + this.timePerLoad };
-								onLoad?.( res as Range, this.options.timeScaleMs );
+								this.options.onLoad( time, opts.mightRefresh, !opts.prefetch );
 								return res as Range;
 							} )
 							.catch( err => {
@@ -102,16 +109,16 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 		// } );
 
 		//__
-		if ( prefetch ){
+		if ( opts.prefetch && res.length ){
 			const d = this.timePerLoad * this.options.prefetchMargin;
 			loadedStart = Math.floor( ( loadedStart - d ) / this.timePerLoad ) * this.timePerLoad;
 			loadedEnd = Math.floor( ( loadedEnd + d ) / this.timePerLoad ) * this.timePerLoad;
-			// console.log( 'fetchTicks prefetch', { loadedStart, loadedEnd } );
+			// console.log( 'fetchTicks prefetch', res.length, { loadedStart, loadedEnd } );
 
 			Promise.all( res )//__ wait current range loaded
 				.then( ( /*fetches*/ ) => {
 					//__ pre fetch sides so loading is not visible
-					return Promise.all( this.fetchTicks( loadedStart, loadedEnd, false ) );
+					return Promise.all( this.fetchTicks( loadedStart, loadedEnd, { prefetch: false } ) );
 				} )
 				.then( ( /*prefetches*/ ) => {
 
@@ -119,7 +126,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 						this.firstSize = this.mapFetches.size;
 					}
 
-					// console.log('prefetch loaded', { loadedStart, loadedEnd, loadedMin: this.loadedMin, loadedMax: this.loadedMax } );
+					debug && console.log('prefetch loaded', { timeScale: this.options.timeScaleMs, loadedStart, loadedEnd, loadedMin: this.loadedMin, loadedMax: this.loadedMax } );
 					clearTimeout( this.timeoutRelease );
 					this.timeoutRelease = setTimeout( this.releaseTicks.bind( this, { loadedStart, loadedEnd } ), 2000 );
 				} );
@@ -135,7 +142,11 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 
 	getMapTicks( time: number ): FetchResult | undefined {
 		const t = Math.floor( +time / this.timePerLoad ) * this.timePerLoad;
-		return this.mapTicks.get( t );
+		const res = this.mapTicks.get( t );
+		if( !res && this.options.fetchOnDemand && !this.mapFetches.get( t ) ){
+			this.fetchTicks( t, t + this.timePerLoad, { prefetch: false, mightRefresh: true } );
+		}
+		return res;
 	}
 
 	reset(){

@@ -22,8 +22,8 @@ export type LineStyle = {
 const defaultScalingY = new ScalingLinear( { min: 0, max: 10 }, { min: 0, max: 10 } );
 const defaultCanvas = document.createElement( 'canvas' );
 
-export default abstract class Base<Options extends Record<string,any>,
-			Computed extends Record<string, number>,
+export default abstract class Base<Options extends object,
+			Computed extends object,
 			CK extends KeyOfString<Computed> = KeyOfString<Computed>,
 			TCK extends TK | CK= TK | CK> {
 	private readonly compute: { [key in CK]: ComputeFunc };
@@ -35,7 +35,6 @@ export default abstract class Base<Options extends Record<string,any>,
 	private xMin = 0;
 	private xMax = 0;
 	private cacheComputed: Map<number,Map<CK,number>> = new Map();
-	private cacheIntern: Map<number,Record<string,any>> = new Map();
 	private cacheClearTimeout: ReturnType<typeof setTimeout> | undefined;
 	private cacheMin = +Infinity;
 	private cacheMax = -Infinity;
@@ -51,8 +50,7 @@ export default abstract class Base<Options extends Record<string,any>,
 		tick: defaultTick,
 	}
 
-	constructor ( public key: string,
-								private readonly defaultComputed: Computed,
+	constructor ( private readonly defaultComputed: Computed,
 								options: Options ){
 
 		this.options = Object.assign( {
@@ -75,6 +73,7 @@ export default abstract class Base<Options extends Record<string,any>,
 		this.getTick = getTick;
 		this.ctx = canvasContext;
 		this.scalingY = scalingY;
+		this.reset();
 	}
 
 	setTickStep( tickStep: number ){
@@ -83,16 +82,21 @@ export default abstract class Base<Options extends Record<string,any>,
 		this.tickStep = Math.max( 1, tickStep );
 		this.lib.setTickStep( tickStep );
 		this.reset();
-		// this.setViewXMinMax( this.xMin, this.xMax, false );
 	}
 	
 	reset(){
 		this.cacheComputed = new Map();
-		this.cacheIntern = new Map();
 	}
 	
-	setViewXMinMax( min = this.xMin, max = this.xMax, clear = true ){
+	setViewXMinMax( min = this.xMin, max = this.xMax, force = false, clear = true ){
 		if( !min ){  return;}
+		if ( !force && min === this.xMin && max === this.xMax ){
+			return;
+		}
+		if ( max < min ){
+			console.warn( 'min < max !' );
+			return;
+		}
 
 		this.xMin = min;
 		this.xMax = max;
@@ -117,26 +121,24 @@ export default abstract class Base<Options extends Record<string,any>,
 	
 	getMinMaxY(): MinMax {
 		const res = { min: Infinity, max: -Infinity };
-		let tick: Tick;
 		let current = this.xMin;
 		// this.debug('_____ getMinMaxY START' );
 		while ( current <= this.xMax ){
-			tick = this.getTick( current );
 			// this.debug( '__ getMinMaxY', tick.time, new Date( tick.time ).toUTCString() );
-			res.min = Math.min( res.min, this.getMinY( tick, current ) );
-			res.max = Math.max( res.max, this.getMaxY( tick, current ) );
+			res.min = Math.min( res.min, this.getMinY( current ) );
+			res.max = Math.max( res.max, this.getMaxY( current ) );
 			current += this.tickStep;
 		}
 
 		return res;
 	}
 
-	getMinY( tick: Tick, index: number ): number {
+	getMinY( index: number ): number {
 		return 0;
 	}
 
-	getMaxY( tick: Tick, index: number ): number {
-		return 0;
+	getMaxY( index: number ): number {
+		return 100;
 	}
 
 	//__ drawing
@@ -237,7 +239,6 @@ export default abstract class Base<Options extends Record<string,any>,
 			while ( current >= this.cacheMin ){
 				// console.log( '  release min', current );
 				this.cacheComputed.delete( current );
-				this.cacheIntern.delete( current );
 				current -= this.tickStep;
 			}
 			this.cacheMin = Math.max( start, this.cacheMin );
@@ -249,7 +250,6 @@ export default abstract class Base<Options extends Record<string,any>,
 			while ( current <= this.cacheMax ){
 				// console.log( '  release max', current );
 				this.cacheComputed.delete( current );
-				this.cacheIntern.delete( current );
 				current += this.tickStep;
 			}
 			this.cacheMax = Math.min( start, this.cacheMax );

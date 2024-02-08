@@ -4,7 +4,7 @@ import { ScalingLinear, type Scale, type ScalingLinearOptions } from './utils/ma
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
 import { addListenerFactory, removeListenerFactory, createElement, resizeCanvas, sharpCanvasValue, defaultTick,
 	type CandleTick, type GetTick, type ElementRect } from './index.ts';
-import indicators, { type List, type IOptions } from './Indicator/index.ts';
+import indicators, { type List, type Indicator } from './Indicator/index.ts';
 import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
 
 //______
@@ -107,11 +107,12 @@ export default class Chart {
 	private enabledCrossHair = true;
 	private border = '1px solid #333333';
 	private maxDisplayX: number | null = null;
-	private chartRows: Map<string|number, ChartRow> = new Map();
+	private chartRows: ChartRow[] = [];
 	private mouseEnterElement: ElementRect;
 	private mouseMoveElement: HTMLElement;
 	private mouseIndicator: ChartRow | null = null;
 	private mouseDragIndicator: ChartRow | null = null;
+	private layers: Indicator[] = [];
 
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
@@ -200,6 +201,78 @@ export default class Chart {
 		return this;
 	}
 
+	addIndicator<K extends keyof List> ( type: K, mode: 'layer'|'row' = 'row',
+		...params: ConstructorParameters<List[K]>/*options?: IOptions<K>*/ ){
+		// console.log('params', params );
+		// @ts-ignore
+		const indicator = new indicators[ type ]( ...params );
+		indicator.setTickStep( this.tickStep );
+		
+		switch( mode ){
+			case 'row': {
+				const row = new ChartRow( this.chartRows.length, indicator, this.getTick, this.elements.main,
+					( scaling, row ) => {
+						this.render( undefined, undefined, row );
+					},
+					{
+						// height: 240,
+						...this.options.chartRow,
+						onMouseEnter: ( event, chartRow ) => {
+							this.mouseIndicator = chartRow;
+							this.onMouseEnterChart( event );
+						},
+						onMouseLeave: ( event ) => {
+							this.mouseIndicator = null;
+							this.onMouseLeaveChart( event );
+						},
+						onMouseDown: ( event, emitter ) => {
+							this.mouseDragIndicator = emitter;
+							this.onMouseDown( event );
+						},
+					} );
+				this.chartRows.push( row );
+				break;
+			}
+			case 'layer': {
+				this.layers.push( indicator );
+				indicator.setContext( this.getTick, this.ctxTicks, this.scalingY );
+				break;
+			}
+			default: break;
+		}
+
+		this.resizeCanvas();
+
+		return this;
+	}
+
+	beforeDestroy (){
+		this.uiScaleX.beforeDestroy();
+		this.uiScaleY.beforeDestroy();
+		this.mouseEnterElement.removeEventListener( 'mouseenter', this.onMouseEnterChart );
+		this.mouseEnterElement.removeEventListener( 'mouseleave', this.onMouseLeaveChart );
+		this.mouseMoveElement.removeEventListener( 'mousedown', this.onMouseDown );
+		this.mouseMoveElement.removeEventListener( 'keydown', this.onKeyDown );
+		this.mouseMoveElement.removeEventListener( 'wheel', this.onMouseWheel );
+		document.removeEventListener( 'mouseup', this.onMouseUp );
+		document.removeEventListener( 'mousemove', this.onMouseMove );
+		window.removeEventListener( 'resize', this.onResize );
+
+		this.chartRows.forEach( row => {
+			row.beforeDestroy();
+		} );
+	}
+
+	refresh (){
+		this.chartRows.forEach( row => {
+			row.getIndicator().reset();
+		} );
+		this.layers.forEach( indicator => {
+			indicator.reset();
+		} );
+		this.updateX( true, true );
+	}
+	
 	getElement( key: keyof Chart['elements'] ){
 		return this.elements[key];
 	}
@@ -218,464 +291,6 @@ export default class Chart {
 		return this;
 	}
 	
-	addIndicator<K extends keyof List>( type: K, key: string, options?: IOptions<K> ){
-		// const { key } = indicator;
-		if( this.chartRows.has( key )){
-			console.warn(`An indicator is already registered with this key, it will be replaced: ${key}`);
-		}
-
-		const indicator = new indicators[type]( key, options );
-		const row = new ChartRow( indicator, this.getTick, this.elements.main,
-( scaling, row ) => {
-					this.render( undefined, undefined, row );
-				}, 
-			{
-				// height: 240,
-				...this.options.chartRow,
-			onMouseEnter: ( event, chartRow ) => {
-				this.mouseIndicator = chartRow;
-				this.onMouseEnterChart( event );
-			},
-			onMouseLeave: ( event ) => {
-				this.mouseIndicator = null;
-				this.onMouseLeaveChart( event );
-			},
-			onMouseDown: ( event, emitter ) => {
-				this.mouseDragIndicator = emitter;
-				this.onMouseDown( event );
-			},
-		} );
-		indicator.setTickStep( this.tickStep );
-		this.chartRows.set( key, row );
-
-		this.resizeCanvas();
-		
-		return this;
-	}
-	
-	private mouseMoveListeners: ( ( x:number, y: number, xOut: number, event: MouseEvent ) => void )[] = [];
-	addMouseMoveListener = addListenerFactory( this.mouseMoveListeners );
-	removeMouseMoveListener = removeListenerFactory( this.mouseMoveListeners );
-
-	private mouseEnterLeaveListeners: ( ( inside: boolean, event: MouseEvent ) => void )[] = [];
-	addMouseEnterLeaveListener = addListenerFactory( this.mouseEnterLeaveListeners );
-	removeMouseEnterLeaveListener = removeListenerFactory( this.mouseEnterLeaveListeners );
-
-	private onMouseEnterChart = ( event: MouseEvent ) => {
-		event.stopImmediatePropagation();
-		this.mouseOverChart = true;
-		if( this.enabledCrossHair ){
-			this.elements.cross.style.display = 'block';
-		}
-		this.elements.labelX.style.display = 'block';
-		this.elements.labelY.style.display = 'block';
-		this.mouseEnterLeaveListeners.forEach( callback => {
-			callback( true, event );
-		} );
-	}
-
-	private onMouseLeaveChart = ( event: MouseEvent ) => {
-		event.stopImmediatePropagation();
-		this.mouseOverChart = false;
-		if ( this.enabledCrossHair ){
-			this.elements.cross.style.display = 'none';
-		}
-		this.elements.labelX.style.display = 'none';
-		this.elements.labelY.style.display = 'none';
-		this.mouseEnterLeaveListeners.forEach( callback => {
-			callback( false, event );
-		} );
-	}
-
-	private onMouseDown = ( event: MouseEvent ) => {
-		// event.stopImmediatePropagation();//__ avoid any sub mousedown
-		if( event.button === 0 ){
-			this.position = { x: event.clientX, y: event.clientY };
-			this.drag = true;
-			document.body.style.userSelect = 'none';
-		}
-	}
-
-	private onMouseUp = ( event: MouseEvent ) => {
-		this.drag = false;
-		this.mouseDragIndicator = null;
-		this.update();
-		document.body.style.userSelect = 'auto';
-	}
-
-	private moveEvent: MouseEvent | null = null;
-	private position: { x: number, y: number } = { x: 0, y: 0};
-
-	private onMouseMove = ( event: MouseEvent ) => {
-		this.moveEvent = event;
-		requestAnimationFrame( this.update );
-	}
-
-	private onMouseWheel = ( event: WheelEvent ) => {
-		if( !this.options.wheelScroll ){ return;}
-		event.preventDefault();
-		const scale = { ...this.scalingX.scaleIn };
-		const dx = event.deltaX * this.tickStep * .5;
-		scale.min += dx;
-		scale.max += dx;
-		const dy = event.deltaY * this.scalingX.distIn * .0001;
-		scale.min -= dy;
-		scale.max += dy;
-		this.setScaleX( scale );
-	}
-
-	private onKeyDown = ( event: KeyboardEvent ) => {
-		// console.log('onKeyDown', event.keyCode, event );
-		let v = this.options.keyboard.vx;
-		if( event.shiftKey ){
-			v *= 10;
-		}
-		switch ( event.keyCode ){
-			default:
-				break;
-			case 37:{//_ left
-				this.translateX( -v * this.scalingX.distIn );
-				break;
-			}
-			case 39:{//_ right
-				this.translateX( v * this.scalingX.distIn );
-				break;
-			}
-			case 38:{//_ up
-				this.translateY( v * this.scalingY.distIn );
-				break;
-			}
-			case 40:{//_ down
-				this.translateY( -v * this.scalingY.distIn );
-				break;
-			}
-			case 27:{//_ escape
-				if ( document.activeElement instanceof HTMLElement ){
-					document.activeElement.blur();
-				}
-				break;
-			}
-		}
-	}
-	private onResize = ( event: UIEvent ) => {
-		// console.log('onResize', event );
-		this.resizing = true;
-		requestAnimationFrame( this.update );
-	}
-	
-	private update = () => {
-		let render = false;
-
-		if ( this.resizing ){
-			this.resizing = false;
-			if ( this.resizeCanvas() ){
-				render = true;
-			}
-		}
-
-		if( this.moveEvent ){
-			const event = this.moveEvent;
-			this.moveEvent = null;
-
-			if ( this.mouseOverChart ){
-				//__ x
-				const x = this.scalingX.scaleToInv( event.offsetX - this.tickWidthHalf );
-				const tick = this.getTick( x );
-				if ( !this.maxDisplayX || x < this.maxDisplayX ){
-					Object.keys( this.infosLabels ).forEach( key => {
-						const kv = `info-${ key }-value`;
-						this.elements[ kv ].innerText = `${ +tick[ key as keyof CandleTick ] }`;
-					} );
-					this.elements.infos.style.display = 'flex';
-				}else{
-					this.elements.infos.style.display = 'none';
-				}
-				const xValue = Math.floor( this.scalingX.scaleTo( x ) + this.tickWidthHalf );
-				this.elements.crossX.style.transform = `translateX(${ xValue }px)`;
-				this.elements.labelX.innerText = ( this.options.crossHairLabelX || this.uiScaleX.options.formatLabel )( x );
-				const px = Math.round(
-					Math.min( 
-						Math.max( xValue - this.elements.labelX.clientWidth / 2, 0 )
-						, this.width- this.elements.labelX.clientWidth ) );
-				this.elements.labelX.style.transform = `translateX(${ px }px)`;
-				
-				//__ y
-				const target = event.target as ElementRect;
-				let yPos = event.offsetY;
-				const hLabel = Math.ceil( this.elements.labelY.clientHeight );
-				let yLabel = Math.ceil(
-					Math.min(
-						Math.max( yPos - hLabel / 2, 0 )
-						, ( target.rect?.height || 0) - hLabel ) );
-				let yValue = 0;
-
-				if( this.mouseIndicator ){
-					const d = Math.floor(( target.rect?.y || 0 ) - ( this.mouseEnterElement.rect?.y || 0 ));
-					yPos += d;
-					yLabel += d;
-					yValue = this.mouseIndicator.scalingY.scaleToInv( event.offsetY );
-				}else{
-					yValue = this.scalingY.scaleToInv( yPos );
-				}
-				this.elements.crossY.style.transform = `translateY(${ yPos }px)`;
-				this.elements.labelY.innerText = isNaN( yValue )
-					? '--'
-					: ( this.options.crossHairLabelY || this.uiScaleY.options.formatLabel )( yValue );
-				this.elements.labelY.style.transform = `translateY(${ Math.round( yLabel ) }px)`;
-
-				this.mouseMoveListeners.forEach( callback => {
-					callback( xValue, yValue, x, event );
-				} );
-			}
-
-			if ( this.drag ){
-				//__ y
-				const autoScaleY = this.mouseDragIndicator ? this.mouseDragIndicator.options.autoScaleY : this.options.autoScaleY;
-				if ( !autoScaleY ){
-					const cy = this.mouseDragIndicator ? this.mouseDragIndicator.cy : this.cy;
-					const vy = ( this.position.y - event.clientY ) * cy;
-					this.position.y = event.clientY;
-					if ( vy !== 0 ){
-						if( this.mouseDragIndicator ){
-							this.mouseDragIndicator.translateY( vy );
-						}else{
-							this.translateY( vy, { render: false } );
-						}
-						render = true;
-					}
-				}
-
-				const vx = ( this.position.x - event.clientX ) * this.cx;
-				this.position.x = event.clientX;
-				if ( vx !== 0 ){
-					render = false;
-					this.translateX( vx );
-				}
-			}
-
-		}
-		
-		if ( render ){
-			this.render();
-		}
-
-	}
-	
-	private resizeCanvas(){
-
-		const resized = resizeCanvas( this.canvas );
-
-		if( resized ) {
-			this.width = resized.width;
-			this.height = resized.height;
-			const dw = this.width * this.tickStep;
-			this.scalingX.setDistInMax( dw );// force min tick width 1px
-			this.scalingX.setDistInMin( dw / 50 );// force max tick width px ( divider ) 
-			this.mouseEnterElement.rect = this.mouseEnterElement.getBoundingClientRect();
-			this.uiScaleX.setScaleOut( { min: 0, max: resized.width } );
-			this.uiScaleY.setScaleOut( {
-				min: resized.height - this.options.autoScaleYMargin,
-				max: this.options.autoScaleYMargin
-			} );
-		}
-
-		this.chartRows.forEach( row => {
-			row.resizeCanvas();
-		} );
-
-		return resized;
-	}
-	
-	private createDomElements(){
-		Object.assign( this.parentElement.style, {
-			display: 'flex',
-			'flex-direction': 'column',
-			overflow: 'hidden',
-		} );
-		//____ main
-		this.elements.main = createElement('div', this.parentElement, {
-			className: 'main',
-			style: {
-				flex: '1 1',
-				position: 'relative',
-				display: 'flex',
-				flexDirection: 'column',
-				justifyContent: 'stretch',
-				overflow: 'hidden',
-			}
-		});
-		//____ row Candles
-		this.elements.rowCandles = createElement('div', this.elements.main, {
-			className: 'row-candles',
-			style: {
-				flex: '1 1',
-				display: 'flex',
-				flexDirection: 'row',
-				alignItems: 'stretch',
-				overflow: 'hidden',
-			}
-		});
-		this.elements.candles = createElement( 'div', this.elements.rowCandles, {
-			className: 'candles',
-			style: {
-				flex: '1 1', position: 'relative', overflow: 'hidden', cursor: 'crosshair',
-			}
-		} );
-		this.elements.scaleY = createElement( 'div', this.elements.rowCandles, {
-			className: 'scale scale-y',
-			style: {
-				borderLeft: this.border,
-				width: `${ this.options.yScaleWidth }px`,
-				color: '#cccccc',
-			}
-		} );
-		//____ foot
-		this.elements.foot = createElement( 'div', this.parentElement, {
-			className: 'foot',
-			style: {
-				height: '24px',
-				display: 'flex',
-				flexDirection: 'row',
-				alignItems: 'stretch',
-				borderTop: this.border,
-			}
-		} );
-		//____ scaleX
-		this.elements.scaleX = createElement( 'div', this.elements.foot, {
-			className: 'scale scale-x',
-			style: {
-				flex: '1 1',
-				color: '#cccccc',
-			}
-		} );
-		//____ foot corner
-		this.elements.corner = createElement( 'div', this.elements.foot, {
-			className: 'corner',
-			style: {
-				width: `${ this.options.yScaleWidth }px`,
-				borderLeft: this.border,
-			}
-		} );
-		//__ cross
-		const crossBorder = '1px solid #ffffff33';
-		this.elements.cross = createElement( 'div', this.elements.main, {
-			className: 'cross',
-			style: {
-				display: 'none', position: 'absolute', inset: `0 ${this.elements.scaleY.style.width} 0 0`, zIndex: '95',
-				pointerEvents: 'none',
-			}
-		} );
-		//____ cross x
-		this.elements.crossX = createElement( 'div', this.elements.cross, {
-			className: 'cross-x',
-			style: {
-				display: 'block',
-				position: 'absolute', top: '0', bottom: '0', left: '0',
-				borderLeft: crossBorder,
-			}
-		} );
-		//____ cross y
-		this.elements.crossY = createElement( 'div', this.elements.cross, {
-			className: 'cross-y',
-			style: {
-				display: 'block',
-				position: 'absolute', left: '0', right: '0', top: '0',
-				borderTop: crossBorder,
-			}
-		} );
-		//_______ cross labels
-		const crossLabelStyle = {
-			display: 'none', background: '#2C2C2C', color: '#ffffff', padding: '0 8px', overflow: 'hidden', zIndex: '96',
-			fontWeight: '400',
-			position: 'absolute', top: '0',
-		};
-		this.elements.labelX = createElement( 'div', this.elements.scaleX, {
-			className: 'cross-label-x',
-			style: {
-				...crossLabelStyle,
-				left: '0', height: this.elements.foot.style.height,
-			}
-		} );
-		this.elements.labelY = createElement( 'div', this.elements.main, {
-			className: 'cross-label-y',
-			style: {
-				...crossLabelStyle,
-				right: '0', width: this.elements.scaleY.style.width,
-			}
-		} );
-		this.elements.labelY.innerText = '0';
-		this.elements.labelY.style.marginTop = `${ -Math.round( this.elements.labelY.clientHeight / 2 ) }px`;
-		//____ infos
-		this.elements.infos = createElement( 'div', this.elements.main, {
-			className: 'infos',
-			style: {
-				background: '#161616cc', padding: '0 8px',
-				position: 'absolute', left: '1px', top: '1px', zIndex: '96',
-				display: 'flex', flexDirection: 'row', gap: '8px', justifyContent: 'flex-start',
-			}
-		} );
-		Object.entries( this.infosLabels ).forEach( ( [key,label] ) => {
-			const k = `info-${ key }`;
-			this.elements[k] = createElement( 'div', this.elements.infos, {
-				className: k,
-				style: {
-					display: 'flex', flexDirection: 'row', gap: '4px', justifyContent: 'flex-start',
-				}
-			} );
-			this.elements[ k ].innerText = `${label}:`;
-			
-			const kv = `${ k }-value`;
-			this.elements[ kv ] = createElement( 'div', this.elements[k], {
-				className: kv,
-				style: {}
-			} );
-		});
-
-		//__ options elements
-		if( this.options.uiElements.buttonGoMaxX ){
-			if( this.options.uiElements.buttonGoMaxX === true ){
-				this.elements.buttonGoMaxX = createElement( 'button', this.elements.candles, {
-					style: {
-						position: 'absolute', bottom: '4px', right: '4px', color: '#222222', display: 'none',
-					}
-				} );
-				this.elements.buttonGoMaxX.innerText = '>>';
-				this.elements.buttonGoMaxX.title = 'Scroll X to max';
-					// console.log('insert buttonGoMaxX', this.elements.buttonGoMaxX );
-			}else{
-				this.elements.buttonGoMaxX = this.elements.candles.appendChild( this.options.uiElements.buttonGoMaxX );
-			}
-			this.elements.buttonGoMaxX.addEventListener('click', () => {
-				this.setX( Date.now(), { render: true, xOriginRatio: .75 } );
-			});
-		}
-	}
-
-	beforeDestroy(){
-		this.uiScaleX.beforeDestroy();
-		this.uiScaleY.beforeDestroy();
-		this.mouseEnterElement.removeEventListener( 'mouseenter', this.onMouseEnterChart );
-		this.mouseEnterElement.removeEventListener( 'mouseleave', this.onMouseLeaveChart );
-		this.mouseMoveElement.removeEventListener( 'mousedown', this.onMouseDown );
-		this.mouseMoveElement.removeEventListener( 'keydown', this.onKeyDown );
-		this.mouseMoveElement.removeEventListener( 'wheel', this.onMouseWheel );
-		document.removeEventListener( 'mouseup', this.onMouseUp );
-		document.removeEventListener( 'mousemove', this.onMouseMove );
-		window.removeEventListener( 'resize', this.onResize );
-		
-		this.chartRows.forEach( row => {
-			row.beforeDestroy();
-		});
-	}
-	
-	refresh(){
-		this.updateX( true, true );
-		this.chartRows.forEach( row => {
-			row.reset();
-		} );
-	}
-
-	//__ x
 	getTick = ( index: number ) => {
 		const indexMax = this.options.tickIndexMax();
 		if ( indexMax !== null && index > indexMax ){
@@ -693,9 +308,13 @@ export default class Chart {
 		this.chartRows.forEach( row => {
 			row.getIndicator().setTickStep( this.tickStep );
 		});
+		this.layers.forEach( indicator => {
+			indicator.setTickStep( this.tickStep );
+		});
 		this.setX( this.scalingX.scaleIn.min, { render, force: render, xOriginRatio } );
 	}
 
+	//__ x
 	setMaxDisplayX( x: number | null, render = false ){
 		this.maxDisplayX = x;
 		if ( render ){
@@ -766,7 +385,9 @@ export default class Chart {
 				// console.log('### updateX', new Date( this.xStart).toUTCString(), new Date( this.xEnd ).toUTCString() );
 				this.chartRows.forEach( row => {
 					row.setViewXMinMax( this.xStart, this.xEnd );
-					row.autoScaleY();
+				} );
+				this.layers.forEach( indicator => {
+					indicator.setViewXMinMax( this.xStart, this.xEnd );
 				} );
 			}
 
@@ -845,6 +466,7 @@ export default class Chart {
 		return { min, max };
 	}
 
+	//__
 	setCanvasOptions( options: Options['canvas'] ){
 		// console.log('setCanvasOptions', options );
 		Object.assign( this.ctxTicks, options );
@@ -866,15 +488,8 @@ export default class Chart {
 			wPx = this.width - xPx;
 		}
 
-		const rows: ( Chart|ChartRow)[] = [];
-
-		if( row ){
-			rows.push( row );
-		}else{
-			rows.push( this, ...this.chartRows.values() );
-		}
-
-		rows.forEach( (row ) => {
+		this.clearRect( xPx, wPx );
+		this.chartRows.forEach( (row ) => {
 			row.clearRect( xPx, wPx );
 		} );
 
@@ -886,9 +501,13 @@ export default class Chart {
 			tick = this.getTick( x );
 			if( tick !== defaultTick ){
 				xPos = this.scalingX.scaleTo( x );
-				for ( let i = 0, max = rows.length; i < max; i++ ){
-					rows[ i ].drawTick( tick, xPos, this.tickWidth, x );
-				}
+				this.layers.forEach( indicator => {
+					indicator.drawTick( tick, xPos, this.tickWidth, x );
+				});
+				this.drawTick( tick, xPos, this.tickWidth, x );
+				this.chartRows.forEach( row => {
+					row.getIndicator().drawTick( tick, xPos, this.tickWidth, x );
+				} );
 			}
 			x += this.tickStep;
 		}
@@ -922,6 +541,407 @@ export default class Chart {
 
 		// debug && console.log( 'drawTick', { isDown, xWick, xBody }, tick );
 	}
-	
+
+	private mouseMoveListeners: ( ( x: number, y: number, xOut: number, event: MouseEvent ) => void )[] = [];
+	addMouseMoveListener = addListenerFactory( this.mouseMoveListeners );
+	removeMouseMoveListener = removeListenerFactory( this.mouseMoveListeners );
+
+	private mouseEnterLeaveListeners: ( ( inside: boolean, event: MouseEvent ) => void )[] = [];
+	addMouseEnterLeaveListener = addListenerFactory( this.mouseEnterLeaveListeners );
+	removeMouseEnterLeaveListener = removeListenerFactory( this.mouseEnterLeaveListeners );
+
+	private onMouseEnterChart = ( event: MouseEvent ) => {
+		event.stopImmediatePropagation();
+		this.mouseOverChart = true;
+		if ( this.enabledCrossHair ){
+			this.elements.cross.style.display = 'block';
+		}
+		this.elements.labelX.style.display = 'block';
+		this.elements.labelY.style.display = 'block';
+		this.mouseEnterLeaveListeners.forEach( callback => {
+			callback( true, event );
+		} );
+	}
+
+	private onMouseLeaveChart = ( event: MouseEvent ) => {
+		event.stopImmediatePropagation();
+		this.mouseOverChart = false;
+		if ( this.enabledCrossHair ){
+			this.elements.cross.style.display = 'none';
+		}
+		this.elements.labelX.style.display = 'none';
+		this.elements.labelY.style.display = 'none';
+		this.mouseEnterLeaveListeners.forEach( callback => {
+			callback( false, event );
+		} );
+	}
+
+	private onMouseDown = ( event: MouseEvent ) => {
+		// event.stopImmediatePropagation();//__ avoid any sub mousedown
+		if ( event.button === 0 ){
+			this.position = { x: event.clientX, y: event.clientY };
+			this.drag = true;
+			document.body.style.userSelect = 'none';
+		}
+	}
+
+	private onMouseUp = ( event: MouseEvent ) => {
+		this.drag = false;
+		this.mouseDragIndicator = null;
+		this.update();
+		document.body.style.userSelect = 'auto';
+	}
+
+	private moveEvent: MouseEvent | null = null;
+	private position: { x: number, y: number } = { x: 0, y: 0 };
+
+	private onMouseMove = ( event: MouseEvent ) => {
+		this.moveEvent = event;
+		requestAnimationFrame( this.update );
+	}
+
+	private onMouseWheel = ( event: WheelEvent ) => {
+		if ( !this.options.wheelScroll ){
+			return;
+		}
+		event.preventDefault();
+		const scale = { ...this.scalingX.scaleIn };
+		const dx = event.deltaX * this.tickStep * .5;
+		scale.min += dx;
+		scale.max += dx;
+		const dy = event.deltaY * this.scalingX.distIn * .0001;
+		scale.min -= dy;
+		scale.max += dy;
+		this.setScaleX( scale );
+	}
+
+	private onKeyDown = ( event: KeyboardEvent ) => {
+		// console.log('onKeyDown', event.keyCode, event );
+		let v = this.options.keyboard.vx;
+		if ( event.shiftKey ){
+			v *= 10;
+		}
+		switch ( event.keyCode ){
+			default:
+				break;
+			case 37:{//_ left
+				this.translateX( -v * this.scalingX.distIn );
+				break;
+			}
+			case 39:{//_ right
+				this.translateX( v * this.scalingX.distIn );
+				break;
+			}
+			case 38:{//_ up
+				this.translateY( v * this.scalingY.distIn );
+				break;
+			}
+			case 40:{//_ down
+				this.translateY( -v * this.scalingY.distIn );
+				break;
+			}
+			case 27:{//_ escape
+				if ( document.activeElement instanceof HTMLElement ){
+					document.activeElement.blur();
+				}
+				break;
+			}
+		}
+	}
+	private onResize = ( event: UIEvent ) => {
+		// console.log('onResize', event );
+		this.resizing = true;
+		requestAnimationFrame( this.update );
+	}
+
+	private update = () => {
+		let render = false;
+
+		if ( this.resizing ){
+			this.resizing = false;
+			if ( this.resizeCanvas() ){
+				render = true;
+			}
+		}
+
+		if ( this.moveEvent ){
+			const event = this.moveEvent;
+			this.moveEvent = null;
+
+			if ( this.mouseOverChart ){
+				//__ x
+				const x = this.scalingX.scaleToInv( event.offsetX - this.tickWidthHalf );
+				const tick = this.getTick( x );
+				if ( !this.maxDisplayX || x < this.maxDisplayX ){
+					Object.keys( this.infosLabels ).forEach( key => {
+						const kv = `info-${ key }-value`;
+						this.elements[ kv ].innerText = `${ +tick[ key as keyof CandleTick ] }`;
+					} );
+					this.elements.infos.style.display = 'flex';
+				} else {
+					this.elements.infos.style.display = 'none';
+				}
+				const xValue = Math.floor( this.scalingX.scaleTo( x ) + this.tickWidthHalf );
+				this.elements.crossX.style.transform = `translateX(${ xValue }px)`;
+				this.elements.labelX.innerText = ( this.options.crossHairLabelX || this.uiScaleX.options.formatLabel )( x );
+				const px = Math.round(
+					Math.min(
+						Math.max( xValue - this.elements.labelX.clientWidth / 2, 0 )
+						, this.width - this.elements.labelX.clientWidth ) );
+				this.elements.labelX.style.transform = `translateX(${ px }px)`;
+
+				//__ y
+				const target = event.target as ElementRect;
+				let yPos = event.offsetY;
+				const hLabel = Math.ceil( this.elements.labelY.clientHeight );
+				let yLabel = Math.ceil(
+					Math.min(
+						Math.max( yPos - hLabel / 2, 0 )
+						, ( target.rect?.height || 0 ) - hLabel ) );
+				let yValue = 0;
+
+				if ( this.mouseIndicator ){
+					const d = Math.floor( ( target.rect?.y || 0 ) - ( this.mouseEnterElement.rect?.y || 0 ) );
+					yPos += d;
+					yLabel += d;
+					yValue = this.mouseIndicator.scalingY.scaleToInv( event.offsetY );
+				} else {
+					yValue = this.scalingY.scaleToInv( yPos );
+				}
+				this.elements.crossY.style.transform = `translateY(${ yPos }px)`;
+				this.elements.labelY.innerText = isNaN( yValue )
+					? '--'
+					: ( this.options.crossHairLabelY || this.uiScaleY.options.formatLabel )( yValue );
+				this.elements.labelY.style.transform = `translateY(${ Math.round( yLabel ) }px)`;
+
+				this.mouseMoveListeners.forEach( callback => {
+					callback( xValue, yValue, x, event );
+				} );
+			}
+
+			if ( this.drag ){
+				//__ y
+				const autoScaleY = this.mouseDragIndicator ? this.mouseDragIndicator.options.autoScaleY : this.options.autoScaleY;
+				if ( !autoScaleY ){
+					const cy = this.mouseDragIndicator ? this.mouseDragIndicator.cy : this.cy;
+					const vy = ( this.position.y - event.clientY ) * cy;
+					this.position.y = event.clientY;
+					if ( vy !== 0 ){
+						if ( this.mouseDragIndicator ){
+							this.mouseDragIndicator.translateY( vy );
+						} else {
+							this.translateY( vy, { render: false } );
+						}
+						render = true;
+					}
+				}
+
+				const vx = ( this.position.x - event.clientX ) * this.cx;
+				this.position.x = event.clientX;
+				if ( vx !== 0 ){
+					render = false;
+					this.translateX( vx );
+				}
+			}
+
+		}
+
+		if ( render ){
+			this.render();
+		}
+
+	}
+
+	private resizeCanvas (){
+
+		const resized = resizeCanvas( this.canvas );
+
+		if ( resized ){
+			this.width = resized.width;
+			this.height = resized.height;
+			const dw = this.width * this.tickStep;
+			this.scalingX.setDistInMax( dw );// force min tick width 1px
+			this.scalingX.setDistInMin( dw / 50 );// force max tick width px ( divider ) 
+			this.mouseEnterElement.rect = this.mouseEnterElement.getBoundingClientRect();
+			this.uiScaleX.setScaleOut( { min: 0, max: resized.width } );
+			this.uiScaleY.setScaleOut( {
+				min: resized.height - this.options.autoScaleYMargin,
+				max: this.options.autoScaleYMargin
+			} );
+		}
+
+		this.chartRows.forEach( row => {
+			row.resizeCanvas();
+		} );
+
+		return resized;
+	}
+
+	private createDomElements (){
+		Object.assign( this.parentElement.style, {
+			display: 'flex',
+			'flex-direction': 'column',
+			overflow: 'hidden',
+		} );
+		//____ main
+		this.elements.main = createElement( 'div', this.parentElement, {
+			className: 'main',
+			style: {
+				flex: '1 1',
+				position: 'relative',
+				display: 'flex',
+				flexDirection: 'column',
+				justifyContent: 'stretch',
+				overflow: 'hidden',
+			}
+		} );
+		//____ row Candles
+		this.elements.rowCandles = createElement( 'div', this.elements.main, {
+			className: 'row-candles',
+			style: {
+				flex: '1 1',
+				display: 'flex',
+				flexDirection: 'row',
+				alignItems: 'stretch',
+				overflow: 'hidden',
+			}
+		} );
+		this.elements.candles = createElement( 'div', this.elements.rowCandles, {
+			className: 'candles',
+			style: {
+				flex: '1 1', position: 'relative', overflow: 'hidden', cursor: 'crosshair',
+			}
+		} );
+		this.elements.scaleY = createElement( 'div', this.elements.rowCandles, {
+			className: 'scale scale-y',
+			style: {
+				borderLeft: this.border,
+				width: `${ this.options.yScaleWidth }px`,
+				color: '#cccccc',
+			}
+		} );
+		//____ foot
+		this.elements.foot = createElement( 'div', this.parentElement, {
+			className: 'foot',
+			style: {
+				height: '24px',
+				display: 'flex',
+				flexDirection: 'row',
+				alignItems: 'stretch',
+				borderTop: this.border,
+			}
+		} );
+		//____ scaleX
+		this.elements.scaleX = createElement( 'div', this.elements.foot, {
+			className: 'scale scale-x',
+			style: {
+				flex: '1 1',
+				color: '#cccccc',
+			}
+		} );
+		//____ foot corner
+		this.elements.corner = createElement( 'div', this.elements.foot, {
+			className: 'corner',
+			style: {
+				width: `${ this.options.yScaleWidth }px`,
+				borderLeft: this.border,
+			}
+		} );
+		//__ cross
+		const crossBorder = '1px solid #ffffff33';
+		this.elements.cross = createElement( 'div', this.elements.main, {
+			className: 'cross',
+			style: {
+				display: 'none', position: 'absolute', inset: `0 ${ this.elements.scaleY.style.width } 0 0`, zIndex: '95',
+				pointerEvents: 'none',
+			}
+		} );
+		//____ cross x
+		this.elements.crossX = createElement( 'div', this.elements.cross, {
+			className: 'cross-x',
+			style: {
+				display: 'block',
+				position: 'absolute', top: '0', bottom: '0', left: '0',
+				borderLeft: crossBorder,
+			}
+		} );
+		//____ cross y
+		this.elements.crossY = createElement( 'div', this.elements.cross, {
+			className: 'cross-y',
+			style: {
+				display: 'block',
+				position: 'absolute', left: '0', right: '0', top: '0',
+				borderTop: crossBorder,
+			}
+		} );
+		//_______ cross labels
+		const crossLabelStyle = {
+			display: 'none', background: '#2C2C2C', color: '#ffffff', padding: '0 8px', overflow: 'hidden', zIndex: '96',
+			fontWeight: '400',
+			position: 'absolute', top: '0',
+		};
+		this.elements.labelX = createElement( 'div', this.elements.scaleX, {
+			className: 'cross-label-x',
+			style: {
+				...crossLabelStyle,
+				left: '0', height: this.elements.foot.style.height,
+			}
+		} );
+		this.elements.labelY = createElement( 'div', this.elements.main, {
+			className: 'cross-label-y',
+			style: {
+				...crossLabelStyle,
+				right: '0', width: this.elements.scaleY.style.width,
+			}
+		} );
+		this.elements.labelY.innerText = '0';
+		this.elements.labelY.style.marginTop = `${ -Math.round( this.elements.labelY.clientHeight / 2 ) }px`;
+		//____ infos
+		this.elements.infos = createElement( 'div', this.elements.main, {
+			className: 'infos',
+			style: {
+				background: '#161616cc', padding: '0 8px',
+				position: 'absolute', left: '1px', top: '1px', zIndex: '96',
+				display: 'flex', flexDirection: 'row', gap: '8px', justifyContent: 'flex-start',
+			}
+		} );
+		Object.entries( this.infosLabels ).forEach( ( [ key, label ] ) => {
+			const k = `info-${ key }`;
+			this.elements[ k ] = createElement( 'div', this.elements.infos, {
+				className: k,
+				style: {
+					display: 'flex', flexDirection: 'row', gap: '4px', justifyContent: 'flex-start',
+				}
+			} );
+			this.elements[ k ].innerText = `${ label }:`;
+
+			const kv = `${ k }-value`;
+			this.elements[ kv ] = createElement( 'div', this.elements[ k ], {
+				className: kv,
+				style: {}
+			} );
+		} );
+
+		//__ options elements
+		if ( this.options.uiElements.buttonGoMaxX ){
+			if ( this.options.uiElements.buttonGoMaxX === true ){
+				this.elements.buttonGoMaxX = createElement( 'button', this.elements.candles, {
+					style: {
+						position: 'absolute', bottom: '4px', right: '4px', color: '#222222', display: 'none', zIndex: '999',
+						cursor: 'pointer',
+					}
+				} );
+				this.elements.buttonGoMaxX.innerText = '>>';
+				this.elements.buttonGoMaxX.title = 'Scroll X to max';
+				// console.log('insert buttonGoMaxX', this.elements.buttonGoMaxX );
+			} else {
+				this.elements.buttonGoMaxX = this.elements.candles.appendChild( this.options.uiElements.buttonGoMaxX );
+			}
+			this.elements.buttonGoMaxX.addEventListener( 'click', () => {
+				this.setX( Date.now(), { render: true, xOriginRatio: .75 } );
+			} );
+		}
+	}
+
 }
 

@@ -1,3 +1,12 @@
+## [0.0.8](https://github.com/dmidz/tickschart/compare/v0.0.7...v0.0.8) (2024-02-08)
+
+
+### Features
+
+* **core:** [TC-6] on chart indicators ( layers ) ([#8](https://github.com/dmidz/tickschart/issues/8)) ([bcff59a](https://github.com/dmidz/tickschart/commit/bcff59aef90d8949d4f524870dfa350a32e5d6ba))
+
+
+
 ## [0.0.7](https://github.com/dmidz/tickschart/compare/v0.0.6...v0.0.7) (2024-02-07)
 
 

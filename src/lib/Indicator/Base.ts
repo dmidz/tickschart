@@ -22,8 +22,8 @@ export type LineStyle = {
 const defaultScalingY = new ScalingLinear( { min: 0, max: 10 }, { min: 0, max: 10 } );
 const defaultCanvas = document.createElement( 'canvas' );
 
-export default abstract class Base<Options extends Record<string,any>,
-			Computed extends Record<string, number>,
+export default abstract class Base<Options extends object,
+			Computed extends object,
 			CK extends KeyOfString<Computed> = KeyOfString<Computed>,
 			TCK extends TK | CK= TK | CK> {
 	private readonly compute: { [key in CK]: ComputeFunc };

@@ -3,7 +3,7 @@ import merge from '../utils/merge.ts';
 import Base, { type BaseOptions, type BarStyle, type LineStyle } from './Base.ts';
 
 //______
-export type Options = Partial<BaseOptions> & {
+export type Options = {
 	maProperty: Parameters<Base<BaseOptions, Computed>['computed']>[1],
 	maType?: 'sma' | 'ema' | false,
 	maLength?: number,
@@ -21,9 +21,9 @@ type Computed = typeof defaultComputed;
 
 export default class Volume extends Base<Required<Options>, Computed> {
 
-	constructor ( options: Options ){
+	constructor ( options: Options & Partial<BaseOptions> ){
 		
-		super( defaultComputed, merge<Required<Options>>({
+		const _options: Required<PickOptional<Options>> = {
 			maType: 'sma',
 			maLength: 10,
 			styleBars: {
@@ -32,7 +32,9 @@ export default class Volume extends Base<Required<Options>, Computed> {
 			styleMa: {
 				color: '#0080c5'
 			},
-		}, options) );
+		};
+		
+		super( defaultComputed, merge( _options, options ) );
 
 		this.options.maLength = Math.max( 1, Math.round( this.options.maLength ) );
 	}

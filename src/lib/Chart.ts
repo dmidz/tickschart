@@ -4,7 +4,7 @@ import { ScalingLinear, type Scale, type ScalingLinearOptions } from './utils/ma
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
 import { addListenerFactory, removeListenerFactory, createElement, resizeCanvas, sharpCanvasValue, defaultTick,
 	type CandleTick, type GetTick, type ElementRect } from './index.ts';
-import indicators, { type List, type IOptions, type Indicator } from './Indicator/index.ts';
+import indicators, { type List, type Indicator } from './Indicator/index.ts';
 import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
 
 //______
@@ -201,8 +201,11 @@ export default class Chart {
 		return this;
 	}
 
-	addIndicator<K extends keyof List> ( type: K, mode: 'layer'|'row' = 'row', options?: IOptions<K> ){
-		const indicator = new indicators[ type ]( options );
+	addIndicator<K extends keyof List> ( type: K, mode: 'layer'|'row' = 'row',
+		...params: ConstructorParameters<List[K]>/*options?: IOptions<K>*/ ){
+		// console.log('params', params );
+		// @ts-ignore
+		const indicator = new indicators[ type ]( ...params );
 		indicator.setTickStep( this.tickStep );
 		
 		switch( mode ){

@@ -1,13 +1,14 @@
 
+import merge from '../utils/merge.ts';
 import Base, { type BaseOptions, type BarStyle, type LineStyle } from './Base.ts';
 
 //______
 export type Options = Partial<BaseOptions> & {
 	maProperty: Parameters<Base<BaseOptions, Computed>['computed']>[1],
-	maType: 'sma' | 'ema' | false,
-	maLength: number,
-	styleBars: BarStyle,
-	styleMa: LineStyle,
+	maType?: 'sma' | 'ema' | false,
+	maLength?: number,
+	styleBars?: BarStyle,
+	styleMa?: LineStyle,
 }
 
 //__ would never be used, its purpose is to define properties set in computeSetup
@@ -18,23 +19,20 @@ const defaultComputed = {
 
 type Computed = typeof defaultComputed;
 
-export default class Volume extends Base<Options, Computed> {
+export default class Volume extends Base<Required<Options>, Computed> {
 
-	constructor ( options: Partial<Options> = {} ){
-
-		super( defaultComputed,
-			{
-				maProperty: 'vol',
-				maType: 'sma',
-				maLength: 10,
-				styleBars: {
-					fillColor: '#444444',
-				},
-				styleMa: {
-					color: '#0080c5'
-				},
-				...options,
-			} );
+	constructor ( options: Options ){
+		
+		super( defaultComputed, merge<Required<Options>>({
+			maType: 'sma',
+			maLength: 10,
+			styleBars: {
+				fillColor: '#444444',
+			},
+			styleMa: {
+				color: '#0080c5'
+			},
+		}, options) );
 
 		this.options.maLength = Math.max( 1, Math.round( this.options.maLength ) );
 	}
@@ -49,7 +47,7 @@ export default class Volume extends Base<Options, Computed> {
 	
 	computeSetup(){
 		return {
-			ma: this.lib[this.options.maType||'sma']( this.options.maProperty, this.options.maLength ),
+			ma: this.lib[this.options.maType||'sma']( this.options.maProperty, this.options.maLength, true ),
 		};
 	}
 	

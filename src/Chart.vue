@@ -97,7 +97,8 @@ onMounted( async () => {
 		}
 	} );
 	
-	chart.addIndicator( 'Volume', 'vol-1', { maLength: 14, maType: 'ema' } );
+	chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 'sma' } );
+	// chart.addIndicator( 'VolumeImpulse', 'row', { maProperty: 'vol', test: 'aa', maLength: 14, maType: 'ema' } );
 	
 	//__ can now apply the initial time & render
 	init = true;

@@ -66,7 +66,7 @@ const fetcher = new Fetcher<CandleTick, DataTick>( defaultTick, async ( startTim
 
 const rangeLoadMs = ticksPerLoad * timeScaleMs;
 onMounted( async () => {
-	if( !refChartWrapper.value /*|| !refReplayToolbar.value*/ ){ return;}
+	if( !refChartWrapper.value ){ return;}
 	let init = false;//__ using to prevent fetching until chart fully initialized ( timeScale, symbol, etc )
 	
 	chart = new Chart( refChartWrapper.value, timeScaleMs, ( index: number ) => {

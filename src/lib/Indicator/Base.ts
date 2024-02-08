@@ -35,7 +35,6 @@ export default abstract class Base<Options extends object,
 	private xMin = 0;
 	private xMax = 0;
 	private cacheComputed: Map<number,Map<CK,number>> = new Map();
-	private cacheIntern: Map<number,Record<string,any>> = new Map();
 	private cacheClearTimeout: ReturnType<typeof setTimeout> | undefined;
 	private cacheMin = +Infinity;
 	private cacheMax = -Infinity;
@@ -87,7 +86,6 @@ export default abstract class Base<Options extends object,
 	
 	reset(){
 		this.cacheComputed = new Map();
-		this.cacheIntern = new Map();
 	}
 	
 	setViewXMinMax( min = this.xMin, max = this.xMax, force = false, clear = true ){
@@ -241,7 +239,6 @@ export default abstract class Base<Options extends object,
 			while ( current >= this.cacheMin ){
 				// console.log( '  release min', current );
 				this.cacheComputed.delete( current );
-				this.cacheIntern.delete( current );
 				current -= this.tickStep;
 			}
 			this.cacheMin = Math.max( start, this.cacheMin );
@@ -253,7 +250,6 @@ export default abstract class Base<Options extends object,
 			while ( current <= this.cacheMax ){
 				// console.log( '  release max', current );
 				this.cacheComputed.delete( current );
-				this.cacheIntern.delete( current );
 				current += this.tickStep;
 			}
 			this.cacheMax = Math.min( start, this.cacheMax );

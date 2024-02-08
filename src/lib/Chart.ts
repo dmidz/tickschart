@@ -501,13 +501,13 @@ export default class Chart {
 			tick = this.getTick( x );
 			if( tick !== defaultTick ){
 				xPos = this.scalingX.scaleTo( x );
-				this.drawTick( tick, xPos, this.tickWidth, x );
-				this.chartRows.forEach( row => {
-					row.getIndicator().drawTick( tick, xPos, this.tickWidth, x );
-				});
 				this.layers.forEach( indicator => {
 					indicator.drawTick( tick, xPos, this.tickWidth, x );
 				});
+				this.drawTick( tick, xPos, this.tickWidth, x );
+				this.chartRows.forEach( row => {
+					row.getIndicator().drawTick( tick, xPos, this.tickWidth, x );
+				} );
 			}
 			x += this.tickStep;
 		}

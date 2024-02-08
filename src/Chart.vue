@@ -68,7 +68,6 @@ onMounted( async () => {
 					we can bypass it to always return a tick from the file ( 1692000000000 ) time range */
 		return fetcher.getMapTicks( index )?.[ 1692000000000 + index % rangeLoadMs ] || defaultTick;
 	}, {
-		// tickWidth: 35,
 		onScalingXChange: async ( scalingX ) => {
 			if( !init ){  return;}//__ avoid any fetch during initialization
 			const fetches = fetcher.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max );
@@ -98,7 +97,7 @@ onMounted( async () => {
 	} );
 	
 	chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 'sma' } );
-	// chart.addIndicator( 'VolumeImpulse', 'row', { maProperty: 'vol', test: 'aa', maLength: 14, maType: 'ema' } );
+	chart.addIndicator( 'MA', 'layer', { maProperty: 'close', maLength: 50, maType: 'sma' } );
 	
 	//__ can now apply the initial time & render
 	init = true;

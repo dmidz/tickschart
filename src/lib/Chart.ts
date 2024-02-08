@@ -505,6 +505,9 @@ export default class Chart {
 				this.chartRows.forEach( row => {
 					row.getIndicator().drawTick( tick, xPos, this.tickWidth, x );
 				});
+				this.layers.forEach( indicator => {
+					indicator.drawTick( tick, xPos, this.tickWidth, x );
+				});
 			}
 			x += this.tickStep;
 		}

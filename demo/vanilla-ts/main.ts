@@ -48,6 +48,12 @@ const fetcher = new Fetcher<CandleTick, DataTick>( defaultTick, async ( startTim
 	ticksPerLoad,
 	prefetchMargin: 1,
 	cacheSize: 2,
+	onLoad: ( time, mightRefresh ) => {
+		//__ refresh when new loaded so long indicators ( ex: ma 200 ) have their data progressively without waiting whole loaded
+		if ( mightRefresh ){
+			chart.refresh();
+		}
+	},
 	// debug: true,
 } );
 
@@ -63,9 +69,7 @@ const chart = new Chart( document.getElementById('chart'), timeScaleMs, ( index:
 	return fetcher.getMapTicks( index )?.[ 1692000000000 + index % rangeLoadMs ] || defaultTick;
 }, {
 	onScalingXChange: async ( scalingX ) => {
-		// if ( !init ){
-		// 	return;
-		// }//__ avoid any fetch during initialization
+		// if ( !init ){ return;}//__ avoid any fetch during initialization
 		const fetches = fetcher.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max );
 		return Promise.all( fetches );
 	},
@@ -89,5 +93,9 @@ const chart = new Chart( document.getElementById('chart'), timeScaleMs, ( index:
 	autoScaleY: true,
 } );
 
-chart.addIndicator( 'Volume', 'vol-1', { maLength: 14 } );
+chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 'sma' } );
+chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000' } } );
+chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00' } } );
+chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
+
 chart.setX( currentTime.value.getTime(), { render: true, xOriginRatio } );

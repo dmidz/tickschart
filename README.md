@@ -8,19 +8,18 @@ Provides a set of classe such `Chart.ts` & `Fectcher.ts`, so they can be used in
 by providing a dom NodeElement at Chart instanciation.
 
 It is also decoupled from the data fetching, you provides a fetch function called with
-start & end index. Checkout examples on `/scr/Chart.vue` or `/demo` directory.
+start & end index. Checkout examples on [`/demo/vanilla-ts/main.ts`](https://github.com/dmidz/tickschart/blob/develop/demo/vanilla-ts/main.ts)
+ or [the Vue example `/scr/Chart.vue`](https://github.com/dmidz/tickschart/blob/develop/src/Chart.vue).
 
 ## Features
-- Efficient horizontablly scrollable chart drawn with HTML Canvas
+- Efficient horizontally scrollable chart drawn with HTML Canvas
 - Resizable scales to zoom in / out
 - Crosshair displaying current ticks infos
-- Indicators system easy to expand ( only under chart for now, soon on chart )
+- Indicators system easy to expand
 - Fetcher helper to easily connect to an API
 - many more to come :)
 
-## Preview or Dev base
-// TODO: online demo
-
+## Quick preview / Dev environment
 This repo is based on [Vite, a wonderful environment for smooth JS dev](https://vitejs.dev/), just clone
 this repo and run:
 
@@ -32,6 +31,8 @@ You should be immediately able to browse the provided local address such `http:/
 The data comes from a unique file of real past 500 BTC H4 ticks used in loop for the dev ( this why you will see 
  gap at joins ) but it is very easy to plug it to a real API.
 
+// TODO: online demo
+
 ## Installation ( as 3rd party )
 Install package
 
@@ -41,8 +42,72 @@ Install package
 ### Vanilla TS
 You can check and copy this example [demo/vanilla-ts](https://github.com/dmidz/tickschart/tree/develop/demo/vanilla-ts).
 
-Also download a copy of [the sample data file](https://github.com/dmidz/tickschart/blob/develop/public/data/ticks_BTC_4h/1692000000000.json)
-into your local public directory such `/my-project/public/data/1692000000000.json`
+Also download a copy of [the 500 ticks sample data file](https://github.com/dmidz/tickschart/blob/develop/public/data/ticks_BTC_4h/1692000000000.json)
+into your local public directory such `~/my-project/public/data/1692000000000.json`
+
+Create a simple html file with a #chart div
+```html
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8"/>
+ <!-- this browser icon is just a minimal 1x1px transparent image -->
+ <link rel="icon" type="image/svg+xml" href="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA="/>
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+ <title>Ticks Chart Vue Example</title>
+</head>
+<body>
+<div id="app">
+ <div id="chart"></div>
+</div>
+<script type="module" src="main.ts"></script>
+</body>
+</html>
+
+```
+Ensure to have minimal style so your #app takes full available space like:
+
+```css
+html, body, #app {
+ height: 100%;
+}
+
+body {
+ display: flex;
+ flex-direction: column;
+ overflow-x: hidden;
+ margin: 0;
+ justify-content: flex-start;
+ align-items: stretch;
+}
+
+* {
+ box-sizing: border-box;
+}
+
+#app {
+ flex: 1 1;
+ display: flex;
+ flex-direction: column;
+ justify-content: flex-start;
+ align-items: stretch;
+}
+
+#chart {
+ flex: 1 1;
+ background-color: #191919;
+ border: 1px solid #333333;
+ color: #cccccc;
+ display: flex;
+ flex-direction: column;
+ overflow: hidden;
+ position: relative;
+}
+/*...*/
+```
+
+
+Then the main.ts file:
 
 ```typescript
 //_ main.ts
@@ -152,14 +217,20 @@ chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 
 chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000' } } );
 chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00' } } );
 chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
+//    Only 2 types of Indicator ( Volume & MA ) for now, but many more to come, very easy to extend !
 
+// finally init display at the time you wish, originRatio is the displacement of time wanted along the screen width
+// ex: time now + .75 will scroll to place now time at 3/4 screen width from left
+// ex: time now + 0 will scroll to place now time at screen left
 chart.setX( currentTime.value.getTime(), { render: true, xOriginRatio } );
 
 ```
 
-Serve the html page, you should see a chart with BTC H4 ticks.
+Compile ts file & serve the html page, you should see a chart with BTC H4 ticks.
 
-Once running correctly, you can customize the fetch so it binds to your ticks API.
+Once running correctly, you can start customizing, for ex the fetch so it binds to your ticks API.
+
+// TODO: provide demo/node-api example with Binance public market ticks API for ex
 
 
 ### Vanilla JS

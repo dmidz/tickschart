@@ -20,8 +20,8 @@ start & end index. Checkout examples on [`/demo/vanilla-ts/main.ts`](https://git
 - many more to come :)
 
 ## Quick preview / Dev environment
-This repo is based on [Vite, a wonderful environment for smooth JS dev](https://vitejs.dev/), just clone
-this repo and run:
+This repo is based on [Vite, a wonderful environment for smooth JS dev](https://vitejs.dev/), you just clone
+this current derived repo and run:
 
       npm install
       npm run dev

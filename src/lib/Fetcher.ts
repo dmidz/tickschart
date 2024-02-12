@@ -35,6 +35,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 	private timeoutRelease: ReturnType<typeof setTimeout> | undefined;
 	private mapTicks = new Map<number, FetchResult>();
 	private mapFetches = new Map<number, Promise<Range|null>>();
+	private mapRefresh = new Map<number,true>;
 	
 	constructor( private defaultTick: Tick, private fetch: FetchTicks<FetchResult>, options: Options = {} ){
 		Object.assign( this.options, options );
@@ -48,7 +49,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 		return timeScaleMs;
 	}
 
-	fetchTicks( timeStart: number, timeEnd: number, opts: { prefetch?: boolean, mightRefresh?: boolean } = {} ): Promise<Range|null>[]{
+	fetchTicks( timeStart: number, timeEnd: number, opts: { prefetch?: boolean } = { prefetch: true } ): Promise<Range|null>[]{
 		const debug = this.options.debug;
 
 		const res: Promise<Range|null>[] = [];
@@ -83,7 +84,8 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 								debug && console.log( 'loaded', time, new Date( time ).toUTCString(), Object.keys( r ).length );
 								this.mapTicks.set( time, r );
 								const res: LoadedTimeRange = { min: time, max: time + this.timePerLoad };
-								this.options.onLoad( time, opts.mightRefresh, !opts.prefetch );
+								this.options.onLoad( time, this.mapRefresh.get( time ), !opts.prefetch );
+								this.mapRefresh.delete( time );
 								return res as Range;
 							} )
 							.catch( err => {
@@ -143,8 +145,11 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 	getMapTicks( time: number ): FetchResult | undefined {
 		const t = Math.floor( +time / this.timePerLoad ) * this.timePerLoad;
 		const res = this.mapTicks.get( t );
-		if( !res && this.options.fetchOnDemand && !this.mapFetches.get( t ) ){
-			this.fetchTicks( t, t + this.timePerLoad, { prefetch: false, mightRefresh: true } );
+		if( !res && this.options.fetchOnDemand ){
+			this.mapRefresh.set( t, true );
+			if( !this.mapFetches.get( t ) ){
+				this.fetchTicks( t, t + this.timePerLoad, { prefetch: false } );
+			}
 		}
 		return res;
 	}
@@ -156,6 +161,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 		this.firstSize = 0;
 		this.mapTicks = new Map();
 		this.mapFetches = new Map();
+		this.mapRefresh = new Map();
 	}
 
 	//__ clean cache

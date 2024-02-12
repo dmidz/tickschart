@@ -56,6 +56,7 @@ const fetcher = new Fetcher<CandleTick, DataTick>( defaultTick, async ( startTim
 	prefetchMargin: 1,
 	cacheSize: 2,
 	onLoad: ( time, mightRefresh ) => {
+		// console.log('onLoad', { time, mightRefresh });
 		//__ refresh when new loaded so long indicators ( ex: ma 200 ) have their data progressively without waiting whole loaded
 		if ( mightRefresh ){
 			chart.refresh();
@@ -76,7 +77,7 @@ onMounted( async () => {
 	}, {
 		onScalingXChange: async ( scalingX ) => {
 			if( !init ){  return;}//__ avoid any fetch during initialization
-			const fetches = fetcher.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max, true );
+			const fetches = fetcher.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max );
 			return Promise.all( fetches );
 		},
 		crossHairLabelX: ( value ) => {

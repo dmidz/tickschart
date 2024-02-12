@@ -1,3 +1,12 @@
+## [0.0.11](https://github.com/dmidz/tickschart/compare/v0.0.9...v0.0.11) (2024-02-12)
+
+
+### Bug Fixes
+
+* **core:** Fetcher: fix mightRefresh ([3e29194](https://github.com/dmidz/tickschart/commit/3e2919474957be6fdb3274c3a13d2e523f71a371))
+
+
+
 ## [0.0.9](https://github.com/dmidz/tickschart/compare/v0.0.8...v0.0.9) (2024-02-09)
 
 

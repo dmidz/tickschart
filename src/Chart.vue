@@ -10,9 +10,10 @@ const { m1, h1, d1 } = intervalsMs;
 const timeScaleMs = h1 * 4;
 const ticksPerLoad = 500;
 const xOriginRatio = .75;
-// const currentTime = ref( new Date() );
+const currentTime = ref( new Date() );
 // const currentTime = ref( new Date( Date.UTC( 2024, 1, 15 ) ) );
-const currentTime = ref( new Date( Date.UTC( 2023, 9, 10 ) ) );
+// const currentTime = ref( new Date( Date.UTC( 2023, 8,29 ) ) );
+// const currentTime = ref( new Date( Date.UTC( 2023, 9, 10 ) ) );
 
 const refChartWrapper = ref<HTMLElement>();
 const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, {
@@ -104,10 +105,12 @@ onMounted( async () => {
 		// }
 	} );
 	
-	chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 'sma' } );
-	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
-	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
-	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
+	// chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 'sma' } );
+	chart.addIndicator( 'VolumeImpulse', 'row', { maLength: 14, maType: 'sma' } );
+	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
+	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
+	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
+	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 21, type: 'sma' } );
 	
 	//__ can now apply the initial time & render
 	init = true;

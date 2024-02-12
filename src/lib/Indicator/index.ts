@@ -1,10 +1,12 @@
 import type Base from './Base.ts';
-import Volume from './Volume.ts';
 import MA from './MA.ts';
+import Volume from './Volume.ts';
+import VolumeImpulse from './VolumeImpulse.ts';
 
 const indicators = {
-	Volume,
 	MA,
+	Volume,
+	VolumeImpulse,
 } as const;
 
 export default indicators;

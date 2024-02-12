@@ -291,12 +291,13 @@ export default class Chart {
 		return this;
 	}
 	
-	getTick = ( index: number ) => {
+	getTick = ( index: number, delta = 0 ) => {
+		const _index = index - delta * this.tickStep;
 		const indexMax = this.options.tickIndexMax();
-		if ( indexMax !== null && index > indexMax ){
+		if ( indexMax !== null && _index > indexMax ){
 			return defaultTick;
 		}
-		return this._getTick( index );
+		return this._getTick( _index );
 	}
 
 	setTickStep( tickStep: number, { render = true, xOriginRatio = 0 } ){

@@ -26,9 +26,9 @@ export default abstract class Base<Options extends object,
 			Computed extends object,
 			CK extends KeyOfString<Computed> = KeyOfString<Computed>,
 			TCK extends TK | CK= TK | CK> {
-	private readonly compute: { [key in CK]: ComputeFunc };
+	private compute: { [key in CK]: ComputeFunc };
 	protected options: BaseOptions & Options;
-	private getTick: GetTick = () => defaultTick;
+	protected getTick: GetTick = () => defaultTick;
 	private ctx: CanvasRenderingContext2D = defaultCanvas.getContext( '2d' ) as CanvasRenderingContext2D;
 	private scalingY: ScalingLinear = defaultScalingY;
 	private tickStep = 1;
@@ -63,11 +63,11 @@ export default abstract class Base<Options extends object,
 			this.computeKeys.set( key, true );
 		} );
 		this.lib = new Computation<TCK>( this.tickStep, this.computed.bind( this ) );
-		this.compute = this.computeSetup( this.lib );
+		this.compute = this.computeSetup();
 	}
 	
-	abstract draw(): void;
-	abstract computeSetup( lib: Computation<TCK> ): ({ [key in keyof Computed]: ComputeFunc });
+	abstract draw( index: number, tick: Tick ): void;
+	abstract computeSetup(): ({ [key in keyof Computed]: ComputeFunc });
 	
 	setContext( getTick: GetTick, canvasContext: CanvasRenderingContext2D, scalingY: ScalingLinear ){
 		this.getTick = getTick;
@@ -86,6 +86,7 @@ export default abstract class Base<Options extends object,
 	
 	reset(){
 		this.cacheComputed = new Map();
+		this.compute = this.computeSetup();
 	}
 	
 	setViewXMinMax( min = this.xMin, max = this.xMax, force = false, clear = true ){
@@ -148,7 +149,7 @@ export default abstract class Base<Options extends object,
 		this.drawing.width = width;
 		this.drawing.index = index;
 		// this.debug('__ drawTick', tick.time, new Date( tick.time ).toUTCString() );
-		this.draw();
+		this.draw( index, tick );
 	}
 
 	plotBar( prop: TCK, style: BarStyle ){

@@ -92,11 +92,11 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 		return this.indicator;
 	}
 
-	setViewXMinMax( min: number, max: number, force = false ){
+	setViewXMinMax( min: number, max: number, opts = {} ){
 		const tick = this.getTick( min );
 		this.validXMinMax = !!min && !!tick && tick !== defaultTick;
 		if( !this.validXMinMax ){ return;}
-		this.indicator.setViewXMinMax( min, max, force );
+		this.indicator.setViewXMinMax( min, max, opts );
 		this.autoScaleY();
 	}
 

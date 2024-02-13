@@ -42,13 +42,13 @@ export default abstract class Base<Options extends object,
 	private cacheSizeMax = 0;
 	private readonly computeKeys: Map<CK,true> = new Map();
 	protected lib: Computation<TCK>;
-
 	private drawing = {
 		x: 0,
 		width: 0,
 		index: 0,
 		tick: defaultTick,
 	}
+	private tickIndexMax: number | undefined;
 
 	constructor ( private readonly defaultComputed: Computed,
 								options: Options ){
@@ -89,8 +89,11 @@ export default abstract class Base<Options extends object,
 		this.compute = this.computeSetup();
 	}
 	
-	setViewXMinMax( min = this.xMin, max = this.xMax, force = false, clear = true ){
+	setViewXMinMax( min = this.xMin, max = this.xMax, opts?: { force?: boolean, clear?: boolean, tickIndexMax?: number } ){
 		if( !min ){  return;}
+		
+		const { clear = true, force = false, tickIndexMax } = opts||{};
+		
 		if ( !force && min === this.xMin && max === this.xMax ){
 			return;
 		}
@@ -98,6 +101,8 @@ export default abstract class Base<Options extends object,
 			console.warn( 'min < max !' );
 			return;
 		}
+		
+		this.tickIndexMax = tickIndexMax;
 
 		this.xMin = min;
 		this.xMax = max;
@@ -123,8 +128,12 @@ export default abstract class Base<Options extends object,
 	getMinMaxY(): MinMax {
 		const res = { min: Infinity, max: -Infinity };
 		let current = this.xMin;
+		let max = this.xMax;
+		if( typeof this.tickIndexMax !== 'undefined' ){
+			max = Math.min( max, this.tickIndexMax );
+		}
 		// this.debug('_____ getMinMaxY START' );
-		while ( current <= this.xMax ){
+		while ( current <= max ){
 			// this.debug( '__ getMinMaxY', tick.time, new Date( tick.time ).toUTCString() );
 			res.min = Math.min( res.min, this.getMinY( current ) );
 			res.max = Math.max( res.max, this.getMaxY( current ) );

@@ -35,7 +35,7 @@ export type Options = {
 	autoScaleYMargin: number,
 	yScaleWidth: number,
 	wheelScroll: boolean,
-	readonly tickIndexMax: ( () => number | null ),
+	readonly tickIndexMax: ( () => number ) | null,
 	uiElements: {
 		buttonGoMaxX?: boolean | HTMLElement,
 	},
@@ -383,12 +383,13 @@ export default class Chart {
 		const after = () => {
 			if ( changed || force ){
 				this.autoScaleY( false );
+				const opts = { tickIndexMax: this.options.tickIndexMax?.() };
 				// console.log('### updateX', new Date( this.xStart).toUTCString(), new Date( this.xEnd ).toUTCString() );
 				this.chartRows.forEach( row => {
-					row.setViewXMinMax( this.xStart, this.xEnd );
+					row.setViewXMinMax( this.xStart, this.xEnd, opts );
 				} );
 				this.layers.forEach( indicator => {
-					indicator.setViewXMinMax( this.xStart, this.xEnd );
+					indicator.setViewXMinMax( this.xStart, this.xEnd, opts );
 				} );
 			}
 
@@ -448,8 +449,12 @@ export default class Chart {
 		let max: number = -Infinity;
 		let t = this.xStart;
 		let tick: ReturnType<GetTick>;
+		let xEnd = this.xEnd;
+		if ( this.options.tickIndexMax ){
+			xEnd = Math.min( this.xEnd, this.options.tickIndexMax() );
+		}
 
-		while( t <= this.xEnd ){
+		while( t <= xEnd ){
 			tick = this.getTick( t );
 			if( tick !== defaultTick ){
 				min = Math.min( min, +tick.low );

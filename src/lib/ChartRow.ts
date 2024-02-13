@@ -3,7 +3,7 @@ import merge from './utils/merge.ts';
 import { ScalingLinear, type Scale } from './utils/math.ts';
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
 import type { Indicator } from './Indicator/index.ts';
-import { defaultTick, createElement, resizeCanvas, type GetTick, type ElementRect, type CandleTick } from './index';
+import { createElement, resizeCanvas, type GetTick, type ElementRect, type CandleTick } from './index';
 
 //______
 export type Options = {
@@ -94,7 +94,7 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 
 	setViewXMinMax( min: number, max: number, opts = {} ){
 		const tick = this.getTick( min );
-		this.validXMinMax = !!min && !!tick && tick !== defaultTick;
+		this.validXMinMax = !!min && !!tick && !tick._default;
 		if( !this.validXMinMax ){ return;}
 		this.indicator.setViewXMinMax( min, max, opts );
 		this.autoScaleY();

@@ -1,7 +1,7 @@
 export { default as Chart } from './Chart.ts';
 export { default as Fetcher } from './Fetcher.ts';
 
-export const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0, someString: 'hello' };
+export const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0, someString: 'hello', _default: true };
 
 export type CandleTick = typeof defaultTick;
 

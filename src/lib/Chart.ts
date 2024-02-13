@@ -2,7 +2,7 @@
 import merge from './utils/merge.ts';
 import { ScalingLinear, type Scale, type ScalingLinearOptions } from './utils/math.ts';
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
-import { addListenerFactory, removeListenerFactory, createElement, resizeCanvas, sharpCanvasValue, defaultTick,
+import { addListenerFactory, removeListenerFactory, createElement, resizeCanvas, sharpCanvasValue,
 	type CandleTick, type GetTick, type ElementRect } from './index.ts';
 import indicators, { type List, type Indicator } from './Indicator/index.ts';
 import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
@@ -456,7 +456,7 @@ export default class Chart {
 
 		while( t <= xEnd ){
 			tick = this.getTick( t );
-			if( tick !== defaultTick ){
+			if( !tick._default ){
 				min = Math.min( min, +tick.low );
 				max = Math.max( max, +tick.high );
 			}
@@ -505,7 +505,7 @@ export default class Chart {
 		let x = _xStart;
 		while ( x <= _xEnd ){
 			tick = this.getTick( x );
-			if( tick !== defaultTick ){
+			if( !tick._default ){
 				xPos = this.scalingX.scaleTo( x );
 				this.layers.forEach( indicator => {
 					indicator.drawTick( tick, xPos, this.tickWidth, x );

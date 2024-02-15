@@ -7,7 +7,6 @@ type TK = KeyOfValue<Tick, number>;
 
 //______
 export type BaseOptions = {
-	tickIndex: KeyOfValue<Tick, number>,
 	debug: boolean,
 }
 
@@ -26,48 +25,45 @@ export default abstract class Base<Options extends object,
 			Computed extends object,
 			CK extends KeyOfString<Computed> = KeyOfString<Computed>,
 			TCK extends TK | CK= TK | CK> {
-	private readonly compute: { [key in CK]: ComputeFunc };
+	private compute: { [key in CK]: ComputeFunc };
 	protected options: BaseOptions & Options;
-	private getTick: GetTick = () => defaultTick;
+	protected getTick: GetTick = () => defaultTick;
 	private ctx: CanvasRenderingContext2D = defaultCanvas.getContext( '2d' ) as CanvasRenderingContext2D;
 	private scalingY: ScalingLinear = defaultScalingY;
 	private tickStep = 1;
 	private xMin = 0;
 	private xMax = 0;
-	private cacheComputed: Map<number,Map<CK,number>> = new Map();
-	private cacheClearTimeout: ReturnType<typeof setTimeout> | undefined;
+	private cacheComputed: Map<CK,Map<number,number>> = new Map();
 	private cacheMin = +Infinity;
 	private cacheMax = -Infinity;
-	private cacheDist = 0;
-	private cacheSizeMax = 0;
 	private readonly computeKeys: Map<CK,true> = new Map();
 	protected lib: Computation<TCK>;
-
 	private drawing = {
 		x: 0,
 		width: 0,
 		index: 0,
 		tick: defaultTick,
 	}
+	private tickIndexMax: number | undefined;
 
 	constructor ( private readonly defaultComputed: Computed,
 								options: Options ){
 
-		this.options = Object.assign( {
-			tickIndex: 'time' as const,
+		const baseOptions: BaseOptions = {
 			debug: true,
-		}, options );
+		};
+		this.options = Object.assign( baseOptions, options );
 
 		//___
 		(Object.keys( this.defaultComputed ) as CK[]).forEach( (key: CK) => {
 			this.computeKeys.set( key, true );
 		} );
 		this.lib = new Computation<TCK>( this.tickStep, this.computed.bind( this ) );
-		this.compute = this.computeSetup( this.lib );
+		this.compute = this.computeSetup();
 	}
 	
-	abstract draw(): void;
-	abstract computeSetup( lib: Computation<TCK> ): ({ [key in keyof Computed]: ComputeFunc });
+	abstract draw( index: number, tick: Tick ): void;
+	abstract computeSetup(): ({ [key in CK]: ComputeFunc });
 	
 	setContext( getTick: GetTick, canvasContext: CanvasRenderingContext2D, scalingY: ScalingLinear ){
 		this.getTick = getTick;
@@ -88,8 +84,11 @@ export default abstract class Base<Options extends object,
 		this.cacheComputed = new Map();
 	}
 	
-	setViewXMinMax( min = this.xMin, max = this.xMax, force = false, clear = true ){
+	setViewXMinMax( min = this.xMin, max = this.xMax, opts?: { force?: boolean, clear?: boolean, tickIndexMax?: number } ){
 		if( !min ){  return;}
+		
+		const { force = false, tickIndexMax } = opts||{};
+		
 		if ( !force && min === this.xMin && max === this.xMax ){
 			return;
 		}
@@ -97,13 +96,13 @@ export default abstract class Base<Options extends object,
 			console.warn( 'min < max !' );
 			return;
 		}
-
+		
+		this.tickIndexMax = tickIndexMax;
+		
 		this.xMin = min;
 		this.xMax = max;
-		const d = Math.round( ( this.xMax - this.xMin ) / this.tickStep );
-		const size = Math.round( d * .6 );
-		this.cacheDist = size * this.tickStep;
-		this.cacheSizeMax = d + size * 2;
+
+		this.reset();
 
 		// this.debug( '____ setViewXMinMax', {
 		// 	xMin: this.xMin,
@@ -113,17 +112,17 @@ export default abstract class Base<Options extends object,
 		// 	cacheSizeMax: this.cacheSizeMax,
 		// 	cacheComputed: this.cacheComputed.size } );
 
-		clearTimeout( this.cacheClearTimeout );
-		if( clear ){
-			this.cacheClearTimeout = setTimeout( this.cacheClean.bind( this ), 3000 );
-		}
 	}
 	
 	getMinMaxY(): MinMax {
 		const res = { min: Infinity, max: -Infinity };
 		let current = this.xMin;
+		let max = this.xMax;
+		if( typeof this.tickIndexMax !== 'undefined' ){
+			max = Math.min( max, this.tickIndexMax );
+		}
 		// this.debug('_____ getMinMaxY START' );
-		while ( current <= this.xMax ){
+		while ( current <= max ){
 			// this.debug( '__ getMinMaxY', tick.time, new Date( tick.time ).toUTCString() );
 			res.min = Math.min( res.min, this.getMinY( current ) );
 			res.max = Math.max( res.max, this.getMaxY( current ) );
@@ -148,7 +147,7 @@ export default abstract class Base<Options extends object,
 		this.drawing.width = width;
 		this.drawing.index = index;
 		// this.debug('__ drawTick', tick.time, new Date( tick.time ).toUTCString() );
-		this.draw();
+		this.draw( index, tick );
 	}
 
 	plotBar( prop: TCK, style: BarStyle ){
@@ -190,12 +189,12 @@ export default abstract class Base<Options extends object,
 		const isComputeKey = this.computeKeys.get( pc );
 		let value;
 		if ( isComputeKey ){
-			value = this.cacheGet( _index, pc );
+			value = this.cacheGet( pc, _index );
 			if( typeof value !== 'undefined' ){
 				return value;
 			}
-			value = Computation.asNumber( this.compute[ pc ]( _index, this.cacheGet( _index-this.tickStep, pc ) ) );
-			this.cacheSet( _index, pc, value );
+			value = Computation.asNumber( this.compute[ pc ]( _index, this.cacheGet( pc, _index-this.tickStep ) ) );
+			this.cacheSet( pc, _index, value );
 		} else {
 			const tick = this.getTick( _index );
 			value = Computation.asNumber( tick[ prop as keyof Tick ] );
@@ -208,61 +207,22 @@ export default abstract class Base<Options extends object,
 		return this;
 	}
 
-	protected cacheGet( index: number = 0, prop: CK ): number | undefined {
-		let m = this.cacheComputed.get( index );
-		if ( !m ){
-			m = new Map<CK, number>();
-			this.cacheComputed.set( index, m );
-		}
-		return m.get( prop );
+	protected cacheGet( prop: CK, index: number = 0 ): number | undefined {
+		return this.cacheComputed.get( prop )?.get( index );
 	}
 
-	protected cacheSet( index: number, prop: CK, value: number ) {
+	protected cacheSet( prop: CK, index: number, value: number ) {
 		this.cacheMin = Math.min( this.cacheMin, index );
 		this.cacheMax = Math.max( this.cacheMax, index );
-		let m = this.cacheComputed.get( index );
+		let m = this.cacheComputed.get( prop );
 		if ( !m ){
-			m = new Map<CK, number>();
-			this.cacheComputed.set( index, m );
+			m = new Map<number, number>();
+			this.cacheComputed.set( prop, m );
 		}
-		m.set( prop, value );
+		m.set( index, value );
 		return value;
 	}
 	
-	private cacheClean(){
-		// console.log('___ cacheClean', this.xMin, this.xMax, this.cacheMin, this.cacheMax, this.cacheSizeMax, this.cacheComputed.size );
-
-		if ( this.cacheMin ){
-			const start = this.xMin - this.cacheDist;
-			// console.log( 'cacheClean', { min, max, start, cacheMin: this.cacheMin, cacheMax: this.cacheMax }, this.cacheComputed.size, this.cacheSizeMax );
-			let current = start;
-			while ( current >= this.cacheMin ){
-				// console.log( '  release min', current );
-				this.cacheComputed.delete( current );
-				current -= this.tickStep;
-			}
-			this.cacheMin = Math.max( start, this.cacheMin );
-		}
-
-		if ( this.cacheMax ){
-			const start = this.xMax + this.cacheDist;
-			let current = start;
-			while ( current <= this.cacheMax ){
-				// console.log( '  release max', current );
-				this.cacheComputed.delete( current );
-				current += this.tickStep;
-			}
-			this.cacheMax = Math.min( start, this.cacheMax );
-		}
-
-		// console.log( 'released', this.cacheComputed.size, this.cacheComputed );
-
-		if ( this.cacheComputed.size > this.cacheSizeMax ){
-			console.warn( 'cache.size growing', this.cacheComputed.size );
-		}
-		
-	}
-
 	protected debug ( ...args: any[] ){
 		if ( this.options.debug ){
 			console.log( ...args );

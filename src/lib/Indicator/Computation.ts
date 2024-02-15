@@ -30,7 +30,6 @@ export default class Computation<ComputeKey extends string> {
 			}
 			return this.computed( index, prop ) * alpha + prevEma * inv;
 		};
-
 	}
 
 	sma( prop: ComputeKey, length: number = 3, debug = false ): ComputeFunc {
@@ -42,13 +41,11 @@ export default class Computation<ComputeKey extends string> {
 
 		return ( index, prevValue ) => {
 			let res: number;
-			// debug && console.log( '_ sma', prop, index );
 			if( typeof prevValue === 'undefined'){
 				res = sum( index ) / length;
 			}else{
 				res = ( prevValue * length - this.computed( index, prop, length ) + this.computed( index, prop ) ) / length;
 			}
-			// debug && console.log( 'sma res', res );
 			return res;
 		}
 	}
@@ -59,14 +56,12 @@ export default class Computation<ComputeKey extends string> {
 		}
 		
 		return ( index, prevValue ): number => {
-			// debug && console.log( '_ sum', index, prevValue );
 			let res: number;
 			if ( typeof prevValue === 'undefined' ){
 				res = this.reduce( index, length, ( value, i ) => value + this.computed( i, prop ) );
 			}else{
 				res = prevValue - this.computed( index, prop, length ) + this.computed( index, prop );
 			}
-			// debug && console.log( 'sum res', res );
 			return res;
 		};
 	}

@@ -2,7 +2,7 @@
 import merge from './utils/merge.ts';
 import { ScalingLinear, type Scale, type ScalingLinearOptions } from './utils/math.ts';
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
-import { addListenerFactory, removeListenerFactory, createElement, resizeCanvas, sharpCanvasValue, defaultTick,
+import { addListenerFactory, removeListenerFactory, createElement, resizeCanvas, sharpCanvasValue,
 	type CandleTick, type GetTick, type ElementRect } from './index.ts';
 import indicators, { type List, type Indicator } from './Indicator/index.ts';
 import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
@@ -35,7 +35,7 @@ export type Options = {
 	autoScaleYMargin: number,
 	yScaleWidth: number,
 	wheelScroll: boolean,
-	readonly tickIndexMax: ( () => number | null ),
+	readonly tickIndexMax: ( () => number ) | null,
 	uiElements: {
 		buttonGoMaxX?: boolean | HTMLElement,
 	},
@@ -234,8 +234,8 @@ export default class Chart {
 				break;
 			}
 			case 'layer': {
-				this.layers.push( indicator );
 				indicator.setContext( this.getTick, this.ctxTicks, this.scalingY );
+				this.layers.push( indicator );
 				break;
 			}
 			default: break;
@@ -291,12 +291,13 @@ export default class Chart {
 		return this;
 	}
 	
-	getTick = ( index: number ) => {
-		const indexMax = this.options.tickIndexMax();
-		if ( indexMax !== null && index > indexMax ){
-			return defaultTick;
-		}
-		return this._getTick( index );
+	getTick = ( index: number, delta = 0 ) => {
+		const _index = index - delta * this.tickStep;
+		// const indexMax = this.options.tickIndexMax();
+		// if ( indexMax !== null && _index > indexMax ){
+		// 	return defaultTick;
+		// }
+		return this._getTick( _index );
 	}
 
 	setTickStep( tickStep: number, { render = true, xOriginRatio = 0 } ){
@@ -382,12 +383,13 @@ export default class Chart {
 		const after = () => {
 			if ( changed || force ){
 				this.autoScaleY( false );
+				const opts = { tickIndexMax: this.options.tickIndexMax?.() };
 				// console.log('### updateX', new Date( this.xStart).toUTCString(), new Date( this.xEnd ).toUTCString() );
 				this.chartRows.forEach( row => {
-					row.setViewXMinMax( this.xStart, this.xEnd );
+					row.setViewXMinMax( this.xStart, this.xEnd, opts );
 				} );
 				this.layers.forEach( indicator => {
-					indicator.setViewXMinMax( this.xStart, this.xEnd );
+					indicator.setViewXMinMax( this.xStart, this.xEnd, opts );
 				} );
 			}
 
@@ -447,10 +449,14 @@ export default class Chart {
 		let max: number = -Infinity;
 		let t = this.xStart;
 		let tick: ReturnType<GetTick>;
+		let xEnd = this.xEnd;
+		if ( this.options.tickIndexMax ){
+			xEnd = Math.min( this.xEnd, this.options.tickIndexMax() );
+		}
 
-		while( t <= this.xEnd ){
+		while( t <= xEnd ){
 			tick = this.getTick( t );
-			if( tick !== defaultTick ){
+			if( !tick._default ){
 				min = Math.min( min, +tick.low );
 				max = Math.max( max, +tick.high );
 			}
@@ -476,22 +482,26 @@ export default class Chart {
 		if( xEnd < this.xStart || xStart > this.xEnd ){ return;}
 		const _xStart = Math.max( xStart, this.xStart );
 		let _xEnd = Math.min( xEnd, this.xEnd );
-		
+
 		const xPx = this.scalingX.scaleTo( _xStart );
-		let wPx = ( _xEnd-_xStart ) / this.scalingX.distIn * this.scalingX.distOut;
+		const wPx = ( _xEnd-_xStart ) / this.scalingX.distIn * this.scalingX.distOut;
+		this.clearRect( xPx, wPx );
+		this.chartRows.forEach( ( row ) => {
+			row.clearRect( xPx, wPx );
+		} );
+
 
 		// console.log( 'render', { xStart, _xStart, xEnd, _xEnd, xPx, wPx,
 		// 	scaleXMin: this.scalingX.scaleIn.min, scaleXMax: this.scalingX.scaleIn.max, distIn: this.scalingX.distIn } );
 
-		if ( this.maxDisplayX ){
-			_xEnd = this.maxDisplayX;
-			wPx = this.width - xPx;
-		}
 
-		this.clearRect( xPx, wPx );
-		this.chartRows.forEach( (row ) => {
-			row.clearRect( xPx, wPx );
-		} );
+		//__ TODO: remove maxDisplayX, replaced by tickIndexMax() ( Player should use the latter )
+		if ( this.maxDisplayX ){
+			_xEnd = Math.min( _xEnd, this.maxDisplayX );
+		}
+		if( this.options.tickIndexMax ){
+			_xEnd = Math.min( _xEnd, this.options.tickIndexMax() );
+		}
 
 		// console.log( '//_________ render', { _xStart: new Date( _xStart ).toUTCString(), xStart: new Date( xStart ).toUTCString(), thisxStart: new Date( this.xStart ).toUTCString() } );
 		let tick: ReturnType<GetTick>;
@@ -499,7 +509,7 @@ export default class Chart {
 		let x = _xStart;
 		while ( x <= _xEnd ){
 			tick = this.getTick( x );
-			if( tick !== defaultTick ){
+			if( !tick._default ){
 				xPos = this.scalingX.scaleTo( x );
 				this.layers.forEach( indicator => {
 					indicator.drawTick( tick, xPos, this.tickWidth, x );

@@ -65,7 +65,6 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 		let loadedEnd = Math.floor( timeEnd / this.timePerLoad ) * this.timePerLoad;
 		this.loadedMax = Math.max( this.loadedMax, loadedEnd );
 
-		// const _timeEnd = Math.min( timeEnd, Date.now() );
 		let time = loadedStart;
 
 		while ( time <= timeEnd ){
@@ -192,8 +191,8 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 		}
 
 		// console.log( 'new size', this.mapFetches.size, this.mapTicks.keys() );
-		if ( this.mapFetches.size > this.firstSize + 5 + this.options.cacheSize ){
-			console.warn( 'mapTicks.size growing', this.mapFetches.size );
+		if ( this.mapTicks.size > this.firstSize + this.options.cacheSize ){
+			console.warn( 'mapTicks.size growing', this.mapTicks.size );
 		}
 
 	}

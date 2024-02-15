@@ -1,7 +1,6 @@
 // ! change this import to @dmidz/tickschart
 import { Chart, Fetcher, defaultTick, intervalsMs, type CandleTick } from '../../dist';
 import './style.css';
-import { ref } from 'vue';
 
 //__
 const { m1, h1, d1 } = intervalsMs;
@@ -15,7 +14,7 @@ const timeScaleMs = h1 * 4;
 const ticksPerLoad = 500;
 const rangeLoadMs = ticksPerLoad * timeScaleMs;
 const xOriginRatio = .75;
-const currentTime = ref( new Date( Date.UTC( 2023, 9, 10 ) ) );
+const currentTime = new Date( Date.UTC( 2023, 9, 10 ) );
 
 //__
 const fetcher = new Fetcher<CandleTick, DataTick>( defaultTick, async ( startTime, limit ) => {
@@ -100,4 +99,4 @@ chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma'
 chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00' } } );
 chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 
-chart.setX( currentTime.value.getTime(), { render: true, xOriginRatio } );
+chart.setX( currentTime.getTime(), { render: true, xOriginRatio } );

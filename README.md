@@ -114,7 +114,6 @@ Then the main.ts file:
 //##### update first line source of import to:
 import { Chart, Fetcher, defaultTick, intervalsMs, type CandleTick } from '@dmidz/tickschart';
 import './style.css';
-import { ref } from 'vue';
 
 //__
 //##### update this line with your local public sample data URL:
@@ -128,7 +127,7 @@ const timeScaleMs = h1 * 4;
 const ticksPerLoad = 500;
 const rangeLoadMs = ticksPerLoad * timeScaleMs;
 const xOriginRatio = .75;
-const currentTime = ref( new Date( Date.UTC( 2023, 9, 10 ) ) );
+const currentTime = new Date( Date.UTC( 2023, 9, 10 ) );
 
 //__
 // instanciate a fetcher helper which role is to fetch ticks from your api with time range
@@ -222,7 +221,7 @@ chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' 
 // finally init display at the time you wish, originRatio is the displacement of time wanted along the screen width
 // ex: time now + .75 will scroll to place now time at 3/4 screen width from left
 // ex: time now + 0 will scroll to place now time at screen left
-chart.setX( currentTime.value.getTime(), { render: true, xOriginRatio } );
+chart.setX( currentTime.getTime(), { render: true, xOriginRatio } );
 
 ```
 

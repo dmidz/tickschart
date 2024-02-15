@@ -1,3 +1,12 @@
+## [0.0.14](https://github.com/dmidz/tickschart/compare/v0.0.13...v0.0.14) (2024-02-15)
+
+
+### Bug Fixes
+
+* **demo:** remove vue usage from vanilla-js & vanilla-ts ([d0af24d](https://github.com/dmidz/tickschart/commit/d0af24dbf06defd7def86ea05287bcc16ed12ed3))
+
+
+
 ## [0.0.13](https://github.com/dmidz/tickschart/compare/v0.0.12...v0.0.13) (2024-02-15)
 
 

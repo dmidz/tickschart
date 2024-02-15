@@ -234,8 +234,8 @@ export default class Chart {
 				break;
 			}
 			case 'layer': {
-				this.layers.push( indicator );
 				indicator.setContext( this.getTick, this.ctxTicks, this.scalingY );
+				this.layers.push( indicator );
 				break;
 			}
 			default: break;
@@ -293,10 +293,10 @@ export default class Chart {
 	
 	getTick = ( index: number, delta = 0 ) => {
 		const _index = index - delta * this.tickStep;
-		const indexMax = this.options.tickIndexMax();
-		if ( indexMax !== null && _index > indexMax ){
-			return defaultTick;
-		}
+		// const indexMax = this.options.tickIndexMax();
+		// if ( indexMax !== null && _index > indexMax ){
+		// 	return defaultTick;
+		// }
 		return this._getTick( _index );
 	}
 
@@ -482,22 +482,26 @@ export default class Chart {
 		if( xEnd < this.xStart || xStart > this.xEnd ){ return;}
 		const _xStart = Math.max( xStart, this.xStart );
 		let _xEnd = Math.min( xEnd, this.xEnd );
-		
+
 		const xPx = this.scalingX.scaleTo( _xStart );
-		let wPx = ( _xEnd-_xStart ) / this.scalingX.distIn * this.scalingX.distOut;
+		const wPx = ( _xEnd-_xStart ) / this.scalingX.distIn * this.scalingX.distOut;
+		this.clearRect( xPx, wPx );
+		this.chartRows.forEach( ( row ) => {
+			row.clearRect( xPx, wPx );
+		} );
+
 
 		// console.log( 'render', { xStart, _xStart, xEnd, _xEnd, xPx, wPx,
 		// 	scaleXMin: this.scalingX.scaleIn.min, scaleXMax: this.scalingX.scaleIn.max, distIn: this.scalingX.distIn } );
 
-		if ( this.maxDisplayX ){
-			_xEnd = this.maxDisplayX;
-			wPx = this.width - xPx;
-		}
 
-		this.clearRect( xPx, wPx );
-		this.chartRows.forEach( (row ) => {
-			row.clearRect( xPx, wPx );
-		} );
+		//__ TODO: remove maxDisplayX, replaced by tickIndexMax() ( Player should use the latter )
+		if ( this.maxDisplayX ){
+			_xEnd = Math.min( _xEnd, this.maxDisplayX );
+		}
+		if( this.options.tickIndexMax ){
+			_xEnd = Math.min( _xEnd, this.options.tickIndexMax() );
+		}
 
 		// console.log( '//_________ render', { _xStart: new Date( _xStart ).toUTCString(), xStart: new Date( xStart ).toUTCString(), thisxStart: new Date( this.xStart ).toUTCString() } );
 		let tick: ReturnType<GetTick>;

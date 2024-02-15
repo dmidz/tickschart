@@ -44,13 +44,13 @@ export default class Volume extends Base<Required<Options>, Computed> {
 				fillColor: '#444444',
 			},
 			maStyle: {
-				color: '#ffffff'
+				color: '#ffffff66'
 			},
 			flipped: true,
 			flipMaLength: 7,
 			flippedStyle: {
-				up: { color: '#4dffc3' },//'#00ff00',
-				down: { color: '#ff00cb' },//'#ff0000',
+				up: { color: '#00d28d' },//'#00ff00',
+				down: { color: '#ff4040' },//'#ff0000',
 			},
 		};
 		
@@ -74,12 +74,19 @@ export default class Volume extends Base<Required<Options>, Computed> {
 	
 	computeSetup(){
 		/*__ credit to https://fr.tradingview.com/u/moluv/
-				this is a JS adaptation of his script "MW Volume Impulse" at https://fr.tradingview.com/script/c8A2cQb7-MW-Volume-Impulse/ */
+				JS adaptation of his script "MW Volume Impulse" at https://fr.tradingview.com/script/c8A2cQb7-MW-Volume-Impulse/ */
+		
 		const mapBuySellVol: Map<number,{buy:number,sell:number}> = new Map();
 		const buySellVol = ( index: number, prevValue?: number ) => {
 			let bs = mapBuySellVol.get( index );
 			if( !bs ){
 				const tick = this.getTick( index );
+				if( tick._default ){
+					return {
+						buy: 0,
+						sell: 0,
+					}
+				}
 				const isUp = +tick.close >= +tick.open;
 				const upperWick = isUp ? ( +tick.high - +tick.close ) : ( +tick.high - +tick.open );
 				const lowerWick = isUp ? ( +tick.open - +tick.low ) : ( +tick.close - +tick.low );
@@ -101,10 +108,10 @@ export default class Volume extends Base<Required<Options>, Computed> {
 		
 		return {
 			buyVol: ( index: number, prevValue?: number ) => buySellVol( index, prevValue ).buy,
-			buyVolEma: this.lib.ema('buyVol', 14 ),
+			buyVolEma: this.lib.ema('buyVol', this.options.maLength ),
 			sellVol: ( index: number, prevValue?: number ) => buySellVol( index, prevValue ).sell,
-			sellVolEma: this.lib.ema('sellVol', 14 ),
-			volDelta: ( index: number, prevValue?: number ) =>
+			sellVolEma: this.lib.ema('sellVol', this.options.maLength ),
+			volDelta: ( index: number, prevValue?: number ) => 
 				this.computed( index, 'buyVolEma' ) - this.computed( index, 'sellVolEma' ),
 			volDeltaMa: this.lib.ema('volDelta', this.options.maLength ),
 			cvdDelta: ( index: number, prevValue?: number ) => 

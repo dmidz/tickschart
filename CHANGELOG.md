@@ -1,3 +1,12 @@
+## [0.0.13](https://github.com/dmidz/tickschart/compare/v0.0.12...v0.0.13) (2024-02-15)
+
+
+### Bug Fixes
+
+* **dx:** move vue dep in devDependencies ([3967fc9](https://github.com/dmidz/tickschart/commit/3967fc98ef33e5ec5a5dbe15e9ec5caa3ed6b2be))
+
+
+
 ## [0.0.12](https://github.com/dmidz/tickschart/compare/v0.0.11...v0.0.12) (2024-02-15)
 
 

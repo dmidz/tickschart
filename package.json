@@ -1,6 +1,6 @@
 {
   "name": "@dmidz/tickschart",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "author": "David MARTIN",
   "description": "Js Interactive Ticks Chart",
   "license": "GPLv3",
@@ -23,8 +23,7 @@
     "release": "node scripts/release.js",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.11.7",
     "@vitejs/plugin-vue": "^4.5.2",

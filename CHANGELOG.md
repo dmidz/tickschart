@@ -1,3 +1,12 @@
+## [0.0.12](https://github.com/dmidz/tickschart/compare/v0.0.11...v0.0.12) (2024-02-15)
+
+
+### Features
+
+* **indicator:** [TC-15] new complex indicator VolumeImpulse ([#9](https://github.com/dmidz/tickschart/issues/9)) ([1f0f52d](https://github.com/dmidz/tickschart/commit/1f0f52dbe2f5c5aad94d62116a7cedf3cdff08df))
+
+
+
 ## [0.0.11](https://github.com/dmidz/tickschart/compare/v0.0.9...v0.0.11) (2024-02-12)
 
 

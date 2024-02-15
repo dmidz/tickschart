@@ -40,7 +40,7 @@ Install package
 
 ## Usage
 ### Vanilla TS
-You can check and copy this example [demo/vanilla-ts](https://github.com/dmidz/tickschart/tree/develop/demo/vanilla-ts).
+Check and copy this example [demo/vanilla-ts](https://github.com/dmidz/tickschart/tree/develop/demo/vanilla-ts).
 
 Also download a copy of [the 500 ticks sample data file](https://github.com/dmidz/tickschart/blob/develop/public/data/ticks_BTC_4h/1692000000000.json)
 into your local public directory such `~/my-project/public/data/1692000000000.json`
@@ -234,8 +234,10 @@ Once running correctly, you can start customizing, for ex the fetch so it binds 
 
 
 ### Vanilla JS
-( Same than Vanilla TS, use js file and remove TS parts )
 
-// TODO: demo/vanilla-js
+Check and copy this example [demo/vanilla-js](https://github.com/dmidz/tickschart/tree/develop/demo/vanilla-js).
 
+Also download a copy of [the 500 ticks sample data file](https://github.com/dmidz/tickschart/blob/develop/public/data/ticks_BTC_4h/1692000000000.json)
+into your local public directory such `~/my-project/public/data/1692000000000.json`
 
+Serve the html page, you should see a chart with BTC H4 ticks.

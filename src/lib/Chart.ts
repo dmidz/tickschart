@@ -610,19 +610,11 @@ export default class Chart {
 		requestAnimationFrame( this.update );
 	}
 
+	private wheelEvent: WheelEvent | null = null;
 	private onMouseWheel = ( event: WheelEvent ) => {
-		if ( !this.options.wheelScroll ){
-			return;
-		}
 		event.preventDefault();
-		const scale = { ...this.scalingX.scaleIn };
-		const dx = event.deltaX * this.tickStep * .5;
-		scale.min += dx;
-		scale.max += dx;
-		const dy = event.deltaY * this.scalingX.distIn * .0001;
-		scale.min -= dy;
-		scale.max += dy;
-		this.setScaleX( scale );
+		this.wheelEvent = event;
+		requestAnimationFrame( this.update );
 	}
 
 	private onKeyDown = ( event: KeyboardEvent ) => {
@@ -672,9 +664,7 @@ export default class Chart {
 			if ( this.resizeCanvas() ){
 				render = true;
 			}
-		}
-
-		if ( this.moveEvent ){
+		}else if ( this.moveEvent ){
 			const event = this.moveEvent;
 			this.moveEvent = null;
 
@@ -685,7 +675,7 @@ export default class Chart {
 				if ( !this.maxDisplayX || x < this.maxDisplayX ){
 					Object.keys( this.infosLabels ).forEach( key => {
 						const kv = `info-${ key }-value`;
-						this.elements[ kv ].innerText = `${ +tick[ key as keyof CandleTick ] }`;
+						this.elements[ kv ].innerText = `${ +tick[ key ] }`;
 					} );
 					this.elements.infos.style.display = 'flex';
 				} else {
@@ -753,7 +743,17 @@ export default class Chart {
 					this.translateX( vx );
 				}
 			}
-
+		}else if( this.wheelEvent ){
+			const scale = { ...this.scalingX.scaleIn };
+			const dx = this.wheelEvent.deltaX * this.scalingX.distIn * .001;
+			scale.min += dx;
+			scale.max += dx;
+			const dy = this.wheelEvent.deltaY * this.scalingX.distIn * .0001;
+			scale.min -= dy;
+			scale.max += dy;
+			this.setScaleX( scale, { render: false } );
+			this.wheelEvent = null;
+			render = true;
 		}
 
 		if ( render ){

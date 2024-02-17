@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 
-import { Chart, Fetcher, defaultTick, intervalsMs, type CandleTick } from '@/lib';
-
-type DataTick = Record<string, CandleTick>
+import { Chart, Fetcher, intervalsMs } from '@/lib';
 
 //____
+const defaultTick = { _default: true, time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 };
+type Tick = typeof defaultTick;
+type DataTick = Record<string, Tick>;
+
 const { m1, h1, d1 } = intervalsMs;
 const timeScaleMs = h1 * 4;
 const ticksPerLoad = 500;
 const xOriginRatio = .75;
 const currentTime = ref( new Date() );
-// const currentTime = ref( new Date( Date.UTC( 2023, 11, 15 ) ) );
-// const currentTime = ref( new Date( Date.UTC( 2024, 1, 15 ) ) );
-// const currentTime = ref( new Date( Date.UTC( 2023, 8,29 ) ) );
 
 const refChartWrapper = ref<HTMLElement>();
 const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, {
@@ -25,9 +24,9 @@ const sampleTimeStart = 1692000000000;
 const sampleTicksURL = `${ window.location.origin }/data/ticks_BTC_4h/${ sampleTimeStart}.json`;
 let sampleTicks: DataTick | null = null;
 
-let chart: Chart;
+let chart: Chart<Tick>;
 
-const fetcher = new Fetcher<CandleTick, DataTick>( defaultTick, async ( startTime, limit ) => {
+const fetcher = new Fetcher<typeof defaultTick, DataTick>( defaultTick, async ( startTime, limit ) => {
 	/*__ this example uses a unique local json file ( 500 ticks ) served in dev mode, replace this by an API call
 	 with passed params such startTime & limit + other such symbol & timeScale string ( 15m / 4h / d1... ) */
 
@@ -77,6 +76,7 @@ onMounted( async () => {
 					we can bypass it to always return a tick from the file ( 1692000000000 ) time range */
 		return fetcher.getMapTicks( index )?.[ sampleTimeStart + index % rangeLoadMs ] || defaultTick;
 	}, {
+		tickPropMap: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'vol' },
 		onScalingXChange: async ( scalingX ) => {
 			if( !init ){  return;}//__ avoid any fetch during initialization
 			const fetches = fetcher.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max );
@@ -106,7 +106,7 @@ onMounted( async () => {
 		// }
 	} );
 	
-	// chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 'sma' } );
+	// chart.addIndicator( 'Volume', 'row', { maLength: 14, maType: 'sma' } );
 	chart.addIndicator( 'VolumeImpulse', 'row', { maLength: 14, maType: 'sma' } );
 	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
 	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );

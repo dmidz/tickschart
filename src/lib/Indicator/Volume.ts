@@ -4,7 +4,6 @@ import Base, { type BaseOptions, type BarStyle, type LineStyle } from './Base.ts
 
 //__ contract of constructor arg options
 export type Options = {
-	maProperty: Parameters<Base<BaseOptions, Computed>['computed']>[1],
 	maType?: 'sma' | 'ema' | false,
 	maLength?: number,
 	styleBars?: BarStyle,
@@ -41,7 +40,7 @@ export default class Volume extends Base<Required<Options>, Computed> {
 	}
 	
 	draw(){
-		this.plotBar( this.options.maProperty, this.options.styleBars );
+		this.plotBar( 'volume', this.options.styleBars );
 		//__ sma / ema
 		if ( this.options.maType ){
 			this.plot( 'ma', this.options.styleMa );
@@ -50,7 +49,7 @@ export default class Volume extends Base<Required<Options>, Computed> {
 	
 	computeSetup(){
 		return {
-			ma: this.lib[this.options.maType||'sma']( this.options.maProperty, this.options.maLength, true ),
+			ma: this.lib[this.options.maType||'sma']( 'volume', this.options.maLength, true ),
 		};
 	}
 	
@@ -59,7 +58,7 @@ export default class Volume extends Base<Required<Options>, Computed> {
 	}
 
 	getMaxY( index: number ): number {
-		return this.computed( index, this.options.maProperty );
+		return this.computed( index, 'volume' );
 	}
 }
 

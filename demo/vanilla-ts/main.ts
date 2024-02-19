@@ -13,8 +13,8 @@ const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 } as c
 // Chart works with 5 minimal tick properties: open, high, low, close & volume, if your API returns different format,
 // adapt the map below to match these properties to your tick properties
 const mapTickProps = { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'vol' } as const;
-const sampleTimeStart = 1692000000000;
 // ! adapt this path to your public sample path ( native fetch needs absolute URL )
+const sampleTimeStart = 1692000000000;
 const sampleTicksURL = `${ window.location.origin }/data/ticks_BTC_4h/${ sampleTimeStart }.json`;
 const ticksPerLoad = 500;// should match the ticks count per fetch
 const timeScaleMs = h1 * 4;// should match time scale of fetched data ( here 4h )
@@ -106,4 +106,4 @@ chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma'
 chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00' } } );
 chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 
-chart.setX( currentTime.getTime(), { render: true, xOriginRatio } );
+chart.setX( currentTime.getTime(), { xOriginRatio } );

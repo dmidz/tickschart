@@ -119,7 +119,7 @@ onMounted( async () => {
 	
 	//__ can now apply the initial time & render
 	init = true;
-	chart.setX( currentTime.getTime(), { render: true, xOriginRatio } );
+	chart.setX( currentTime.getTime(), { xOriginRatio } );
 	
 });
 

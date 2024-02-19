@@ -3,9 +3,9 @@ export { default as Fetcher } from './Fetcher.ts';
 
 export type TickProp = 'open' | 'high' | 'low' | 'close' | 'volume';
 
-export type AbstractTick = ObjKeyStr & { _default?: boolean };
+export type AbstractTick = ObjKeyStr;
 
-export const defaultTick = { _default: true, time: 0, open: 0, high: 0, low: 0, close: 0, volume: 0 };
+export const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, volume: 0 };
 
 export type CandleTick = typeof defaultTick;
 

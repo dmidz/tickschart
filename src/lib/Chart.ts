@@ -40,7 +40,7 @@ export type Options<Tick extends AbstractTick> = {
 		buttonGoMaxX?: boolean | HTMLElement,
 	},
 	chartRow: ChartRowOptions,
-	tickPropMap: { [key in TickProp]: keyof Tick},
+	mapTickProps: { [key in TickProp]: keyof Tick},
 }
 
 export default class Chart<Tick extends AbstractTick = CandleTick> {
@@ -84,7 +84,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			buttonGoMaxX: true,
 		},
 		chartRow: {},
-		tickPropMap: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
+		mapTickProps: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
 	};
 
 	private elements: Record<string,HTMLElement> = {};
@@ -454,10 +454,10 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 
 		while( t <= xEnd ){
 			tick = this.getTick( t );
-			if( !tick._default ){
+			// if( !tick._default ){
 				min = Math.min( min, +this.tickValue(tick,'low') );
 				max = Math.max( max, +this.tickValue(tick,'high') );
-			}
+			// }
 			t += this.tickStep;
 		}
 
@@ -507,7 +507,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		let x = _xStart;
 		while ( x <= _xEnd ){
 			tick = this.getTick( x );
-			if( !tick._default ){
+			// if( !tick._default ){
 				xPos = this.scalingX.scaleTo( x );
 				this.layers.forEach( indicator => {
 					indicator.drawTick( xPos, this.tickWidth, x );
@@ -516,7 +516,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 				this.chartRows.forEach( row => {
 					row.getIndicator().drawTick( xPos, this.tickWidth, x );
 				} );
-			}
+			// }
 			x += this.tickStep;
 		}
 	}
@@ -551,12 +551,11 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	}
 	
 	tickValue( tick: Tick, prop: TickProp ) {
-		return tick[ this.options.tickPropMap[ prop ] ];
+		return tick[ this.options.mapTickProps[ prop ] ];
 	}
 
 	tickIndexValue = ( index: number, prop: TickProp, delta = 0 ) => {
-		// console.log( 'tickValue', index, prop, this.getTick( index, delta )[ this.options.tickPropMap[ prop ] ] );
-		return this.getTick( index, delta )[ this.options.tickPropMap[ prop ] ];
+		return this.tickValue( this.getTick( index, delta ), prop );
 	}
 
 	private mouseMoveListeners: ( ( x: number, y: number, xOut: number, event: MouseEvent ) => void )[] = [];

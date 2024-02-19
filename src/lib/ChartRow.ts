@@ -93,9 +93,6 @@ export default class ChartRow {
 	}
 
 	setViewXMinMax( min: number, max: number, opts = {} ){
-		// const tick = this.getTick( min );
-		// this.validXMinMax = !!min && !!tick && !tick._default;
-		// if( !this.validXMinMax ){ return;}
 		this.indicator.setViewXMinMax( min, max, opts );
 		this.autoScaleY();
 	}
@@ -125,7 +122,6 @@ export default class ChartRow {
 			this.uiScaleY.setScaleIn( scale );
 		}
 
-		// console.log( 'scaleY', scale, this.scalingY );
 		return this;
 	}
 

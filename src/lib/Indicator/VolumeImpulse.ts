@@ -8,7 +8,6 @@ export type Options = {
 	maType?: 'sma' | 'ema' | false,
 	maLength?: number,
 	maStyle?: LineStyle,
-	flipped?: boolean,
 	flipMaLength?: 7,
 	flippedStyle?: {
 		up: LineStyle,
@@ -46,7 +45,6 @@ export default class Volume extends Base<Required<Options>, Computed> {
 			maStyle: {
 				color: '#ffffff66'
 			},
-			flipped: true,
 			flipMaLength: 7,
 			flippedStyle: {
 				up: { color: '#00d28d' },//'#00ff00',
@@ -64,7 +62,7 @@ export default class Volume extends Base<Required<Options>, Computed> {
 		if ( this.options.maType ){
 			this.plot( 'volDeltaMa', this.options.maStyle );
 		}
-		if( this.options.flipped ){
+		if( this.options.flipMaLength ){
 			const flipped = this.computed( index, 'flipped' );
 			if( flipped ){
 				this.plotCircle( 'cvdDelta', this.options.flippedStyle[ flipped > 0 ? 'up' : 'down' ] );
@@ -80,23 +78,27 @@ export default class Volume extends Base<Required<Options>, Computed> {
 		const buySellVol = ( index: number, prevValue?: number ) => {
 			let bs = mapBuySellVol.get( index );
 			if( !bs ){
-				const tick = this.getTick( index );
-				if( tick._default ){
+				const close = this.computed( index, 'close' );
+				if( !close ){
 					return {
 						buy: 0,
 						sell: 0,
 					}
 				}
-				const isUp = +tick.close >= +tick.open;
-				const upperWick = isUp ? ( +tick.high - +tick.close ) : ( +tick.high - +tick.open );
-				const lowerWick = isUp ? ( +tick.open - +tick.low ) : ( +tick.close - +tick.low );
-				const spread = +tick.high - +tick.low;
+				const high = this.computed( index, 'high' );
+				const open = this.computed( index, 'open' );
+				const low = this.computed( index, 'low' );
+				const vol = this.computed( index, 'volume' );
+				const isUp = close >= open;
+				const upperWick = isUp ? ( high - close ) : ( high - open );
+				const lowerWick = isUp ? ( open - low ) : ( close - low );
+				const spread = high - low;
 				const body = spread - ( upperWick + lowerWick );
 				const upperWickRatio = upperWick / spread;
 				const lowerWickRatio = lowerWick / spread;
 				const bodyRatio = body / spread;
-				const vol1 = ( bodyRatio + ( upperWickRatio + lowerWickRatio ) / 2 ) * +tick.vol;
-				const vol2 = ( upperWickRatio + lowerWickRatio ) / 2 * +tick.vol;
+				const vol1 = ( bodyRatio + ( upperWickRatio + lowerWickRatio ) / 2 ) * vol;
+				const vol2 = ( upperWickRatio + lowerWickRatio ) / 2 * vol;
 				bs = {
 					buy: isUp ? vol1 : vol2,
 					sell: isUp ? vol2 : vol1,
@@ -120,7 +122,6 @@ export default class Volume extends Base<Required<Options>, Computed> {
 			// __ TODO: fix typescript accepting keys other than Computed keys
 			flipped: ( index: number, prevValue?: number ) => {
 				const cvdDelta = this.computed( index, 'cvdDelta' );
-				// console.log( 'cvd delta', cvdDelta );
 				const cvdDelta1 = this.computed( index, 'cvdDelta', 1 );
 				const flippedUp = cvdDelta > 0 && cvdDelta1 < 0;
 				let flippedDown = false;
@@ -130,19 +131,24 @@ export default class Volume extends Base<Required<Options>, Computed> {
 				if( !flippedUp && !flippedDown ){
 					return 0;
 				}
-				
-				if( this.options.flipMaLength ){
-					const tick = this.getTick( index );
-					const tick1 = this.getTick( index, 1 );
-					const tick2 = this.getTick( index, 2 );
 
-					if( flippedUp && !( +tick.close > +tick1.open || +tick.close > +tick2.open ) ){	return 0;}
-					if ( flippedDown && !( +tick.close < +tick1.open || +tick.close < +tick2.open ) ){ return 0;}
-					
-					const closeEma = this.computed( index, 'closeEma' );
-					if( flippedUp && !( +tick.close > closeEma ) ){ return 0;}
-					if( flippedDown && !( +tick.close < closeEma ) ){ return 0;}
+				const close = this.computed( index, 'close' );
+				const open1 = this.computed( index, 'open', 1 );
+				const open2 = this.computed( index, 'open', 2 );
 
+				if ( flippedUp && !( close > +open1 || close > open2 ) ){
+					return 0;
+				}
+				if ( flippedDown && !( close < open1 || close < open2 ) ){
+					return 0;
+				}
+
+				const closeEma = this.computed( index, 'closeEma' );
+				if ( flippedUp && !( close > closeEma ) ){
+					return 0;
+				}
+				if ( flippedDown && !( close < closeEma ) ){
+					return 0;
 				}
 				return cvdDelta;
 			},

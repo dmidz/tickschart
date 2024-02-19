@@ -1,21 +1,28 @@
-// ! change this import to @dmidz/tickschart
-import { Chart, Fetcher, defaultTick, intervalsMs } from '../../dist';
+
+import { Chart, Fetcher, intervalsMs } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart/+esm';
 import './style.css';
 
-//__
 const { m1, h1, d1 } = intervalsMs;
 
-//_____ settings
-// ! adapt this to your public sample path
-const sampleTicksURL = `${ window.location.origin }/data/ticks_BTC_4h/1692000000000.json`;
-let sampleTicks = null;
-const timeScaleMs = h1 * 4;
-const ticksPerLoad = 500;
-const rangeLoadMs = ticksPerLoad * timeScaleMs;
-const xOriginRatio = .75;
-const currentTime = new Date( Date.UTC( 2023, 9, 10 ) );
+//_____ main settings
+const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 };//__ define the structure of your ticks
+// Chart works with 5 minimal tick properties: open, high, low, close & volume, if your API returns different format,
+// adapt the map below to match these properties to your tick properties
+const mapTickProps = { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'vol' };
+// ! adapt this path to your public sample path ( native fetch needs absolute URL )
+const sampleTimeStart = 1692000000000;
+const sampleTicksURL = `${ window.location.origin }/data/ticks_BTC_4h/${ sampleTimeStart }.json`;
+const ticksPerLoad = 500;// should match the ticks count per fetch
+const timeScaleMs = h1 * 4;// should match time scale of fetched data ( here 4h )
+const currentTime = new Date( Date.UTC( 2023, 9, 10 ) );// initial time position
+const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 
+const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, {
+	timeZone: 'UTC',
+	weekday: 'short', year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+} );
 
 //__
+let sampleTicks = null;
 const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 	/*__ this example uses a unique local json file ( 500 ticks ) served in dev mode, replace this by an API call
 	 with passed params such startTime & limit + other such symbol & timeScale string ( 15m / 4h / d1... ) */
@@ -58,16 +65,13 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 } );
 
 //__
-const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, {
-	timeZone: 'UTC',
-	weekday: 'short', year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-} );
-
+const rangeLoadMs = ticksPerLoad * timeScaleMs;
 const chart = new Chart( document.getElementById('chart'), timeScaleMs, ( index ) => {
 	/*__ one would normally pass fetcher.getTick directly, but for the only one file sample
 				we can bypass it to always return a tick from the file ( 1692000000000 ) time range */
 	return fetcher.getMapTicks( index )?.[ 1692000000000 + index % rangeLoadMs ] || defaultTick;
 }, {
+	mapTickProps,
 	onScalingXChange: async ( scalingX ) => {
 		// if ( !init ){ return;}//__ avoid any fetch during initialization
 		const fetches = fetcher.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max );
@@ -93,9 +97,9 @@ const chart = new Chart( document.getElementById('chart'), timeScaleMs, ( index 
 	autoScaleY: true,
 } );
 
-chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 'sma' } );
+chart.addIndicator( 'Volume', 'row', { maLength: 14, maType: 'sma' } );
 chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000' } } );
 chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00' } } );
 chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 
-chart.setX( currentTime.getTime(), { render: true, xOriginRatio } );
+chart.setX( currentTime.getTime(), { xOriginRatio } );

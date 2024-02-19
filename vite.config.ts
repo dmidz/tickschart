@@ -11,7 +11,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve( __dirname, 'src' ),
-    }
+      '@dmidz/tickschart': resolve( __dirname, 'dist' ),// trick to compile demo/vanilla-ts using real world package path
+    },
+    // preserveSymlinks: true,
   },
   plugins: [
     vue(),
@@ -41,12 +43,12 @@ export default defineConfig({
     },
   },
   test: {
-    // environment: 'jsdom',
     environment: 'happy-dom',
-    // environmentMatchGlobs: [
-    //   // [ 'jsdom' ],
-    //   [ 'packages/{vue,vue-compat,runtime-dom}/**', 'jsdom' ],
-    // ],    
   },
+  // optimizeDeps: {
+  //   esbuildOptions: {
+  //     tsconfig: 'tsconfig.json'
+  //   }
+  // },
 });
   

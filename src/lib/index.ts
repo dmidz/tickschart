@@ -1,11 +1,15 @@
 export { default as Chart } from './Chart.ts';
 export { default as Fetcher } from './Fetcher.ts';
 
-export const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0, someString: 'hello', _default: true };
+export type TickProp = 'open' | 'high' | 'low' | 'close' | 'volume';
+
+export type AbstractTick = ObjKeyStr;
+
+export const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, volume: 0 };
 
 export type CandleTick = typeof defaultTick;
 
-export type GetTick<Tick extends object = CandleTick> = ( i: number, delta?: number ) => Tick;
+export type GetTick<Tick extends AbstractTick = CandleTick> = ( i: number, delta?: number ) => Tick;
 
 export type ElementRect = HTMLElement & { rect?: ReturnType<Element['getBoundingClientRect']> };
 

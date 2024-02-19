@@ -3,12 +3,12 @@ import merge from './utils/merge.ts';
 import { ScalingLinear, type Scale, type ScalingLinearOptions } from './utils/math.ts';
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
 import { addListenerFactory, removeListenerFactory, createElement, resizeCanvas, sharpCanvasValue,
-	type CandleTick, type GetTick, type ElementRect } from './index.ts';
+	type CandleTick, type GetTick, type ElementRect, type TickProp, type AbstractTick } from './index.ts';
 import indicators, { type List, type Indicator } from './Indicator/index.ts';
 import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
 
 //______
-export type Options = {
+export type Options<Tick extends AbstractTick> = {
 	tickWidth: number,
 	canvas: {
 		imageSmoothingEnabled: boolean,
@@ -40,13 +40,14 @@ export type Options = {
 		buttonGoMaxX?: boolean | HTMLElement,
 	},
 	chartRow: ChartRowOptions,
+	mapTickProps: { [key in TickProp]: keyof Tick},
 }
 
-export default class Chart {
+export default class Chart<Tick extends AbstractTick = CandleTick> {
 
 	private parentElement: HTMLElement;
-	private _getTick: GetTick;
-	private options: Options = {
+	private _getTick: GetTick<Tick>;
+	private options: Options<Tick> = {
 		tickWidth: 4,
 		canvas: {
 			imageSmoothingEnabled: false,
@@ -83,6 +84,7 @@ export default class Chart {
 			buttonGoMaxX: true,
 		},
 		chartRow: {},
+		mapTickProps: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
 	};
 
 	private elements: Record<string,HTMLElement> = {};
@@ -101,7 +103,7 @@ export default class Chart {
 	private drag = false;
 	private cx = 1;
 	private cy = 1;
-	private infosLabels: { [p in keyof CandleTick]?: string } = { open: 'O', high: 'H', low: 'L', close: 'C', vol: 'Vol' };
+	private infosLabels = { open: 'O', high: 'H', low: 'L', close: 'C', vol: 'Vol' } as const;
 	private mouseOverChart = false;
 	private resizing = false;
 	private enabledCrossHair = true;
@@ -116,8 +118,8 @@ export default class Chart {
 
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
-								getTick: GetTick,
-								options: Partial<Options> = {} ){
+								getTick: GetTick<Tick>,
+								options: Partial<Options<Tick>> = {} ){
 		
 		if( !parentElement ){
 			throw new Error('parentElement must be a valid HTMLElement');
@@ -191,7 +193,9 @@ export default class Chart {
 		this.mouseMoveElement.tabIndex = 0;
 		this.mouseMoveElement.addEventListener( 'mousedown', this.onMouseDown );
 		this.mouseMoveElement.addEventListener( 'keydown', this.onKeyDown );
-		this.mouseMoveElement.addEventListener( 'wheel', this.onMouseWheel );
+		if( this.options.wheelScroll ){
+			this.mouseMoveElement.addEventListener( 'wheel', this.onMouseWheel );
+		}
 		document.addEventListener( 'mouseup', this.onMouseUp );
 		document.addEventListener( 'mousemove', this.onMouseMove );
 		window.addEventListener('resize', this.onResize );
@@ -202,20 +206,18 @@ export default class Chart {
 	}
 
 	addIndicator<K extends keyof List> ( type: K, mode: 'layer'|'row' = 'row',
-		...params: ConstructorParameters<List[K]>/*options?: IOptions<K>*/ ){
-		// console.log('params', params );
+		...params: ConstructorParameters<List[K]> ){
 		// @ts-ignore
 		const indicator = new indicators[ type ]( ...params );
 		indicator.setTickStep( this.tickStep );
 		
 		switch( mode ){
 			case 'row': {
-				const row = new ChartRow( this.chartRows.length, indicator, this.getTick, this.elements.main,
+				const row = new ChartRow( this.chartRows.length, indicator, this.tickIndexValue, this.elements.main,
 					( scaling, row ) => {
 						this.render( undefined, undefined, row );
 					},
 					{
-						// height: 240,
 						...this.options.chartRow,
 						onMouseEnter: ( event, chartRow ) => {
 							this.mouseIndicator = chartRow;
@@ -234,7 +236,7 @@ export default class Chart {
 				break;
 			}
 			case 'layer': {
-				indicator.setContext( this.getTick, this.ctxTicks, this.scalingY );
+				indicator.setContext( this.tickIndexValue, this.ctxTicks, this.scalingY );
 				this.layers.push( indicator );
 				break;
 			}
@@ -293,10 +295,6 @@ export default class Chart {
 	
 	getTick = ( index: number, delta = 0 ) => {
 		const _index = index - delta * this.tickStep;
-		// const indexMax = this.options.tickIndexMax();
-		// if ( indexMax !== null && _index > indexMax ){
-		// 	return defaultTick;
-		// }
 		return this._getTick( _index );
 	}
 
@@ -448,7 +446,7 @@ export default class Chart {
 		let min: number = Infinity;
 		let max: number = -Infinity;
 		let t = this.xStart;
-		let tick: ReturnType<GetTick>;
+		let tick: ReturnType<GetTick<Tick>>;
 		let xEnd = this.xEnd;
 		if ( this.options.tickIndexMax ){
 			xEnd = Math.min( this.xEnd, this.options.tickIndexMax() );
@@ -456,10 +454,10 @@ export default class Chart {
 
 		while( t <= xEnd ){
 			tick = this.getTick( t );
-			if( !tick._default ){
-				min = Math.min( min, +tick.low );
-				max = Math.max( max, +tick.high );
-			}
+			// if( !tick._default ){
+				min = Math.min( min, +this.tickValue(tick,'low') );
+				max = Math.max( max, +this.tickValue(tick,'high') );
+			// }
 			t += this.tickStep;
 		}
 
@@ -473,7 +471,7 @@ export default class Chart {
 	}
 
 	//__
-	setCanvasOptions( options: Options['canvas'] ){
+	setCanvasOptions( options: Options<Tick>['canvas'] ){
 		// console.log('setCanvasOptions', options );
 		Object.assign( this.ctxTicks, options );
 	}
@@ -504,21 +502,21 @@ export default class Chart {
 		}
 
 		// console.log( '//_________ render', { _xStart: new Date( _xStart ).toUTCString(), xStart: new Date( xStart ).toUTCString(), thisxStart: new Date( this.xStart ).toUTCString() } );
-		let tick: ReturnType<GetTick>;
+		let tick: ReturnType<GetTick<Tick>>;
 		let xPos: number;
 		let x = _xStart;
 		while ( x <= _xEnd ){
 			tick = this.getTick( x );
-			if( !tick._default ){
+			// if( !tick._default ){
 				xPos = this.scalingX.scaleTo( x );
 				this.layers.forEach( indicator => {
-					indicator.drawTick( tick, xPos, this.tickWidth, x );
+					indicator.drawTick( xPos, this.tickWidth, x );
 				});
 				this.drawTick( tick, xPos, this.tickWidth, x );
 				this.chartRows.forEach( row => {
-					row.getIndicator().drawTick( tick, xPos, this.tickWidth, x );
+					row.getIndicator().drawTick( xPos, this.tickWidth, x );
 				} );
-			}
+			// }
 			x += this.tickStep;
 		}
 	}
@@ -527,10 +525,10 @@ export default class Chart {
 		this.ctxTicks.clearRect( x, 0, w, this.canvas.height );
 	}
 
-	drawTick( tick: CandleTick, x: number, width: number, index: number, debug = false ){
+	drawTick( tick: Tick, x: number, width: number, index: number, debug = false ){
 		
 		const ctx = this.ctxTicks;
-		const isDown = +tick.close < +tick.open;
+		const isDown = +this.tickValue( tick,'close' ) < +this.tickValue( tick, 'open' );
 		const col = isDown ? this.options.candle.color.down : this.options.candle.color.up;
 		
 		//__ wick
@@ -538,18 +536,26 @@ export default class Chart {
 		ctx.beginPath();
 		const xWick = sharpCanvasValue( x + this.tickWidthHalf, .5 );//__ canvas 1px line need .5 pos
 
-		ctx.moveTo( xWick, this.scalingY.scaleTo( tick.high ) );
-		ctx.lineTo( xWick, this.scalingY.scaleTo( tick.low ) );
+		ctx.moveTo( xWick, this.scalingY.scaleTo( this.tickValue( tick, 'high' ) ) );
+		ctx.lineTo( xWick, this.scalingY.scaleTo( this.tickValue( tick, 'low' ) ) );
 		ctx.stroke();
 		
 		//__ body
 		ctx.fillStyle = col;
-		const yOpen = this.scalingY.scaleTo( tick.open );
-		const yClose = this.scalingY.scaleTo( tick.close );
+		const yOpen = this.scalingY.scaleTo( this.tickValue(tick, 'open') );
+		const yClose = this.scalingY.scaleTo( this.tickValue( tick, 'close' ) );
 		const xBody = sharpCanvasValue( x );
 		ctx.fillRect( xBody, isDown ? yOpen : yClose, width, Math.max( 1, Math.abs( yClose - yOpen ) ) );
 
 		// debug && console.log( 'drawTick', { isDown, xWick, xBody }, tick );
+	}
+	
+	tickValue( tick: Tick, prop: TickProp ) {
+		return tick[ this.options.mapTickProps[ prop ] ];
+	}
+
+	tickIndexValue = ( index: number, prop: TickProp, delta = 0 ) => {
+		return this.tickValue( this.getTick( index, delta ), prop );
 	}
 
 	private mouseMoveListeners: ( ( x: number, y: number, xOut: number, event: MouseEvent ) => void )[] = [];
@@ -610,23 +616,16 @@ export default class Chart {
 		requestAnimationFrame( this.update );
 	}
 
+	private wheelEvent: WheelEvent | null = null;
 	private onMouseWheel = ( event: WheelEvent ) => {
-		if ( !this.options.wheelScroll ){
-			return;
-		}
 		event.preventDefault();
-		const scale = { ...this.scalingX.scaleIn };
-		const dx = event.deltaX * this.tickStep * .5;
-		scale.min += dx;
-		scale.max += dx;
-		const dy = event.deltaY * this.scalingX.distIn * .0001;
-		scale.min -= dy;
-		scale.max += dy;
-		this.setScaleX( scale );
+		this.wheelEvent = event;
+		requestAnimationFrame( this.update );
 	}
 
 	private onKeyDown = ( event: KeyboardEvent ) => {
 		// console.log('onKeyDown', event.keyCode, event );
+		//__ TODO: use requestAnimationFrame + refacto all move events with vx / vy + fix autoScale false when !!vy
 		let v = this.options.keyboard.vx;
 		if ( event.shiftKey ){
 			v *= 10;
@@ -672,9 +671,7 @@ export default class Chart {
 			if ( this.resizeCanvas() ){
 				render = true;
 			}
-		}
-
-		if ( this.moveEvent ){
+		}else if ( this.moveEvent ){
 			const event = this.moveEvent;
 			this.moveEvent = null;
 
@@ -685,7 +682,7 @@ export default class Chart {
 				if ( !this.maxDisplayX || x < this.maxDisplayX ){
 					Object.keys( this.infosLabels ).forEach( key => {
 						const kv = `info-${ key }-value`;
-						this.elements[ kv ].innerText = `${ +tick[ key as keyof CandleTick ] }`;
+						this.elements[ kv ].innerText = `${ +tick[ key ] }`;
 					} );
 					this.elements.infos.style.display = 'flex';
 				} else {
@@ -753,7 +750,17 @@ export default class Chart {
 					this.translateX( vx );
 				}
 			}
-
+		}else if( this.wheelEvent ){
+			const scale = { ...this.scalingX.scaleIn };
+			const dx = this.wheelEvent.deltaX * this.scalingX.distIn * .001;
+			scale.min += dx;
+			scale.max += dx;
+			const dy = this.wheelEvent.deltaY * this.scalingX.distIn * .0001;
+			scale.min -= dy;
+			scale.max += dy;
+			this.setScaleX( scale, { render: false } );
+			this.wheelEvent = null;
+			render = true;
 		}
 
 		if ( render ){

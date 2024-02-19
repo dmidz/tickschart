@@ -3,7 +3,7 @@ import merge from './utils/merge.ts';
 import { ScalingLinear, type Scale } from './utils/math.ts';
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
 import type { Indicator } from './Indicator/index.ts';
-import { createElement, resizeCanvas, type GetTick, type ElementRect, type CandleTick } from './index';
+import { createElement, resizeCanvas, type ElementRect } from './index';
 
 //______
 export type Options = {
@@ -22,7 +22,7 @@ export type Options = {
 	onMouseDown?: ( event: MouseEvent, emitter: ChartRow ) => void,
 }
 
-export default class ChartRow<Tick extends CandleTick=CandleTick> {
+export default class ChartRow {
 	options: Required<Options> = {
 		height: 100,
 		border: '1px solid #333333',
@@ -41,14 +41,14 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 	private readonly canvas: HTMLCanvasElement;
 	private readonly ctx: CanvasRenderingContext2D;
 	private elements: Map<string,HTMLElement> = new Map();
-	private validXMinMax = false;
+	// private validXMinMax = false;
 	scalingY: ScalingLinear;
 
 	private uiScaleY: UiScale;
 	cy = 1;
 	mouseArea: ElementRect;
 
-	constructor ( private key: string|number, private indicator: Indicator, private getTick: GetTick, 
+	constructor ( private key: string|number, private indicator: Indicator, tickValue: Indicator['tickValue'], 
 								parentElement: HTMLElement,
 								private onScaleY: ( scaling: ScalingLinear, emitter: ChartRow ) => void,
 								options: Options = {} ){
@@ -80,12 +80,12 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 			// labelPrecision: .01,
 		} );
 
-		this.setIndicator( indicator, getTick );
+		this.setIndicator( indicator, tickValue );
 	}
 
-	setIndicator( indicator: ChartRow['indicator'], getTick: GetTick ){
+	setIndicator( indicator: ChartRow['indicator'], tickValue: Indicator['tickValue'] ){
 		this.indicator = indicator;
-		this.indicator.setContext( getTick, this.ctx, this.scalingY );
+		this.indicator.setContext( tickValue, this.ctx, this.scalingY );
 	}
 
 	getIndicator(){
@@ -93,9 +93,6 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 	}
 
 	setViewXMinMax( min: number, max: number, opts = {} ){
-		const tick = this.getTick( min );
-		this.validXMinMax = !!min && !!tick && !tick._default;
-		if( !this.validXMinMax ){ return;}
 		this.indicator.setViewXMinMax( min, max, opts );
 		this.autoScaleY();
 	}
@@ -112,7 +109,7 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 	}
 
 	autoScaleY(){
-		if ( this.options.autoScaleY && this.validXMinMax ){
+		if ( this.options.autoScaleY /*&& this.validXMinMax*/ ){
 			this.setScaleY( this.indicator.getMinMaxY() );
 		}
 		return this;
@@ -125,7 +122,6 @@ export default class ChartRow<Tick extends CandleTick=CandleTick> {
 			this.uiScaleY.setScaleIn( scale );
 		}
 
-		// console.log( 'scaleY', scale, this.scalingY );
 		return this;
 	}
 

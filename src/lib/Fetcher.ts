@@ -13,12 +13,12 @@ export type Options = {
 	debug?: boolean,
 }
 
-export type LoadedTimeRange = { min: number, max: number, [key: string]: any };
+export type LoadedTimeRange = MinMax;
 
 export type FetchTicks<FetchResult> = ( startTime: number, limit: number ) => Promise<FetchResult|null>;
 
 //______
-export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Range extends LoadedTimeRange = LoadedTimeRange> {
+export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Record<string, Tick>> {
 	private options: Required<Options> = {
 		timeScaleMs: 1000 * 60 * 60,
 		ticksPerLoad: 200,
@@ -34,7 +34,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 	private firstSize = 0;
 	private timeoutRelease: ReturnType<typeof setTimeout> | undefined;
 	private mapTicks = new Map<number, FetchResult>();
-	private mapFetches = new Map<number, Promise<Range|null>>();
+	private mapFetches = new Map<number, Promise<LoadedTimeRange|null>>();
 	private mapRefresh = new Map<number,true>;
 	
 	constructor( private defaultTick: Tick, private fetch: FetchTicks<FetchResult>, options: Options = {} ){
@@ -49,10 +49,10 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 		return timeScaleMs;
 	}
 
-	fetchTicks( timeStart: number, timeEnd: number, opts: { prefetch?: boolean } = { prefetch: true } ): Promise<Range|null>[]{
+	fetchTicks( timeStart: number, timeEnd: number, opts: { prefetch?: boolean } = { prefetch: true } ): Promise<LoadedTimeRange|null>[]{
 		const debug = this.options.debug;
 
-		const res: Promise<Range|null>[] = [];
+		const res: Promise<LoadedTimeRange|null>[] = [];
 		if ( timeEnd < timeStart ){
 			console.warn( new Error( 'timeEnd <= timeStart' ) );
 			return res;
@@ -85,7 +85,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick>, Rang
 								const res: LoadedTimeRange = { min: time, max: time + this.timePerLoad };
 								this.options.onLoad( time, this.mapRefresh.get( time ), !opts.prefetch );
 								this.mapRefresh.delete( time );
-								return res as Range;
+								return res;
 							} )
 							.catch( err => {
 								console.warn('Fetch failed', err );

@@ -1,9 +1,7 @@
 
 import { ScalingLinear } from '../utils/math';
-import { defaultTick, type GetTick, type CandleTick as Tick } from '../index';
+import { type TickProp } from '../index';
 import Computation, { type ComputeFunc } from './Computation';
-
-type TK = KeyOfValue<Tick, number>;
 
 //______
 export type BaseOptions = {
@@ -18,18 +16,15 @@ export type LineStyle = {
 	color: string,
 }
 
-const defaultScalingY = new ScalingLinear( { min: 0, max: 10 }, { min: 0, max: 10 } );
-const defaultCanvas = document.createElement( 'canvas' );
-
-export default abstract class Base<Options extends object,
-			Computed extends object,
+export default abstract class Base<Options extends ObjKeyStr,
+			Computed extends ObjKeyStr,
 			CK extends KeyOfString<Computed> = KeyOfString<Computed>,
-			TCK extends TK | CK= TK | CK> {
+			TCK extends TickProp | CK = TickProp | CK> {
 	private compute: { [key in CK]: ComputeFunc };
 	protected options: BaseOptions & Options;
-	protected getTick: GetTick = () => defaultTick;
-	private ctx: CanvasRenderingContext2D = defaultCanvas.getContext( '2d' ) as CanvasRenderingContext2D;
-	private scalingY: ScalingLinear = defaultScalingY;
+	protected tickValue!: ( index: number, prop: TickProp, delta?: number ) => any;
+	private ctx!: CanvasRenderingContext2D;
+	private scalingY!: ScalingLinear;
 	private tickStep = 1;
 	private xMin = 0;
 	private xMax = 0;
@@ -42,7 +37,6 @@ export default abstract class Base<Options extends object,
 		x: 0,
 		width: 0,
 		index: 0,
-		tick: defaultTick,
 	}
 	private tickIndexMax: number | undefined;
 
@@ -62,11 +56,11 @@ export default abstract class Base<Options extends object,
 		this.compute = this.computeSetup();
 	}
 	
-	abstract draw( index: number, tick: Tick ): void;
+	abstract draw( index: number ): void;
 	abstract computeSetup(): ({ [key in CK]: ComputeFunc });
 	
-	setContext( getTick: GetTick, canvasContext: CanvasRenderingContext2D, scalingY: ScalingLinear ){
-		this.getTick = getTick;
+	setContext( tickValue: ( index: number, prop: TickProp ) => any, canvasContext: CanvasRenderingContext2D, scalingY: ScalingLinear ){
+		this.tickValue = tickValue;
 		this.ctx = canvasContext;
 		this.scalingY = scalingY;
 		this.reset();
@@ -141,13 +135,12 @@ export default abstract class Base<Options extends object,
 	}
 
 	//__ drawing
-	drawTick( tick: Tick, x: number, width: number, index: number ){
-		this.drawing.tick = tick;
+	drawTick( x: number, width: number, index: number ){
 		this.drawing.x = x;
 		this.drawing.width = width;
 		this.drawing.index = index;
 		// this.debug('__ drawTick', tick.time, new Date( tick.time ).toUTCString() );
-		this.draw( index, tick );
+		this.draw( index );
 	}
 
 	plotBar( prop: TCK, style: BarStyle ){
@@ -187,21 +180,19 @@ export default abstract class Base<Options extends object,
 		const _index = index - delta * this.tickStep;
 		const pc = prop as CK;
 		const isComputeKey = this.computeKeys.get( pc );
-		let value;
-		if ( isComputeKey ){
-			value = this.cacheGet( pc, _index );
-			if( typeof value !== 'undefined' ){
-				return value;
-			}
-			value = Computation.asNumber( this.compute[ pc ]( _index, this.cacheGet( pc, _index-this.tickStep ) ) );
-			this.cacheSet( pc, _index, value );
-		} else {
-			const tick = this.getTick( _index );
-			value = Computation.asNumber( tick[ prop as keyof Tick ] );
+		let value = this.cacheGet( pc, _index );
+		if ( typeof value !== 'undefined' ){
+			return value;
 		}
+		if ( isComputeKey ){
+			value = Computation.asNumber( this.compute[ pc ]( _index, this.cacheGet( pc, _index-this.tickStep ) ) );
+		} else {
+			value = Computation.asNumber( this.tickValue( index, prop as TickProp, delta ) )
+		}
+		this.cacheSet( pc, _index, value );
 		return value;
 	}
-
+	
 	//__________
 	beforeDestroy(){
 		return this;

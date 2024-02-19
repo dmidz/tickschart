@@ -1,3 +1,12 @@
+## [0.0.15](https://github.com/dmidz/tickschart/compare/v0.0.14...v0.0.15) (2024-02-19)
+
+
+### Features
+
+* **core:** [TC-11] tick customization ([#11](https://github.com/dmidz/tickschart/issues/11)) ([61b38f1](https://github.com/dmidz/tickschart/commit/61b38f1c2e37f368b9824486eb810a5d2384927b))
+
+
+
 ## [0.0.14](https://github.com/dmidz/tickschart/compare/v0.0.13...v0.0.14) (2024-02-15)
 
 

@@ -1,17 +1,16 @@
 
 import { Chart, Fetcher, intervalsMs } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart/+esm';
-import './style.css';
 
 const { m1, h1, d1 } = intervalsMs;
 
 //_____ main settings
 const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 };//__ define the structure of your ticks
 // Chart works with 5 minimal tick properties: open, high, low, close & volume, if your API returns different format,
-// adapt the map below to match these properties to your tick properties
+// adapt the map below to match these properties to your tick properties ( ie: here sample file has 'vol' for volume )
 const mapTickProps = { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'vol' };
-// ! adapt this path to your public sample path ( native fetch needs absolute URL )
+// ! adapt this path to your public sample path
 const sampleTimeStart = 1692000000000;
-const sampleTicksURL = `${ window.location.origin }/data/ticks_BTC_4h/${ sampleTimeStart }.json`;
+const sampleTicksURL = `/data/ticks_BTC_4h/${ sampleTimeStart }.json`;
 const ticksPerLoad = 500;// should match the ticks count per fetch
 const timeScaleMs = h1 * 4;// should match time scale of fetched data ( here 4h )
 const currentTime = new Date( Date.UTC( 2023, 9, 10 ) );// initial time position
@@ -31,7 +30,8 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 		return sampleTicks;
 	}
 
-	const url = new URL( sampleTicksURL );
+	//__ when github.io ( github pages ), must add sub directory ( repo name )  
+	const url = new URL( `${ window.location.hostname.match(/github.io$/)?'/tickschart':''}${sampleTicksURL}`, window.location.origin );
 
 	url.search = new URLSearchParams( {// sample of params for API, useless here with local json fetch 
 		symbol: 'BTCUSDT',

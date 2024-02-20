@@ -7,10 +7,7 @@ Modern Javascript Lib of interactive Chart with ticks ( TradingView like ).
 Provides a set of classe such `Chart` & `Fectcher`, so they can be used in vanilla JS, TS project or Vuejs or else,
 by providing a dom NodeElement at Chart instanciation.
 
-It is also decoupled from the data fetching, you provides a fetch function called with
-start & end index. Checkout examples
-on [`/demo/vanilla-ts/main.ts`](https://github.com/dmidz/tickschart/blob/develop/demo/vanilla-ts/main.ts)
-or [the Vue example `/scr/Chart.vue`](https://github.com/dmidz/tickschart/blob/develop/src/Chart.vue).
+You can check out the demo here: https://dmidz.github.io/tickschart/
 
 ## Features
 

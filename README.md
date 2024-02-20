@@ -28,15 +28,13 @@ derived repo and run:
 
 You should be able to browse the provided local address such `http://localhost:5173/` and see the Chart in action.
 
-The data comes from a unique file of real past 500 BTC H4 ticks used in loop for the dev ( this why you will see
+The data comes from a unique file of real past 1000 BTC H4 ticks used in loop for the dev ( this why you will see
 gap at joins ) but it is very easy to plug it to a real API.
-
-// TODO: online demo
 
 ## Usage
 
-For initial test, before binding to your ticks API, you can download a copy of [this 500 ticks sample data file](https://github.com/dmidz/tickschart/blob/develop/public/data/ticks_BTC_4h/1692000000000.json)
-into your local public directory such `~/my-project/public/data/1692000000000.json`
+For initial test, before binding to your ticks API, you can download a copy of [this 1000 ticks sample data file](https://github.com/dmidz/tickschart/blob/develop/public/data/ticks_BTC_4h/1684800000000-1000.json)
+into your local public directory such `~/my-project/public/data/1684800000000-1000.json`
 
 ### Vanilla JS
 
@@ -47,9 +45,10 @@ Check and copy this example [demo/vanilla-js](https://github.com/dmidz/tickschar
 import { Chart, Fetcher, defaultTick, intervalsMs } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart/+esm';
 
 ...
-// ! adapt this path to your public sample path ( native fetch needs absolute URL )
-const sampleTimeStart = 1692000000000;
-const sampleTicksURL = `${ window.location.origin }/data/ticks_BTC_4h/${ sampleTimeStart }.json`;
+// ! adapt this path to your public sample path
+const sampleTimeStart = 1684800000000;
+const ticksPerLoad = 1000;// must match the ticks count per fetch
+const sampleTicksURL = `/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
 ...
 ```
 
@@ -65,11 +64,12 @@ Check and copy this example [demo/vanilla-ts](https://github.com/dmidz/tickschar
 
 ```typescript
 //__ main.ts
-import { Chart, Fetcher, defaultTick, intervalsMs, type CandleTick } from '@dmidz/tickschart';
+import { Chart, Fetcher, defaultTick, intervalsMs } from '@dmidz/tickschart';
 ...
-// ! adapt this path to your public sample path ( native fetch needs absolute URL )
-const sampleTimeStart = 1692000000000;
-const sampleTicksURL = `${ window.location.origin }/data/ticks_BTC_4h/${ sampleTimeStart }.json`;
+// ! adapt this path to your public sample path
+const sampleTimeStart = 1684800000000;
+const ticksPerLoad = 1000;// must match the ticks count per fetch
+const sampleTicksURL = `/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
 ...
 const fetcher = new Fetcher( defaultTick, fetchAPI, options );
 

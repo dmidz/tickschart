@@ -24,7 +24,7 @@ export type Options = {
 
 export default class ChartRow {
 	options: Required<Options> = {
-		height: 100,
+		height: 150,
 		border: '1px solid #333333',
 		yScaleWidth: 100,
 		canvas: {

@@ -111,7 +111,8 @@ onMounted( async () => {
 	} );
 	
 	// chart.addIndicator( 'Volume', 'row', { maLength: 14, maType: 'sma' } );
-	chart.addIndicator( 'VolumeImpulse', 'row', { maLength: 14, maType: 'sma' } );
+	// chart.addIndicator( 'VolumeImpulse', 'row', { maLength: 14, maType: 'sma' } );
+	chart.addIndicator( 'OBV', 'row' );
 	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
 	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
 	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );

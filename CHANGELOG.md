@@ -1,3 +1,12 @@
+## [0.0.16](https://github.com/dmidz/tickschart/compare/v0.0.15...v0.0.16) (2024-02-20)
+
+
+### Features
+
+* **dx:** github workflow to publish demo as github pages ([5054c92](https://github.com/dmidz/tickschart/commit/5054c9241dc2f0a96cc604f9a45d5697e1ed095b))
+
+
+
 ## [0.0.15](https://github.com/dmidz/tickschart/compare/v0.0.14...v0.0.15) (2024-02-19)
 
 

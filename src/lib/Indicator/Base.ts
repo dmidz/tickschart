@@ -16,6 +16,18 @@ export type LineStyle = {
 	color: string,
 }
 
+export type ShapeStyle = {
+	fillColor?: string,
+	borderColor?: string,
+}
+
+export type Point = {
+	x: number,
+	y: number,
+}
+
+const defaultShapeFillColor = '#ffffff';
+
 export default abstract class Base<Options extends ObjKeyStr,
 			Computed extends ObjKeyStr,
 			CK extends KeyOfString<Computed> = KeyOfString<Computed>,
@@ -24,10 +36,11 @@ export default abstract class Base<Options extends ObjKeyStr,
 	protected options: BaseOptions & Options;
 	protected tickValue!: ( index: number, prop: TickProp, delta?: number ) => any;
 	private ctx!: CanvasRenderingContext2D;
-	private scalingY!: ScalingLinear;
-	private tickStep = 1;
-	private xMin = 0;
-	private xMax = 0;
+	protected scalingY!: ScalingLinear;
+	protected scalingX!: ScalingLinear;
+	protected tickStep = 1;
+	protected xMin = 0;
+	protected xMax = 0;
 	private cacheComputed: Map<CK,Map<number,number>> = new Map();
 	private cacheMin = +Infinity;
 	private cacheMax = -Infinity;
@@ -59,10 +72,12 @@ export default abstract class Base<Options extends ObjKeyStr,
 	abstract draw( index: number ): void;
 	abstract computeSetup(): ({ [key in CK]: ComputeFunc });
 	
-	setContext( tickValue: ( index: number, prop: TickProp ) => any, canvasContext: CanvasRenderingContext2D, scalingY: ScalingLinear ){
+	setContext( tickValue: ( index: number, prop: TickProp ) => any, canvasContext: CanvasRenderingContext2D,
+			scalingY: ScalingLinear, scalingX: ScalingLinear ){
 		this.tickValue = tickValue;
 		this.ctx = canvasContext;
 		this.scalingY = scalingY;
+		this.scalingX = scalingX;
 		this.reset();
 	}
 
@@ -76,6 +91,7 @@ export default abstract class Base<Options extends ObjKeyStr,
 	
 	reset(){
 		this.cacheComputed = new Map();
+		this.compute = this.computeSetup();
 	}
 	
 	setViewXMinMax( min = this.xMin, max = this.xMax, opts?: { force?: boolean, clear?: boolean, tickIndexMax?: number } ){
@@ -143,17 +159,23 @@ export default abstract class Base<Options extends ObjKeyStr,
 		this.draw( index );
 	}
 
-	plotBar( prop: TCK, style: BarStyle ){
-		const y = this.scalingY.scaleTo( this.computed( this.drawing.index, prop ) );
+	plotBar( propOrValue: TCK | number | false, style: BarStyle ){
+		if ( propOrValue === false ){
+			return;
+		}
+		const y = typeof propOrValue === 'string' ? this.computed( this.drawing.index, propOrValue ) : propOrValue;
 		// console.log( 'plotBar', y );
 		this.ctx.fillStyle = style.fillColor;
 		this.ctx.fillRect( this.drawing.x, y, this.drawing.width, this.scalingY.scaleTo( 0 ) - y );
 	}
 
-	plot( prop: TCK, style: LineStyle ) {
+	plot( propOrValue: TCK | false, style: LineStyle ) {
+		if ( propOrValue === false ){
+			return;
+		}
 		const xWick = this.drawing.x - this.drawing.width / 2;
-		const ySrc = this.scalingY.scaleTo( this.computed( this.drawing.index, prop, 1 ) );
-		const y = this.scalingY.scaleTo( this.computed( this.drawing.index, prop ) );
+		const ySrc = this.scalingY.scaleTo( this.computed( this.drawing.index, propOrValue, 1 ) );
+		const y = this.scalingY.scaleTo( this.computed( this.drawing.index, propOrValue ) );
 		// console.log( 'plot', ySrc, y, this.prev.plotY );
 		this.ctx.beginPath();
 		this.ctx.moveTo( xWick, ySrc );
@@ -162,17 +184,30 @@ export default abstract class Base<Options extends ObjKeyStr,
 		this.ctx.stroke();
 	}
 	
-	plotCircle( prop: TCK, style: LineStyle ){
+	plotDisc( propOrValue: TCK | number | false, style: ShapeStyle ){
+		if( propOrValue === false ){ return;}
 		const d = this.drawing.width / 2;
 		const x = this.drawing.x + d;
-		const y = this.scalingY.scaleTo( this.computed( this.drawing.index, prop ) );
-		// console.log( 'plotCircle', y );
+		const y = this.scalingY.scaleTo( typeof propOrValue === 'string' ? this.computed( this.drawing.index, propOrValue ) : propOrValue );
+		// console.log( 'plotDisc', y );
 		this.ctx.beginPath();
 		this.ctx.arc( x, y, 3/*d*/, 0, 2 * Math.PI );
-		this.ctx.fillStyle = style.color;
+		this.ctx.fillStyle = style.fillColor || defaultShapeFillColor;
 		this.ctx.fill();
 		// this.ctx.strokeStyle = style.color;
 		// this.ctx.stroke();
+	}
+	
+	drawLine( ptStart: Point, ptEnd: Point, style: LineStyle ){
+		// const y = this.scalingY.scaleTo( this.computed( this.drawing.index, propOrValue ) );
+		// // console.log( 'plot', ySrc, y, this.prev.plotY );
+		this.ctx.beginPath();
+		const w = this.drawing.width / 2;
+		this.ctx.moveTo( w+this.scalingX.scaleTo( ptStart.x ), this.scalingY.scaleTo( ptStart.y ) );
+		this.ctx.lineTo( w +this.scalingX.scaleTo( ptEnd.x ), this.scalingY.scaleTo( ptEnd.y ) );
+		this.ctx.strokeStyle = style.color;
+		this.ctx.stroke();
+
 	}
 
 	//________

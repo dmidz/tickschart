@@ -16,7 +16,8 @@ const sampleTimeStart = 1684800000000;
 const ticksPerLoad = 1000;// must match the ticks count per fetch
 const sampleTicksURL = `/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
 const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
-const currentTime = new Date();// initial time position
+// const currentTime = new Date();// initial time position
+const currentTime = new Date( Date.UTC(2023, 8, 7 ) );// initial time position
 const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 
 const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, { 
 	timeZone: 'UTC',
@@ -113,9 +114,9 @@ onMounted( async () => {
 	// chart.addIndicator( 'Volume', 'row', { maLength: 14, maType: 'sma' } );
 	// chart.addIndicator( 'VolumeImpulse', 'row', { maLength: 14, maType: 'sma' } );
 	chart.addIndicator( 'OBV', 'row' );
-	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
-	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
-	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
+	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
+	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
+	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 21, type: 'sma' } );
 	
 	//__ can now apply the initial time & render

@@ -49,7 +49,7 @@ export default class ChartRow {
 	mouseArea: ElementRect;
 
 	constructor ( private key: string|number, private indicator: Indicator, tickValue: Indicator['tickValue'], 
-								parentElement: HTMLElement,
+								parentElement: HTMLElement, scalingX: ScalingLinear,
 								private onScaleY: ( scaling: ScalingLinear, emitter: ChartRow ) => void,
 								options: Options = {} ){
 
@@ -80,12 +80,12 @@ export default class ChartRow {
 			// labelPrecision: .01,
 		} );
 
-		this.setIndicator( indicator, tickValue );
+		this.setIndicator( indicator, tickValue, scalingX );
 	}
 
-	setIndicator( indicator: ChartRow['indicator'], tickValue: Indicator['tickValue'] ){
+	setIndicator( indicator: ChartRow['indicator'], tickValue: Indicator['tickValue'], scalingX: ScalingLinear ){
 		this.indicator = indicator;
-		this.indicator.setContext( tickValue, this.ctx, this.scalingY );
+		this.indicator.setContext( tickValue, this.ctx, this.scalingY, scalingX );
 	}
 
 	getIndicator(){

@@ -1,6 +1,7 @@
 
 import { ScalingLinear } from '../utils/math';
 import { type TickProp } from '../index';
+import { type LowHigh } from './index';
 import Computation, { type ComputeFunc } from './Computation';
 
 //______
@@ -226,6 +227,115 @@ export default abstract class Base<Options extends ObjKeyStr,
 		}
 		this.cacheSet( pc, _index, value );
 		return value;
+	}
+	
+	//___
+	getLowsHighs( prop: TCK, confirmDelta = 25, start = this.xMin, end = this.xMax ){
+		const delta = confirmDelta * this.tickStep;
+
+		let index = Math.max( start, this.xMin );
+		const max = Math.min( end, this.xMax );
+
+		const highs: Map<number, LowHigh> = new Map();
+		const lows: Map<number, LowHigh> = new Map();
+		const low: LowHigh = { index: 0, value: Infinity };
+		const high: LowHigh = { index: 0, value: -Infinity };
+		let lastHigh = false;
+		
+		while ( index <= max ){
+			const value = this.computed( index, prop );
+			if ( !lows.size || lastHigh ){
+				if ( value < low.value ){
+					low.value = value;
+					low.index = index;
+				} else if ( index > low.index + delta ){
+					lows.set( low.index, { ...low } );
+					low.value = Infinity;
+					lastHigh = false;
+					index = low.index + this.tickStep;//_ TODO: try optim ( not going back )
+					continue;
+				}
+			}
+
+			if ( !highs.size || !lastHigh ){
+				if ( value > high.value ){
+					high.value = value;
+					high.index = index;
+				} else if ( index > high.index + delta ){
+					highs.set( high.index, { ...high } );
+					high.value = -Infinity;
+					lastHigh = true;
+					index = high.index + this.tickStep;
+					continue;
+				}
+			}
+
+			index += this.tickStep;
+		}
+		
+		return { lows, highs };
+
+	}
+	
+	minValue( prop: TCK, start = this.xMin, end = this.xMax ){
+		const res: LowHigh = { index: 0, value: Infinity };
+
+		let index = Math.max( start, this.xMin );
+		const max = Math.min( end, this.xMax );
+		while ( index <= max ){
+			const value = this.computed( index, prop );
+			if ( value ){
+				if ( value < res.value ){
+					res.value = value;
+					res.index = index;
+				}
+			}
+			index += this.tickStep;
+		}
+		return res;
+	}
+
+	maxValue( prop: TCK, start = this.xMin, end = this.xMax ){
+		const res: LowHigh = { index: 0, value: -Infinity };
+
+		let index = Math.max( start, this.xMin );
+		const max = Math.min( end, this.xMax );
+		while ( index <= max ){
+			const value = this.computed( index, prop );
+			if ( value ){
+				if ( value > res.value ){
+					res.value = value;
+					res.index = index;
+				}
+			}
+			index += this.tickStep;
+		}
+		return res;
+	}
+
+	minMaxValue( prop: TCK, start = this.xMin, end = this.xMax ){
+		const min: LowHigh = { index: 0, value: Infinity };
+		const max: LowHigh = { index: 0, value: -Infinity };
+
+		let index = Math.max( start, this.xMin );
+		const maxIndex = Math.min( end, this.xMax );
+		while ( index <= maxIndex ){
+			const value = this.computed( index, prop );
+			if ( value ){
+				if ( value < min.value ){
+					min.value = value;
+					min.index = index;
+				}
+				if ( value > max.value ){
+					max.value = value;
+					max.index = index;
+				}
+			}
+			index += this.tickStep;
+		}
+		
+		return { min, max };
+
 	}
 	
 	//__________

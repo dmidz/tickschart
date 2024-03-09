@@ -1,13 +1,19 @@
 
 import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type LineStyle } from './Base.ts';
+import Base, { type BaseOptions, type LineStyle, type ShapeStyle } from './Base.ts';
+import { type LowHigh } from './index.ts';
 
 //__ contract of constructor arg options
 export type Options = {
+	lowsHighsConfirmDelta?: number,
 	style?: LineStyle,
 	styleDivergence?: {
 		bull: LineStyle,
 		bear: LineStyle,
+	},
+	styleDot?: { 
+		low: ShapeStyle,
+		high: ShapeStyle,
 	},
 }
 
@@ -19,14 +25,12 @@ const defaultComputed = {
 
 type Computed = typeof defaultComputed;
 
-
-const MIN_LOWHIGH_DELTA = 20;
-
 export default class OBV extends Base<Required<Options>, Computed> {
 
 	constructor ( options: Options & Partial<BaseOptions> = {} ){
 
 		const _options: ReverseRequired<Options> = {// force constructor optional options to be set here
+			lowsHighsConfirmDelta: 25,
 			style: {
 				color: '#0080c5'
 			},
@@ -38,6 +42,14 @@ export default class OBV extends Base<Required<Options>, Computed> {
 					color: '#4dffc3'
 				},
 			},
+			styleDot: {
+				low: {
+					fillColor: '#ffffff',
+				},
+				high: {
+					fillColor: '#4dffc3',
+				},
+			}
 		};
 		
 		super( defaultComputed, merge( _options, options ) );
@@ -46,71 +58,47 @@ export default class OBV extends Base<Required<Options>, Computed> {
 	draw( index: number ){
 		this.plot( 'obv', this.options.style );
 
-		if ( index === this.highest.index ){
-			const value = this.computed( this.highest.index, 'high' );
-			const value2 = this.computed( this.highest2.index, 'high' );
-			if ( value < value2 ){
-				this.drawLine( { x: this.highest2.index, y: this.highest2.value },
-					{ x: this.highest.index, y: this.highest.value },
-					this.options.styleDivergence.bear );
+		const high = this.lowsHighs.highs.get( index );
+		if ( high ){
+			this.plotDisc( high.value, this.options.styleDot.high );
+			if ( high.next ){
+				const value = this.computed( high.index, 'high' );
+				const value2 = this.computed( high.next.index, 'high' );
+				if ( value < value2 ){
+					this.drawLine( { x: high.index, y: high.value },
+						{ x: high.next.index, y: high.next.value },
+						this.options.styleDivergence.bear );
+				}
 			}
 		}
-		if ( index === this.lowest.index ){
-			const value = this.computed( this.lowest.index, 'low' );
-			const value2 = this.computed( this.lowest2.index, 'low' );
-			if ( value > value2 ){
-				this.drawLine( { x: this.lowest2.index, y: this.lowest2.value },
-					{ x: this.lowest.index, y: this.lowest.value },
-					this.options.styleDivergence.bull );
+
+		const low = this.lowsHighs.lows.get( index );
+		if ( low ){
+			this.plotDisc( low.value, this.options.styleDot.low );
+			if ( low.next ){
+				const value = this.computed( low.index, 'low' );
+				const value2 = this.computed( low.next.index, 'low' );
+				if ( value > value2 ){
+					this.drawLine( { x: low.index, y: low.value },
+						{ x: low.next.index, y: low.next.value },
+						this.options.styleDivergence.bull );
+				}
 			}
 		}
 	}
 	
-	private highest = { index: 0, value: 0 };
-	private highest2 = { index: 0, value: 0 };
-	private lowest = { index: 0, value: 0 };
-	private lowest2 = { index: 0, value: 0 };
+	private lowsHighs: {
+		lows: Map<number, LowHigh>,
+		highs: Map<number, LowHigh>,
+	} = {
+		lows: new Map(),
+		highs: new Map(),
+	};
 
 	computeSetup(){
-		this.highest = { index: 0, value: -Infinity };
-		this.highest2 = { index: 0, value: -Infinity };
-		this.lowest = { index: 0, value: Infinity };
-		this.lowest2 = { index: 0, value: Infinity };
-
-		//__ find 2 highs & lows 
 		if( this.xMin && this.xMax ){
-			let index = this.xMin;
-			while( index <= this.xMax ){
-				const value = this.computed( index, 'obv' );
-				if( value > this.highest.value ){
-					this.highest.value = value;
-					this.highest.index = index;
-				}else if( value < this.lowest.value ){
-					this.lowest.value = value;
-					this.lowest.index = index;
-				}
-				index += this.tickStep;
-			}
-
-			index = this.highest.index + this.tickStep * MIN_LOWHIGH_DELTA;
-			while ( index <= this.xMax ){
-				const value = this.computed( index, 'obv' );
-				if ( value > this.highest2.value ){
-					this.highest2.value = value;
-					this.highest2.index = index;
-				}
-				index += this.tickStep;
-			}
-			index = this.lowest.index + this.tickStep * MIN_LOWHIGH_DELTA;
-			while ( index <= this.xMax ){
-				const value = this.computed( index, 'obv' );
-				if ( value < this.lowest2.value ){
-					this.lowest2.value = value;
-					this.lowest2.index = index;
-				}
-				index += this.tickStep;
-			}
-			
+			this.lowsHighs = this.getLowsHighs( 'obv', this.options.lowsHighsConfirmDelta );
+			// console.log('lows highs', this.lows, this.highs );
 		}
 		
 		return {

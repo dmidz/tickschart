@@ -17,3 +17,10 @@ export type List = typeof indicators;
 export type Indicator = InstanceType<List[keyof List]>;
 
 export type { Base };
+
+export type LowHigh = {
+	index: number,
+	value: number,
+	date? : string,
+	next? : LowHigh,
+}

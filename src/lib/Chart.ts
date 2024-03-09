@@ -214,7 +214,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		switch( mode ){
 			case 'row': {
 				const row = new ChartRow( this.chartRows.length, indicator, this.tickIndexValue, this.elements.main,
-					this.scalingX,
+					this.scalingX, this.ctxTicks, this.scalingY,
 					( scaling, row ) => {
 						this.render( undefined, undefined, row );
 					},
@@ -237,7 +237,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 				break;
 			}
 			case 'layer': {
-				indicator.setContext( this.tickIndexValue, this.ctxTicks, this.scalingY, this.scalingX );
+				indicator.setContext( this.tickIndexValue, this.ctxTicks, this.scalingY, this.scalingX, this.ctxTicks, this.scalingY );
 				this.layers.push( indicator );
 				break;
 			}

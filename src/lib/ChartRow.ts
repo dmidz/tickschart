@@ -50,6 +50,7 @@ export default class ChartRow {
 
 	constructor ( private key: string|number, private indicator: Indicator, tickValue: Indicator['tickValue'], 
 								parentElement: HTMLElement, scalingX: ScalingLinear,
+								chartCanvasContext: CanvasRenderingContext2D, charScalingY: ScalingLinear,
 								private onScaleY: ( scaling: ScalingLinear, emitter: ChartRow ) => void,
 								options: Options = {} ){
 
@@ -80,12 +81,13 @@ export default class ChartRow {
 			// labelPrecision: .01,
 		} );
 
-		this.setIndicator( indicator, tickValue, scalingX );
+		this.setIndicator( indicator, tickValue, scalingX, chartCanvasContext, charScalingY );
 	}
 
-	setIndicator( indicator: ChartRow['indicator'], tickValue: Indicator['tickValue'], scalingX: ScalingLinear ){
+	setIndicator( indicator: ChartRow['indicator'], tickValue: Indicator['tickValue'], scalingX: ScalingLinear,
+				chartCanvasContext: CanvasRenderingContext2D, charScalingY: ScalingLinear ){
 		this.indicator = indicator;
-		this.indicator.setContext( tickValue, this.ctx, this.scalingY, scalingX );
+		this.indicator.setContext( tickValue, this.ctx, this.scalingY, scalingX, chartCanvasContext, charScalingY );
 	}
 
 	getIndicator(){

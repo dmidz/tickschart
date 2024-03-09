@@ -1,4 +1,9 @@
 
+export type Point = {
+  x: number,
+  y: number,
+}
+
 //__ provides the decimal floor of a number: ex: 43.75 -> 10, 7.44 -> 1, 518.28 -> 100, 0.00875 -> 0.001
 export function decimal( value: number ): number {
   const log = Math.log10( value );

@@ -1,7 +1,6 @@
 
-import { ScalingLinear } from '../utils/math';
+import { ScalingLinear, type Point } from '../utils/math';
 import { type TickProp } from '../index';
-import { type LowHigh } from './index';
 import Computation, { type ComputeFunc } from './Computation';
 
 //______
@@ -22,9 +21,15 @@ export type ShapeStyle = {
 	borderColor?: string,
 }
 
-export type Point = {
-	x: number,
-	y: number,
+export type LowHigh = {
+	index: number,
+	value: number,
+	date?: string,
+	next?: LowHigh | null,
+}
+
+export type DrawOptions = {
+	onChart?: boolean,
 }
 
 const defaultShapeFillColor = '#ffffff';
@@ -39,6 +44,8 @@ export default abstract class Base<Options extends ObjKeyStr,
 	private ctx!: CanvasRenderingContext2D;
 	protected scalingY!: ScalingLinear;
 	protected scalingX!: ScalingLinear;
+	private chartCtx!: CanvasRenderingContext2D;
+	protected chartScalingY!: ScalingLinear;
 	protected tickStep = 1;
 	protected xMin = 0;
 	protected xMax = 0;
@@ -74,11 +81,13 @@ export default abstract class Base<Options extends ObjKeyStr,
 	abstract computeSetup(): ({ [key in CK]: ComputeFunc });
 	
 	setContext( tickValue: ( index: number, prop: TickProp ) => any, canvasContext: CanvasRenderingContext2D,
-			scalingY: ScalingLinear, scalingX: ScalingLinear ){
+			scalingY: ScalingLinear, scalingX: ScalingLinear, chartCanvasContext: CanvasRenderingContext2D, charScalingY: ScalingLinear ){
 		this.tickValue = tickValue;
 		this.ctx = canvasContext;
 		this.scalingY = scalingY;
 		this.scalingX = scalingX;
+		this.chartCtx = chartCanvasContext;
+		this.chartScalingY = charScalingY;
 		this.reset();
 	}
 
@@ -185,16 +194,22 @@ export default abstract class Base<Options extends ObjKeyStr,
 		this.ctx.stroke();
 	}
 	
-	plotDisc( propOrValue: TCK | number | false, style: ShapeStyle ){
+	plotDisc( propOrValue: TCK | number | false, style: ShapeStyle, opts: DrawOptions = {} ){
 		if( propOrValue === false ){ return;}
+		let ctx = this.ctx;
+		let scalingY = this.scalingY;
+		if( opts.onChart ){
+			ctx = this.chartCtx;
+			scalingY = this.chartScalingY;
+		}
 		const d = this.drawing.width / 2;
 		const x = this.drawing.x + d;
-		const y = this.scalingY.scaleTo( typeof propOrValue === 'string' ? this.computed( this.drawing.index, propOrValue ) : propOrValue );
+		const y = scalingY.scaleTo( typeof propOrValue === 'string' ? this.computed( this.drawing.index, propOrValue ) : propOrValue );
 		// console.log( 'plotDisc', y );
-		this.ctx.beginPath();
-		this.ctx.arc( x, y, 3/*d*/, 0, 2 * Math.PI );
-		this.ctx.fillStyle = style.fillColor || defaultShapeFillColor;
-		this.ctx.fill();
+		ctx.beginPath();
+		ctx.arc( x, y, 3/*d*/, 0, 2 * Math.PI );
+		ctx.fillStyle = style.fillColor || defaultShapeFillColor;
+		ctx.fill();
 		// this.ctx.strokeStyle = style.color;
 		// this.ctx.stroke();
 	}
@@ -230,26 +245,41 @@ export default abstract class Base<Options extends ObjKeyStr,
 	}
 	
 	//___
-	getLowsHighs( prop: TCK, confirmDelta = 25, start = this.xMin, end = this.xMax ){
+	getLowsHighs( prop: TCK | TCK[], confirmDelta = 25, start = this.xMin, end = this.xMax ){
+		
+		let lowProp: TCK;
+		let highProp: TCK;
+		if( prop instanceof Array ){
+			lowProp = prop[0];
+			highProp = prop[1];
+		}else{
+			lowProp = prop;
+			highProp = prop;
+		}
+		
+		const highs: Map<number, LowHigh> = new Map();
+		const lows: Map<number, LowHigh> = new Map();
+		const low: LowHigh = { index: 0, value: Infinity };
+		const high: LowHigh = { index: 0, value: -Infinity };
+		let prevLow: LowHigh | null = null;
+		let prevHigh: LowHigh | null = null;
+		let lastHigh = false;
+
 		const delta = confirmDelta * this.tickStep;
 
 		let index = Math.max( start, this.xMin );
 		const max = Math.min( end, this.xMax );
 
-		const highs: Map<number, LowHigh> = new Map();
-		const lows: Map<number, LowHigh> = new Map();
-		const low: LowHigh = { index: 0, value: Infinity };
-		const high: LowHigh = { index: 0, value: -Infinity };
-		let lastHigh = false;
-		
 		while ( index <= max ){
-			const value = this.computed( index, prop );
 			if ( !lows.size || lastHigh ){
+				const value = this.computed( index, lowProp );
+
 				if ( value < low.value ){
 					low.value = value;
 					low.index = index;
 				} else if ( index > low.index + delta ){
-					lows.set( low.index, { ...low } );
+					prevLow = { ...low, next: prevLow };
+					lows.set( low.index, prevLow );
 					low.value = Infinity;
 					lastHigh = false;
 					index = low.index + this.tickStep;//_ TODO: try optim ( not going back )
@@ -258,11 +288,13 @@ export default abstract class Base<Options extends ObjKeyStr,
 			}
 
 			if ( !highs.size || !lastHigh ){
+				const value = this.computed( index, highProp );
 				if ( value > high.value ){
 					high.value = value;
 					high.index = index;
 				} else if ( index > high.index + delta ){
-					highs.set( high.index, { ...high } );
+					prevHigh = { ...high, next: prevHigh };
+					highs.set( high.index, prevHigh );
 					high.value = -Infinity;
 					lastHigh = true;
 					index = high.index + this.tickStep;

@@ -187,6 +187,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		
 		//___ events
 		this.mouseEnterElement = this.elements.candles;
+		this.mouseEnterElement.style.cursor = 'crosshair';
 		this.mouseEnterElement.addEventListener( 'mouseenter', this.onMouseEnterChart );
 		this.mouseEnterElement.addEventListener( 'mouseleave', this.onMouseLeaveChart );
 		this.mouseMoveElement = this.elements.candles;
@@ -220,8 +221,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 					},
 					{
 						...this.options.chartRow,
-						onMouseEnter: ( event, chartRow ) => {
-							this.mouseIndicator = chartRow;
+						onMouseEnter: ( event, emitter ) => {
+							this.mouseIndicator = emitter;
 							this.onMouseEnterChart( event );
 						},
 						onMouseLeave: ( event ) => {
@@ -232,7 +233,9 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 							this.mouseDragIndicator = emitter;
 							this.onMouseDown( event );
 						},
+						onMouseWheel: this.onMouseWheel,
 					} );
+				
 				this.chartRows.push( row );
 				break;
 			}
@@ -620,6 +623,9 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 
 	private wheelEvent: WheelEvent | null = null;
 	private onMouseWheel = ( event: WheelEvent ) => {
+		if( !this.options.wheelScroll ){
+			return;
+		}
 		event.preventDefault();
 		this.wheelEvent = event;
 		requestAnimationFrame( this.update );
@@ -828,7 +834,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.elements.candles = createElement( 'div', this.elements.rowCandles, {
 			className: 'candles',
 			style: {
-				flex: '1 1', position: 'relative', overflow: 'hidden', cursor: 'crosshair',
+				flex: '1 1', position: 'relative', overflow: 'hidden',
 			}
 		} );
 		this.elements.scaleY = createElement( 'div', this.elements.rowCandles, {

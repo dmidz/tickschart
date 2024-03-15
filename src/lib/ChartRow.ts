@@ -20,6 +20,7 @@ export type Options = {
 	onMouseEnter?: ( event: MouseEvent, emitter: ChartRow ) => void,
 	onMouseLeave?: ( event: MouseEvent ) => void,
 	onMouseDown?: ( event: MouseEvent, emitter: ChartRow ) => void,
+	onMouseWheel?: ( event: WheelEvent ) => void,
 }
 
 export default class ChartRow {
@@ -37,6 +38,7 @@ export default class ChartRow {
 		onMouseEnter: ( event: MouseEvent ) => {},
 		onMouseLeave: ( event: MouseEvent ) => {},
 		onMouseDown: ( event: MouseEvent ) => {},
+		onMouseWheel: ( event: WheelEvent ) => {},
 	};
 	private readonly canvas: HTMLCanvasElement;
 	private readonly ctx: CanvasRenderingContext2D;
@@ -153,6 +155,7 @@ export default class ChartRow {
 			mouseArea.removeEventListener( 'mouseenter', this.onMouseEnter );
 			mouseArea.removeEventListener( 'mouseleave', this.options.onMouseLeave );
 			mouseArea.removeEventListener( 'mousedown', this.onMouseDown );
+			mouseArea.removeEventListener( 'wheel', this.options.onMouseWheel );
 		}
 	}
 
@@ -212,6 +215,7 @@ export default class ChartRow {
 		//__ events
 		mouseArea.addEventListener( 'mouseenter', this.onMouseEnter );
 		mouseArea.addEventListener( 'mouseleave', this.options.onMouseLeave );
+		mouseArea.addEventListener( 'wheel', this.options.onMouseWheel );
 		mouseArea.addEventListener( 'mousedown', this.onMouseDown );
 
 		return { canvas, ctx, mouseArea };

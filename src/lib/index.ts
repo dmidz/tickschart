@@ -52,7 +52,8 @@ export function resizeCanvas ( canvas: HTMLCanvasElement | undefined ){
 
 export function createElement ( tagName: string = 'div', parentNode?: HTMLElement, options: {
 	style?: Partial<CSSStyleDeclaration>,
-	className?: string
+	className?: string,
+	innerText?: string,
 } = {} ): HTMLElement{
 	const el = document.createElement( tagName );
 	if ( options.className ){
@@ -60,6 +61,9 @@ export function createElement ( tagName: string = 'div', parentNode?: HTMLElemen
 	}
 	if ( options.style ){
 		Object.assign( el.style, options.style );
+	}
+	if ( options.innerText ){
+		el.innerText = options.innerText;
 	}
 	if ( parentNode ){
 		parentNode.append( el );

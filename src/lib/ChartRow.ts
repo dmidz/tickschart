@@ -170,6 +170,7 @@ export default class ChartRow {
 				alignItems: 'stretch',
 				overflow: 'hidden',
 				borderTop: this.options.border,
+				zIndex: '1',
 			}
 		} );
 		this.elements.set('row', row );
@@ -217,6 +218,19 @@ export default class ChartRow {
 		mouseArea.addEventListener( 'mouseleave', this.options.onMouseLeave );
 		mouseArea.addEventListener( 'wheel', this.options.onMouseWheel );
 		mouseArea.addEventListener( 'mousedown', this.onMouseDown );
+		
+		//__ infos
+		this.elements.set( 'label', createElement('div', row, {
+			innerText: this.indicator.constructor.name,
+			style: {
+				position: 'absolute',
+				left: '4px',
+				top: '0',
+				fontSize: '1rem',
+				color:'#ffffff33',
+				zIndex: '1',
+			}
+		}));
 
 		return { canvas, ctx, mouseArea };
 	}

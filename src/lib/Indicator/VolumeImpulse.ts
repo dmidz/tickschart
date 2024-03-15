@@ -1,6 +1,6 @@
 
 import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type BarStyle, type LineStyle } from './Base.ts';
+import Base, { type BaseOptions, type BarStyle, type LineStyle, type ShapeStyle } from './Base.ts';
 
 //__ contract of constructor arg options
 export type Options = {
@@ -10,8 +10,8 @@ export type Options = {
 	maStyle?: LineStyle,
 	flipMaLength?: 7,
 	flippedStyle?: {
-		up: LineStyle,
-		down: LineStyle,
+		up: ShapeStyle,
+		down: ShapeStyle,
 	},
 }
 
@@ -47,8 +47,8 @@ export default class Volume extends Base<Required<Options>, Computed> {
 			},
 			flipMaLength: 7,
 			flippedStyle: {
-				up: { color: '#00d28d' },//'#00ff00',
-				down: { color: '#ff4040' },//'#ff0000',
+				up: { fillColor: '#00d28d' },//'#00ff00',
+				down: { fillColor: '#ff4040' },//'#ff0000',
 			},
 		};
 		
@@ -65,7 +65,7 @@ export default class Volume extends Base<Required<Options>, Computed> {
 		if( this.options.flipMaLength ){
 			const flipped = this.computed( index, 'flipped' );
 			if( flipped ){
-				this.plotCircle( 'cvdDelta', this.options.flippedStyle[ flipped > 0 ? 'up' : 'down' ] );
+				this.plotDisc( 'cvdDelta', this.options.flippedStyle[ flipped > 0 ? 'up' : 'down' ] );
 			}
 		}
 	}

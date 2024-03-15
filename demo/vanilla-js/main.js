@@ -9,10 +9,10 @@ const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 };//__
 // adapt the map below to match these properties to your tick properties ( ie: here sample file has 'vol' for volume )
 const mapTickProps = { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'vol' };
 // ! adapt this path to your public sample path
-const sampleTimeStart = 1692000000000;
-const sampleTicksURL = `/data/ticks_BTC_4h/${ sampleTimeStart }.json`;
-const ticksPerLoad = 500;// should match the ticks count per fetch
-const timeScaleMs = h1 * 4;// should match time scale of fetched data ( here 4h )
+const sampleTimeStart = 1684800000000;
+const ticksPerLoad = 1000;// must match the ticks count per fetch
+const sampleTicksURL = `/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
+const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
 const currentTime = new Date( Date.UTC( 2023, 9, 10 ) );// initial time position
 const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 
 const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, {
@@ -23,7 +23,7 @@ const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, {
 //__
 let sampleTicks = null;
 const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
-	/*__ this example uses a unique local json file ( 500 ticks ) served in dev mode, replace this by an API call
+	/*__ this example uses a unique local json file ( 1000 ticks ) served in dev mode, replace this by an API call
 	 with passed params such startTime & limit + other such symbol & timeScale string ( 15m / 4h / d1... ) */
 
 	if ( sampleTicks ){
@@ -69,7 +69,7 @@ const rangeLoadMs = ticksPerLoad * timeScaleMs;
 const chart = new Chart( document.getElementById('chart'), timeScaleMs, ( index ) => {
 	/*__ one would normally pass fetcher.getTick directly, but for the only one file sample
 				we can bypass it to always return a tick from the file ( 1692000000000 ) time range */
-	return fetcher.getMapTicks( index )?.[ 1692000000000 + index % rangeLoadMs ] || defaultTick;
+	return fetcher.getMapTicks( index )?.[ sampleTimeStart + index % rangeLoadMs ] || defaultTick;
 }, {
 	mapTickProps,
 	onScalingXChange: async ( scalingX ) => {

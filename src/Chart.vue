@@ -12,11 +12,13 @@ const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 } as c
 // chart works with 5 minimal tick properties: open, high, low, close & volume, if your API returns different format,
 // adapt the map below to match these needed properties to your tick properties
 const mapTickProps = { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'vol' } as const;
-const sampleTimeStart = 1692000000000;
-const sampleTicksURL = `${ window.location.origin }/data/ticks_BTC_4h/${ sampleTimeStart }.json`;
-const ticksPerLoad = 500;// should match the ticks count per fetch
-const timeScaleMs = h1 * 4;// should match time scale of fetched data ( here 4h )
-const currentTime = new Date();// initial time position
+const sampleTimeStart = 1684800000000;
+const ticksPerLoad = 1000;// must match the ticks count per fetch
+const sampleTicksURL = `/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
+const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
+// const currentTime = new Date();// initial time position
+// const currentTime = new Date( Date.UTC(2023, 6, 13 ) );// initial time position
+const currentTime = new Date( Date.UTC(2023, 7, 4 ) );// initial time position
 const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 
 const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, { 
 	timeZone: 'UTC',
@@ -31,12 +33,12 @@ let sampleTicks: DataTick | null = null;
 let chart: Chart<Tick>;
 
 const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
-	/*__ this example uses a unique local json file ( 500 ticks ) served in dev mode, replace this by an API call
+	/*__ this example uses a unique local json file ( 1000 ticks ) served in dev mode, replace this by an API call
 	 with passed params such startTime & limit + other such symbol & timeScale string ( 15m / 4h / d1... ) */
 
 	if( sampleTicks ){ return sampleTicks;}
 
-	const url = new URL( sampleTicksURL );
+	const url = new URL( sampleTicksURL, window.location.origin );
 	
 	url.search = new URLSearchParams( {// sample of params for API, useless here with local json fetch 
 		symbol: 'BTCUSDT',
@@ -111,10 +113,12 @@ onMounted( async () => {
 	} );
 	
 	// chart.addIndicator( 'Volume', 'row', { maLength: 14, maType: 'sma' } );
-	chart.addIndicator( 'VolumeImpulse', 'row', { maLength: 14, maType: 'sma' } );
-	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
-	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
-	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
+	// chart.addIndicator( 'VolumeImpulse', 'row', { maLength: 14, maType: 'sma' } );
+	chart.addIndicator( 'OBV', 'row' );
+	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'ema', style: { color: '#ffff00'} } );
+	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
+	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
+	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 21, type: 'sma' } );
 	
 	//__ can now apply the initial time & render

@@ -24,7 +24,7 @@ export type Options = {
 
 export default class ChartRow {
 	options: Required<Options> = {
-		height: 100,
+		height: 150,
 		border: '1px solid #333333',
 		yScaleWidth: 100,
 		canvas: {
@@ -49,7 +49,8 @@ export default class ChartRow {
 	mouseArea: ElementRect;
 
 	constructor ( private key: string|number, private indicator: Indicator, tickValue: Indicator['tickValue'], 
-								parentElement: HTMLElement,
+								parentElement: HTMLElement, scalingX: ScalingLinear,
+								chartCanvasContext: CanvasRenderingContext2D, charScalingY: ScalingLinear,
 								private onScaleY: ( scaling: ScalingLinear, emitter: ChartRow ) => void,
 								options: Options = {} ){
 
@@ -80,12 +81,13 @@ export default class ChartRow {
 			// labelPrecision: .01,
 		} );
 
-		this.setIndicator( indicator, tickValue );
+		this.setIndicator( indicator, tickValue, scalingX, chartCanvasContext, charScalingY );
 	}
 
-	setIndicator( indicator: ChartRow['indicator'], tickValue: Indicator['tickValue'] ){
+	setIndicator( indicator: ChartRow['indicator'], tickValue: Indicator['tickValue'], scalingX: ScalingLinear,
+				chartCanvasContext: CanvasRenderingContext2D, charScalingY: ScalingLinear ){
 		this.indicator = indicator;
-		this.indicator.setContext( tickValue, this.ctx, this.scalingY );
+		this.indicator.setContext( tickValue, this.ctx, this.scalingY, scalingX, chartCanvasContext, charScalingY );
 	}
 
 	getIndicator(){

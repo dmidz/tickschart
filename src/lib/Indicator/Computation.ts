@@ -20,16 +20,24 @@ export default class Computation<ComputeKey extends string> {
 		}
 		
 		const alpha = 2 / ( length + 1 );
-		const inv = 1 - alpha;
+		// const inv = 1 - alpha;
 		const sma = this.sma( prop, length, debug );
 
-		return ( index, prevValue ) => {
-			let prevEma = prevValue;
+		const ema = ( index: number, prevValue: number | undefined ) => {
+			let prevEma = prevValue as unknown as number;
 			if( typeof prevEma === 'undefined' ){
-				prevEma = sma( index - this.tickStep );
+				// prevEma = sma( index - this.tickStep );
+				let k = index - this.tickStep * length * 2;
+				prevEma = sma( k );
+				while( k < index ){
+					k += this.tickStep;
+					prevEma = ema( k, prevEma );
+				}
 			}
-			return this.computed( index, prop ) * alpha + prevEma * inv;
+			return (this.computed( index, prop ) - prevEma) * alpha + prevEma;
+			// return this.computed( index, prop ) * alpha + prevEma * inv;
 		};
+		return ema;
 	}
 
 	sma( prop: ComputeKey, length: number = 3, debug = false ): ComputeFunc {
@@ -67,8 +75,8 @@ export default class Computation<ComputeKey extends string> {
 	}
 
 	reduce ( from: number, length: number, op: ( v: number, i: number ) => number, initial = 0 ): number{
-		let i = -Math.abs( length );
 		let res = initial;
+		let i = -Math.abs( length );
 		while ( i++ < 0 ){
 			res = op( res, from + i * this.tickStep );
 		}

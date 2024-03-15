@@ -42,7 +42,7 @@ export default class MA extends Base<Required<Options>, Computed> {
 	
 	computeSetup(){
 		return {
-			ma: this.lib[this.options.type||'sma']( this.options.property, this.options.length, true ),
+			ma: this.lib[this.options.type]( this.options.property, this.options.length ),
 		};
 	}
 	

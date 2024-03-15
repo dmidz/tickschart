@@ -26,10 +26,12 @@ export type LowHigh = {
 	value: number,
 	date?: string,
 	next?: LowHigh | null,
+	[key: string]: any,
 }
 
 export type DrawOptions = {
 	onChart?: boolean,
+	yDelta?: number,
 }
 
 const defaultShapeFillColor = '#ffffff';
@@ -39,7 +41,7 @@ export default abstract class Base<Options extends ObjKeyStr,
 			CK extends KeyOfString<Computed> = KeyOfString<Computed>,
 			TCK extends TickProp | CK = TickProp | CK> {
 	private compute: { [key in CK]: ComputeFunc };
-	protected options: BaseOptions & Options;
+	public options: BaseOptions & Options;
 	protected tickValue!: ( index: number, prop: TickProp, delta?: number ) => any;
 	private ctx!: CanvasRenderingContext2D;
 	protected scalingY!: ScalingLinear;
@@ -59,7 +61,6 @@ export default abstract class Base<Options extends ObjKeyStr,
 		width: 0,
 		index: 0,
 	}
-	private tickIndexMax: number | undefined;
 
 	constructor ( private readonly defaultComputed: Computed,
 								options: Options ){
@@ -104,10 +105,10 @@ export default abstract class Base<Options extends ObjKeyStr,
 		this.compute = this.computeSetup();
 	}
 	
-	setViewXMinMax( min = this.xMin, max = this.xMax, opts?: { force?: boolean, clear?: boolean, tickIndexMax?: number } ){
+	setViewXMinMax( min = this.xMin, max = this.xMax, opts?: { force?: boolean, clear?: boolean } ){
 		if( !min ){  return;}
 		
-		const { force = false, tickIndexMax } = opts||{};
+		const { force = false } = opts||{};
 		
 		if ( !force && min === this.xMin && max === this.xMax ){
 			return;
@@ -117,8 +118,6 @@ export default abstract class Base<Options extends ObjKeyStr,
 			return;
 		}
 		
-		this.tickIndexMax = tickIndexMax;
-		
 		this.xMin = min;
 		this.xMax = max;
 
@@ -127,22 +126,17 @@ export default abstract class Base<Options extends ObjKeyStr,
 		// this.debug( '____ setViewXMinMax', {
 		// 	xMin: this.xMin,
 		// 	xMinDate: new Date( this.xMin ).toUTCString(),
-		// 	xMax: this.xMax, d,
-		// 	cacheDist:this.cacheDist,
-		// 	cacheSizeMax: this.cacheSizeMax,
-		// 	cacheComputed: this.cacheComputed.size } );
+			// xMax: this.xMax, d,
+			// cacheComputed: this.cacheComputed.size
+		// } );
 
 	}
 	
 	getMinMaxY(): MinMax {
 		const res = { min: Infinity, max: -Infinity };
 		let current = this.xMin;
-		let max = this.xMax;
-		if( typeof this.tickIndexMax !== 'undefined' ){
-			max = Math.min( max, this.tickIndexMax );
-		}
 		// this.debug('_____ getMinMaxY START' );
-		while ( current <= max ){
+		while ( current <= this.xMax ){
 			// this.debug( '__ getMinMaxY', tick.time, new Date( tick.time ).toUTCString() );
 			res.min = Math.min( res.min, this.getMinY( current ) );
 			res.max = Math.max( res.max, this.getMaxY( current ) );
@@ -173,10 +167,9 @@ export default abstract class Base<Options extends ObjKeyStr,
 		if ( propOrValue === false ){
 			return;
 		}
-		const y = typeof propOrValue === 'string' ? this.computed( this.drawing.index, propOrValue ) : propOrValue;
-		// console.log( 'plotBar', y );
+		const y = this.scalingY.scaleTo(typeof propOrValue === 'string' ? this.computed( this.drawing.index, propOrValue ) : propOrValue );
 		this.ctx.fillStyle = style.fillColor;
-		this.ctx.fillRect( this.drawing.x, y, this.drawing.width, this.scalingY.scaleTo( 0 ) - y );
+		this.ctx.fillRect( this.drawing.x, y, this.drawing.width, this.scalingY.scaleTo( 0 )-y );
 	}
 
 	plot( propOrValue: TCK | false, style: LineStyle ) {
@@ -204,7 +197,7 @@ export default abstract class Base<Options extends ObjKeyStr,
 		}
 		const d = this.drawing.width / 2;
 		const x = this.drawing.x + d;
-		const y = scalingY.scaleTo( typeof propOrValue === 'string' ? this.computed( this.drawing.index, propOrValue ) : propOrValue );
+		const y = scalingY.scaleTo( typeof propOrValue === 'string' ? this.computed( this.drawing.index, propOrValue ) : propOrValue ) - (opts.yDelta||0);
 		// console.log( 'plotDisc', y );
 		ctx.beginPath();
 		ctx.arc( x, y, 3/*d*/, 0, 2 * Math.PI );
@@ -245,7 +238,7 @@ export default abstract class Base<Options extends ObjKeyStr,
 	}
 	
 	//___
-	getLowsHighs( prop: TCK | TCK[], confirmDelta = 25, start = this.xMin, end = this.xMax ){
+	getLowsHighs( prop: TCK | TCK[], confirmDelta = 58, start = this.xMin, end = this.xMax ){
 		
 		let lowProp: TCK;
 		let highProp: TCK;
@@ -259,16 +252,20 @@ export default abstract class Base<Options extends ObjKeyStr,
 		
 		const highs: Map<number, LowHigh> = new Map();
 		const lows: Map<number, LowHigh> = new Map();
-		const low: LowHigh = { index: 0, value: Infinity };
-		const high: LowHigh = { index: 0, value: -Infinity };
+		let low: LowHigh = { index: 0, value: Infinity };
+		let high: LowHigh = { index: 0, value: -Infinity };
 		let prevLow: LowHigh | null = null;
 		let prevHigh: LowHigh | null = null;
+		let highest = high;
+		let lowest = high;
 		let lastHigh = false;
 
 		const delta = confirmDelta * this.tickStep;
 
-		let index = Math.max( start, this.xMin );
+		let index = Math.max( start, this.xMin ) - delta;
 		const max = Math.min( end, this.xMax );
+
+		const d2 = this.tickStep * 3;
 
 		while ( index <= max ){
 			if ( !lows.size || lastHigh ){
@@ -278,11 +275,20 @@ export default abstract class Base<Options extends ObjKeyStr,
 					low.value = value;
 					low.index = index;
 				} else if ( index > low.index + delta ){
-					prevLow = { ...low, next: prevLow };
-					lows.set( low.index, prevLow );
-					low.value = Infinity;
+					low.key = highs.size;
+					if( prevLow ){
+						prevLow.next = low;
+					}
+					if ( low.value < lowest.value ){
+						delete lowest.lowest;
+						lowest = low;
+						lowest.lowest = true;
+					}
+					lows.set( low.index, low );
+					prevLow = low;
+					low = { index: low.index, value: Infinity };
 					lastHigh = false;
-					index = low.index + this.tickStep;//_ TODO: try optim ( not going back )
+					index = low.index + d2;//_ TODO: try optim ( not going back )
 					continue;
 				}
 			}
@@ -293,19 +299,30 @@ export default abstract class Base<Options extends ObjKeyStr,
 					high.value = value;
 					high.index = index;
 				} else if ( index > high.index + delta ){
-					prevHigh = { ...high, next: prevHigh };
-					highs.set( high.index, prevHigh );
-					high.value = -Infinity;
+					high.key = highs.size;
+					if( prevHigh ){
+						prevHigh.next = high;
+					}
+					if ( high.value > highest.value ){
+						delete highest.highest;
+						highest = high;
+						highest.highest = true;
+					}
+					highs.set( high.index, high );
+					prevHigh = high;
+					high = { index: high.index, value: -Infinity };
 					lastHigh = true;
-					index = high.index + this.tickStep;
+					index = high.index + d2;
 					continue;
 				}
 			}
 
 			index += this.tickStep;
 		}
-		
-		return { lows, highs };
+
+		// console.log( 'lows, highs', lows, highs );
+
+		return { lows, highs, /*lowest, highest,*/ isUpTrend: highest.index > lowest.index };
 
 	}
 	

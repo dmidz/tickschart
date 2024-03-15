@@ -1,17 +1,16 @@
 
 import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type LineStyle, type ShapeStyle } from './Base.ts';
-import { type LowHigh } from './index.ts';
+import Base, { type BaseOptions, type LineStyle, type ShapeStyle, type DrawOptions } from './Base.ts';
 
 //__ contract of constructor arg options
 export type Options = {
-	lowsHighsConfirmDelta?: number,
 	style?: LineStyle,
 	styleDivergence?: {
 		bull: LineStyle,
 		bear: LineStyle,
 	},
-	styleDot?: { 
+	styleDot?: {
+		neutral: ShapeStyle,
 		low: ShapeStyle,
 		high: ShapeStyle,
 	},
@@ -30,7 +29,6 @@ export default class OBV extends Base<Required<Options>, Computed> {
 	constructor ( options: Options & Partial<BaseOptions> = {} ){
 
 		const _options: ReverseRequired<Options> = {// force constructor optional options to be set here
-			lowsHighsConfirmDelta: 25,
 			style: {
 				color: '#0080c5'
 			},
@@ -43,8 +41,11 @@ export default class OBV extends Base<Required<Options>, Computed> {
 				},
 			},
 			styleDot: {
+				neutral: {
+					fillColor: '#666666',
+				},
 				low: {
-					fillColor: '#ffffff',
+					fillColor: '#ff4040',
 				},
 				high: {
 					fillColor: '#4dffc3',
@@ -55,51 +56,19 @@ export default class OBV extends Base<Required<Options>, Computed> {
 		super( defaultComputed, merge( _options, options ) );
 	}
 
+	// private divergence: Divergence | null = null;
+	// private divergence: Divergence = divergences.lowsHighsDiv2;
+
 	draw( index: number ){
 		this.plot( 'obv', this.options.style );
-
-		const high = this.lowsHighs.highs.get( index );
-		if ( high ){
-			this.plotDisc( high.value, this.options.styleDot.high );
-			if ( high.next ){
-				const value = this.computed( high.index, 'high' );
-				const value2 = this.computed( high.next.index, 'high' );
-				if ( value < value2 ){
-					this.drawLine( { x: high.index, y: high.value },
-						{ x: high.next.index, y: high.next.value },
-						this.options.styleDivergence.bear );
-				}
-			}
-		}
-
-		const low = this.lowsHighs.lows.get( index );
-		if ( low ){
-			this.plotDisc( low.value, this.options.styleDot.low );
-			if ( low.next ){
-				const value = this.computed( low.index, 'low' );
-				const value2 = this.computed( low.next.index, 'low' );
-				if ( value > value2 ){
-					this.drawLine( { x: low.index, y: low.value },
-						{ x: low.next.index, y: low.next.value },
-						this.options.styleDivergence.bull );
-				}
-			}
-		}
+		// console.log('draw', this.divergence.lowsHighs.isUpTrend/*index, new Date( index ).toUTCString()*/ );
+		// this.divergence.draw( index );
 	}
 	
-	private lowsHighs: {
-		lows: Map<number, LowHigh>,
-		highs: Map<number, LowHigh>,
-	} = {
-		lows: new Map(),
-		highs: new Map(),
-	};
-
 	computeSetup(){
-		if( this.xMin && this.xMax ){
-			this.lowsHighs = this.getLowsHighs( 'obv', this.options.lowsHighsConfirmDelta );
-			// console.log('lows highs', this.lows, this.highs );
-		}
+		// if( this.xMin && this.xMax ){
+		// 	this.divergence.setup( this );
+		// }
 		
 		return {
 			obv: ( index: number, prevValue?: number ) => {
@@ -125,5 +94,88 @@ export default class OBV extends Base<Required<Options>, Computed> {
 	getMaxY( index: number ): number {
 		return this.computed( index, 'obv' );
 	}
+
 }
 
+type Divergence = {
+	setup: ( indicator: OBV ) => void,
+	draw: ( index: number ) => void,
+	[ key: string ]: any,
+}
+
+const divergences: { [ key: string ]: Divergence } = {
+	lowsHighsDiv2: {
+		lowsHighsConfirmDelta: 25,
+		dotHighOptions: { /*onChart: true,*/ yDelta: 10 } as DrawOptions,
+		dotLowOptions: { /*onChart: true,*/ yDelta: -10 } as DrawOptions,
+		dotHighOptionsChart: { onChart: true, yDelta: -10 } as DrawOptions,
+		dotLowOptionsChart: { onChart: true, yDelta: 10 } as DrawOptions,
+		setup ( indicator ){
+			this.indicator = indicator;
+			this.lowsHighs = indicator.getLowsHighs( [ 'low', 'high' ], this.lowsHighsConfirmDelta );
+		},
+		draw ( index ){
+			const prev = this.indicator.computed( index - this.indicator.tickStep, 'obv' );
+			const value = this.indicator.computed( index, 'obv' );
+
+			const high = this.lowsHighs.highs.get( index );
+			if( high ){
+				// this.indicator.plotDisc( high.value, this.indicator.options.styleDot.neutral, this.dotLowOptionsChart );
+				if ( prev > value ){
+					this.indicator.plotDisc( prev, this.indicator.options.styleDot.low, this.dotHighOptions );
+				}
+			}
+
+			const low = this.lowsHighs.lows.get( index );
+			if( low ){
+				// this.indicator.plotDisc( low.value, this.indicator.options.styleDot.neutral, this.dotHighOptionsChart );
+				if ( prev < value ){
+					this.indicator.plotDisc( prev, this.indicator.options.styleDot.high, this.dotHighOptions );
+				}
+			}
+		}
+	},
+	lowsHighsDiv: {
+		lowsHighsConfirmDelta: 58,
+		plotDiscOptions: { onChart: true } as DrawOptions,
+		setup ( indicator ){
+			this.indicator = indicator;
+			this.lowsHighs = indicator.getLowsHighs( [ 'low', 'high' ], this.lowsHighsConfirmDelta );
+			// this.lowsHighs = this.getLowsHighs( 'obv', this.options.lowsHighsConfirmDelta );
+			// console.log('lows highs', this.lows, this.highs );
+		},
+		draw ( index ){
+			const high = this.lowsHighs.highs.get( index );
+
+			// console.log( 'draw', index, new Date( index ).toUTCString() );
+			// console.log('___isUpTrend', this.lowsHighs.isUpTrend/*, index, new Date( index ).toUTCString()*/ );
+			if ( high ){
+				this.indicator.plotDisc( high.value, this.indicator.options.styleDot.high, this.plotDiscOptions );
+				if ( /*this.lowsHighs.isUpTrend &&*/ high.next && high.value < high.next.value ){
+					const value = this.indicator.computed( high.index, 'obv' );
+					const value2 = this.indicator.computed( high.next.index, 'obv' );
+					if ( value > value2 ){
+						console.log( 'obv', value, value2 )
+						this.indicator.drawLine( { x: high.index, y: value },
+							{ x: high.next.index, y: value2 },
+							this.indicator.options.styleDivergence.bear );
+					}
+				}
+			}
+
+			const low = this.lowsHighs.lows.get( index );
+			if ( low ){
+				this.indicator.plotDisc( low.value, this.indicator.options.styleDot.low, this.plotDiscOptions );
+				if ( /*!this.lowsHighs.isUpTrend &&*/ low.next && low.value > low.next.value ){
+					const value = this.indicator.computed( low.index, 'obv' );
+					const value2 = this.indicator.computed( low.next.index, 'obv' );
+					if ( value < value2 ){
+						this.indicator.drawLine( { x: low.index, y: value },
+							{ x: low.next.index, y: value2 },
+							this.indicator.options.styleDivergence.bull );
+					}
+				}
+			}
+		}
+	}
+};

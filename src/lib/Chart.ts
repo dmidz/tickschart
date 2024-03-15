@@ -74,7 +74,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			vx: .01,
 		},
 		autoScaleY: true,
-		autoScaleYMargin: 10,// px
+		autoScaleYMargin: 30,// px
 		yScaleWidth: 100,
 		wheelScroll: true,
 		tickIndexMax: () => {
@@ -194,7 +194,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.mouseMoveElement.addEventListener( 'mousedown', this.onMouseDown );
 		this.mouseMoveElement.addEventListener( 'keydown', this.onKeyDown );
 		if( this.options.wheelScroll ){
-			this.mouseMoveElement.addEventListener( 'wheel', this.onMouseWheel );
+			this.mouseMoveElement.addEventListener( 'wheel', this.onMouseWheel, { passive: false } );
 		}
 		document.addEventListener( 'mouseup', this.onMouseUp );
 		document.addEventListener( 'mousemove', this.onMouseMove );
@@ -362,6 +362,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.updateX( render, force );
 	}
 
+	private tickIndexMax: number = this.xEnd;
+	
 	private updateX( render = true, force = false ){
 
 		this.cx = this.scalingX.distIn / this.scalingX.distOut;
@@ -372,29 +374,18 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		if ( xStart !== this.xStart || xEnd !== this.xEnd ){
 			this.xStart = xStart;
 			this.xEnd = xEnd;
+			if ( this.options.tickIndexMax ){
+				this.tickIndexMax = Math.min( this.xEnd, this.options.tickIndexMax() );
+			}
 			changed = true;
 		}
 
-		this.elements.buttonGoMaxX.style.display = this.scalingX.scaleIn.max < Date.now() ? 'inline-block' : 'none'; 
-
+		this.elements.buttonGoMaxX.style.display = this.scalingX.scaleIn.max < Date.now() ? 'inline-block' : 'none';
+		
 		// console.log( 'updateX', this.xStart, this.options.crossHairLabelX( this.xStart ), scale, this.options.crossHairLabelX( scale.min ) );
 
 		const after = () => {
-			if ( changed || force ){
-				this.autoScaleY( false );
-				const opts = { tickIndexMax: this.options.tickIndexMax?.() };
-				// console.log('### updateX', new Date( this.xStart).toUTCString(), new Date( this.xEnd ).toUTCString() );
-				this.chartRows.forEach( row => {
-					row.setViewXMinMax( this.xStart, this.xEnd, opts );
-				} );
-				this.layers.forEach( indicator => {
-					indicator.setViewXMinMax( this.xStart, this.xEnd, opts );
-				} );
-			}
-
-			if ( render ){
-				this.render();
-			}
+			requestAnimationFrame( this._updateX.bind( this, changed || force, render ) );
 		}
 
 		const p = this.options.onScalingXChange( this.scalingX );
@@ -406,6 +397,24 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		}
 
 		return this;
+	}
+	
+	_updateX( update: boolean, render: boolean ){
+		if ( update ){
+			this.autoScaleY( false );
+			const opts = {};
+			// console.log('### updateX', new Date( this.xStart).toUTCString(), new Date( this.xEnd ).toUTCString() );
+			this.chartRows.forEach( row => {
+				row.setViewXMinMax( this.xStart, this.tickIndexMax, opts );
+			} );
+			this.layers.forEach( indicator => {
+				indicator.setViewXMinMax( this.xStart, this.tickIndexMax, opts );
+			} );
+		}
+
+		if ( render ){
+			this.render();
+		}
 	}
 
 	//__ y
@@ -448,22 +457,15 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		let max: number = -Infinity;
 		let t = this.xStart;
 		let tick: ReturnType<GetTick<Tick>>;
-		let xEnd = this.xEnd;
-		if ( this.options.tickIndexMax ){
-			xEnd = Math.min( this.xEnd, this.options.tickIndexMax() );
-		}
+		const xEnd = this.tickIndexMax;
 
 		while( t <= xEnd ){
 			tick = this.getTick( t );
-			// if( !tick._default ){
-				min = Math.min( min, +this.tickValue(tick,'low') );
-				max = Math.max( max, +this.tickValue(tick,'high') );
-			// }
+			min = Math.min( min, +this.tickValue( tick, 'low' ) );
+			max = Math.max( max, +this.tickValue( tick, 'high' ) );
 			t += this.tickStep;
 		}
 
-		// if( min === Infinity ){			min = 0;}
-		// if( max === -Infinity ){		max = 10;}
 		if( max - min === 0 ){			max += 10;}
 
 		// console.log( '//_________ getMinMaxY', { min, max }, new Date( this.xStart ).toUTCString() );
@@ -494,12 +496,11 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		// 	scaleXMin: this.scalingX.scaleIn.min, scaleXMax: this.scalingX.scaleIn.max, distIn: this.scalingX.distIn } );
 
 
+		_xEnd = this.tickIndexMax;
+
 		//__ TODO: remove maxDisplayX, replaced by tickIndexMax() ( Player should use the latter )
 		if ( this.maxDisplayX ){
 			_xEnd = Math.min( _xEnd, this.maxDisplayX );
-		}
-		if( this.options.tickIndexMax ){
-			_xEnd = Math.min( _xEnd, this.options.tickIndexMax() );
 		}
 
 		// console.log( '//_________ render', { _xStart: new Date( _xStart ).toUTCString(), xStart: new Date( xStart ).toUTCString(), thisxStart: new Date( this.xStart ).toUTCString() } );

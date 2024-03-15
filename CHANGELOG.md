@@ -1,3 +1,12 @@
+## [0.0.17](https://github.com/dmidz/tickschart/compare/v0.0.16...v0.0.17) (2024-03-15)
+
+
+### Features
+
+* **indicator:** [TC-19] new indicator OBV ([#12](https://github.com/dmidz/tickschart/issues/12)) ([f7e2598](https://github.com/dmidz/tickschart/commit/f7e2598794341849713fab24e27df2e40e2aae8e))
+
+
+
 ## [0.0.16](https://github.com/dmidz/tickschart/compare/v0.0.15...v0.0.16) (2024-02-20)
 
 

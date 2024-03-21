@@ -6,6 +6,8 @@ import { addListenerFactory, removeListenerFactory, createElement, resizeCanvas,
 	type CandleTick, type GetTick, type ElementRect, type TickProp, type AbstractTick } from './index.ts';
 import indicators, { type List, type Indicator } from './Indicator/index.ts';
 import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
+import { Dialog, InputBase } from './UI/index.ts';
+import IndicatorSettings from './IndicatorSettings.ts';
 
 //______
 export type Options<Tick extends AbstractTick> = {
@@ -115,6 +117,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	private mouseIndicator: ChartRow | null = null;
 	private mouseDragIndicator: ChartRow | null = null;
 	private layers: Indicator[] = [];
+	private indicatorSettings: IndicatorSettings;
 
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
@@ -184,7 +187,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			},
 			// labelPrecision: .01,
 		} );
-		
+
 		//___ events
 		this.mouseEnterElement = this.elements.candles;
 		this.mouseEnterElement.style.cursor = 'crosshair';
@@ -201,13 +204,22 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		document.addEventListener( 'mousemove', this.onMouseMove );
 		window.addEventListener('resize', this.onResize );
 
+		//__
 		this.resizeCanvas();
+
+		//__
+		this.indicatorSettings = new IndicatorSettings({
+			parentElement: this.parentElement,
+			onUpdate: () => {
+				this.render();
+			},
+		});
+		
 		//__
 		return this;
 	}
 
-	addIndicator<K extends keyof List> ( type: K, mode: 'layer'|'row' = 'row',
-		...params: ConstructorParameters<List[K]> ){
+	addIndicator<K extends keyof List> ( type: K, mode: 'layer'|'row' = 'row', ...params: ConstructorParameters<List[K]> ){
 		// @ts-ignore
 		const indicator = new indicators[ type ]( ...params );
 		indicator.setTickStep( this.tickStep );
@@ -217,7 +229,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 				const row = new ChartRow( this.chartRows.length, indicator, this.tickIndexValue, this.elements.main,
 					this.scalingX, this.ctxTicks, this.scalingY,
 					( scaling, row ) => {
-						this.render( undefined, undefined, row );
+						this.render();
 					},
 					{
 						...this.options.chartRow,
@@ -234,6 +246,9 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 							this.onMouseDown( event );
 						},
 						onMouseWheel: this.onMouseWheel,
+						onClickSettings: ( event, emitter ) => {
+							this.indicatorSettings.diplay( emitter.getIndicator(), true );
+						},
 					} );
 				
 				this.chartRows.push( row );
@@ -267,6 +282,9 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.chartRows.forEach( row => {
 			row.beforeDestroy();
 		} );
+		
+		Dialog.beforeDestroy();
+		InputBase.beforeDestroy();
 	}
 
 	refresh (){
@@ -482,7 +500,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		Object.assign( this.ctxTicks, options );
 	}
 	
-	render( xStart: number = this.xStart, xEnd: number = this.xEnd, row?: ChartRow ){
+	render( xStart: number = this.xStart, xEnd: number = this.xEnd ){
 		if( xEnd < this.xStart || xStart > this.xEnd ){ return;}
 		const _xStart = Math.max( xStart, this.xStart );
 		let _xEnd = Math.min( xEnd, this.xEnd );
@@ -494,10 +512,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			row.clearRect( xPx, wPx );
 		} );
 
-
 		// console.log( 'render', { xStart, _xStart, xEnd, _xEnd, xPx, wPx,
 		// 	scaleXMin: this.scalingX.scaleIn.min, scaleXMax: this.scalingX.scaleIn.max, distIn: this.scalingX.distIn } );
-
 
 		_xEnd = this.tickIndexMax;
 
@@ -507,21 +523,17 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		}
 
 		// console.log( '//_________ render', { _xStart: new Date( _xStart ).toUTCString(), xStart: new Date( xStart ).toUTCString(), thisxStart: new Date( this.xStart ).toUTCString() } );
-		let tick: ReturnType<GetTick<Tick>>;
 		let xPos: number;
 		let x = _xStart;
 		while ( x <= _xEnd ){
-			tick = this.getTick( x );
-			// if( !tick._default ){
-				xPos = this.scalingX.scaleTo( x );
-				this.layers.forEach( indicator => {
-					indicator.drawTick( xPos, this.tickWidth, x );
-				});
-				this.drawTick( tick, xPos, this.tickWidth, x );
-				this.chartRows.forEach( row => {
-					row.getIndicator().drawTick( xPos, this.tickWidth, x );
-				} );
-			// }
+			xPos = this.scalingX.scaleTo( x );
+			this.layers.forEach( indicator => {
+				indicator.drawTick( xPos, this.tickWidth, x );
+			});
+			this.drawTick( xPos, this.tickWidth, x );
+			this.chartRows.forEach( row => {
+				row.getIndicator().drawTick( xPos, this.tickWidth, x );
+			} );
 			x += this.tickStep;
 		}
 	}
@@ -530,8 +542,10 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.ctxTicks.clearRect( x, 0, w, this.canvas.height );
 	}
 
-	drawTick( tick: Tick, x: number, width: number, index: number, debug = false ){
+	drawTick( x: number, width: number, index: number, debug = false ){
 		
+		const tick = this.getTick( index );
+
 		const ctx = this.ctxTicks;
 		const isDown = +this.tickValue( tick,'close' ) < +this.tickValue( tick, 'open' );
 		const col = isDown ? this.options.candle.color.down : this.options.candle.color.up;
@@ -563,6 +577,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return this.tickValue( this.getTick( index, delta ), prop );
 	}
 
+	//__
 	private mouseMoveListeners: ( ( x: number, y: number, xOut: number, event: MouseEvent ) => void )[] = [];
 	addMouseMoveListener = addListenerFactory( this.mouseMoveListeners );
 	removeMouseMoveListener = removeListenerFactory( this.mouseMoveListeners );
@@ -952,13 +967,20 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			if ( this.options.uiElements.buttonGoMaxX === true ){
 				this.elements.buttonGoMaxX = createElement( 'button', this.elements.candles, {
 					style: {
-						position: 'absolute', bottom: '4px', right: '4px', color: '#222222', display: 'none', zIndex: '999',
-						cursor: 'pointer',
+						position: 'absolute', bottom: '0', right: '0', display: 'none', zIndex: '999',
+						cursor: 'pointer', padding: '2px 4px',
 					}
 				} );
-				this.elements.buttonGoMaxX.innerText = '>>';
+				createElement( 'span', this.elements.buttonGoMaxX, {
+					className: 'icon',
+					style: {
+						backgroundImage: 'url( "/icons/chevron-double.svg" )',
+						transform: 'rotate(90deg)',
+						marginBottom: '2px',
+					}
+				} );
+				// this.elements.buttonGoMaxX.innerText = '>>';
 				this.elements.buttonGoMaxX.title = 'Scroll X to max';
-				// console.log('insert buttonGoMaxX', this.elements.buttonGoMaxX );
 			} else {
 				this.elements.buttonGoMaxX = this.elements.candles.appendChild( this.options.uiElements.buttonGoMaxX );
 			}
@@ -967,6 +989,5 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			} );
 		}
 	}
-
 }
 

@@ -21,6 +21,7 @@ export type Options = {
 	onMouseLeave?: ( event: MouseEvent ) => void,
 	onMouseDown?: ( event: MouseEvent, emitter: ChartRow ) => void,
 	onMouseWheel?: ( event: WheelEvent ) => void,
+	onClickSettings?: ( event: MouseEvent, emitter: ChartRow ) => void,
 }
 
 export default class ChartRow {
@@ -35,10 +36,11 @@ export default class ChartRow {
 		},
 		autoScaleY: true,
 		scaleY: {},
-		onMouseEnter: ( event: MouseEvent ) => {},
-		onMouseLeave: ( event: MouseEvent ) => {},
-		onMouseDown: ( event: MouseEvent ) => {},
-		onMouseWheel: ( event: WheelEvent ) => {},
+		onMouseEnter: () => {},
+		onMouseLeave: () => {},
+		onMouseDown: () => {},
+		onMouseWheel: () => {},
+		onClickSettings: () => {},
 	};
 	private readonly canvas: HTMLCanvasElement;
 	private readonly ctx: CanvasRenderingContext2D;
@@ -157,11 +159,12 @@ export default class ChartRow {
 			mouseArea.removeEventListener( 'mousedown', this.onMouseDown );
 			mouseArea.removeEventListener( 'wheel', this.options.onMouseWheel );
 		}
+		this.elements.get('name')?.removeEventListener('click', this.onClickSettings );
 	}
 
 	private createElements( parentElement: HTMLElement ): { canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, mouseArea: HTMLElement }{
 		const row = createElement( 'div', parentElement, {
-			className: `row-indctr-${ this.key }`,
+			className: `row-ind ind-${ this.key }`,
 			style: {
 				position: 'relative',
 				height: `${this.options.height}px`,
@@ -176,7 +179,7 @@ export default class ChartRow {
 		this.elements.set('row', row );
 
 		const draw = createElement( 'div', row, {
-			className: `indctr-${ this.key }`,
+			className: `row-ind-draw indctr-${ this.key }`,
 			style: { flex: '1 1', overflow: 'hidden', cursor: 'crosshair' }
 		} );
 		this.elements.set( 'draw', draw );
@@ -219,22 +222,40 @@ export default class ChartRow {
 		mouseArea.addEventListener( 'wheel', this.options.onMouseWheel );
 		mouseArea.addEventListener( 'mousedown', this.onMouseDown );
 		
-		//__ infos
-		this.elements.set( 'label', createElement('div', row, {
+		//__ bt settings
+		const name = createElement( 'div', row, {
 			innerText: this.indicator.constructor.name,
+			className: 'bt-link bt-ind-settings',
 			style: {
 				position: 'absolute',
 				left: '4px',
 				top: '0',
-				fontSize: '1rem',
-				color:'#ffffff33',
-				zIndex: '1',
+				zIndex: '150',
 			}
-		}));
+		} );
+		this.elements.set( 'name', name );
+		if( Object.keys( this.indicator.settings||{} ).length ){
+			createElement( 'div', name, {
+				className: 'icon',
+				style: {
+					marginLeft: '4px',
+					backgroundImage: 'url( "/icons/settings.svg" )',
+					backgroundRepeat: 'no-repeat',
+				}
+			} );
+			name.addEventListener('click', this.onClickSettings );
+		}else{
+			name.style.pointerEvents = 'none';
+		}
 
+		//__
 		return { canvas, ctx, mouseArea };
 	}
 	
+	private onClickSettings = ( event: MouseEvent ) => {
+		this.options.onClickSettings( event, this );
+	}
+
 	private onMouseEnter = ( event: MouseEvent ) => {
 		this.options.onMouseEnter( event, this );
 	}

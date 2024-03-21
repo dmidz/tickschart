@@ -2,6 +2,7 @@
 import { ScalingLinear, type Point } from '../utils/math';
 import { type TickProp } from '../index';
 import Computation, { type ComputeFunc } from './Computation';
+import { type InputOptions } from '../UI/index.ts';
 
 //______
 export type BaseOptions = {
@@ -41,7 +42,7 @@ export default abstract class Base<Options extends ObjKeyStr,
 			CK extends KeyOfString<Computed> = KeyOfString<Computed>,
 			TCK extends TickProp | CK = TickProp | CK> {
 	private compute: { [key in CK]: ComputeFunc };
-	public options: BaseOptions & Options;
+	public options: /*BaseOptions &*/ Options;
 	protected tickValue!: ( index: number, prop: TickProp, delta?: number ) => any;
 	private ctx!: CanvasRenderingContext2D;
 	protected scalingY!: ScalingLinear;
@@ -62,8 +63,7 @@ export default abstract class Base<Options extends ObjKeyStr,
 		index: 0,
 	}
 
-	constructor ( private readonly defaultComputed: Computed,
-								options: Options ){
+	constructor ( private readonly defaultComputed: Computed, options: Options ){
 
 		const baseOptions: BaseOptions = {
 			debug: true,
@@ -80,6 +80,25 @@ export default abstract class Base<Options extends ObjKeyStr,
 	
 	abstract draw( index: number ): void;
 	abstract computeSetup(): ({ [key in CK]: ComputeFunc });
+	/*abstract */settings: {[key in keyof Options]?: InputOptions} = {};
+	
+	setOption<K extends keyof Options= keyof Options,V extends Options[K]=Options[K]>( key: K, value: V, reset = true ){
+		this.options[key] = value;
+		if( reset ){
+			this.reset();
+		}
+	}
+	
+	setOptions( options: Partial<Options>, reset = true ){
+		Object.assign( this.options, options );
+		if ( reset ){
+			this.reset();
+		}
+	}
+	
+	getOption<K extends keyof Options= keyof Options>( key: K){
+		return this.options[key];
+	}
 	
 	setContext( tickValue: ( index: number, prop: TickProp ) => any, canvasContext: CanvasRenderingContext2D,
 			scalingY: ScalingLinear, scalingX: ScalingLinear, chartCanvasContext: CanvasRenderingContext2D, charScalingY: ScalingLinear ){

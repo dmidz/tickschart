@@ -1,3 +1,12 @@
+## [0.0.18](https://github.com/dmidz/tickschart/compare/v0.0.17...v0.0.18) (2024-03-21)
+
+
+### Features
+
+* **indicator:** [TC-9] label settings ([#13](https://github.com/dmidz/tickschart/issues/13)) ([cfb4ee2](https://github.com/dmidz/tickschart/commit/cfb4ee28f71dec3fd358e9d98865974f13bf3691))
+
+
+
 ## [0.0.17](https://github.com/dmidz/tickschart/compare/v0.0.16...v0.0.17) (2024-03-15)
 
 

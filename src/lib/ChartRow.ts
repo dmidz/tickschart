@@ -236,10 +236,9 @@ export default class ChartRow {
 		this.elements.set( 'name', name );
 		if( Object.keys( this.indicator.settings||{} ).length ){
 			createElement( 'div', name, {
-				className: 'icon',
+				className: 'icon ic-settings',
 				style: {
 					marginLeft: '4px',
-					backgroundImage: 'url( "/icons/settings.svg" )',
 					backgroundRepeat: 'no-repeat',
 				}
 			} );

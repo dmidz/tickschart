@@ -15,7 +15,7 @@ const mapTickProps = { open: 'open', high: 'high', low: 'low', close: 'close', v
 // ! adapt this path to your public sample path ( native fetch needs absolute URL )
 const sampleTimeStart = 1684800000000;
 const ticksPerLoad = 1000;// must match the ticks count per fetch
-const sampleTicksURL = `/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
+const sampleTicksURL = `/tickschart/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
 const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
 const currentTime = new Date( Date.UTC( 2023, 9, 10 ) );// initial time position
 const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 

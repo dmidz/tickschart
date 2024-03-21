@@ -105,9 +105,8 @@ export default class Dialog {
 		this.elements.btClose.addEventListener( 'click', this.handleClose );
 
 		createElement( 'span', this.elements.btClose, {
-			className: 'icon',
+			className: 'icon ic-close',
 			style: {
-				backgroundImage: 'url( "/icons/close.svg" )',
 				width: '24px',
 				height: '24px',
 			}

@@ -972,9 +972,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 					}
 				} );
 				createElement( 'span', this.elements.buttonGoMaxX, {
-					className: 'icon',
+					className: 'icon ic-chevron-double',
 					style: {
-						backgroundImage: 'url( "/icons/chevron-double.svg" )',
 						transform: 'rotate(90deg)',
 						marginBottom: '2px',
 					}

@@ -36,7 +36,7 @@ jobs:
       - name: Upload artifacts
         uses: ./.github/actions/upload-pages-artifact
         with:
-          path: './demo/vanilla-js . --directory ../../public ./data --directory . ./css'
+          path: './demo/vanilla-js . --directory ../../public/tickschart .'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

@@ -12,6 +12,7 @@ export default defineConfig({
     alias: {
       '@': resolve( __dirname, 'src' ),
       '@dmidz/tickschart': resolve( __dirname, 'dist' ),// trick to compile demo/vanilla-ts using real world package path
+      '@public': resolve( __dirname, 'public' ),
     },
     // preserveSymlinks: true,
   },

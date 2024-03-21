@@ -32,9 +32,11 @@ The data comes from a unique file of real past 1000 BTC H4 ticks used in loop fo
 gap at joins ) but it is very easy to plug it to a real API.
 
 ## Usage
-
-For initial test, before binding to your ticks API, you can download a copy of [this 1000 ticks sample data file](https://github.com/dmidz/tickschart/blob/develop/public/data/ticks_BTC_4h/1684800000000-1000.json)
+- Before bind to your ticks API, you can download a copy of [this 1000 ticks sample data file](https://github.com/dmidz/tickschart/blob/develop/public/data/ticks_BTC_4h/1684800000000-1000.json)
 into your local public directory such `~/my-project/public/data/1684800000000-1000.json`
+- Assets ( css & svg icons ) are not part of the published lib ( yet ), you
+  can [download it here](https://github.com/dmidz/tickschart/tree/develop/public/tickschart/assets) to your local public directory
+( and override it in your own css )
 
 ### Vanilla JS
 
@@ -44,12 +46,25 @@ Check and copy this example [demo/vanilla-js](https://github.com/dmidz/tickschar
 //__ main.js
 import { Chart, Fetcher, defaultTick, intervalsMs } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart/+esm';
 
-...
+//...
 // ! adapt this path to your public sample path
 const sampleTimeStart = 1684800000000;
 const ticksPerLoad = 1000;// must match the ticks count per fetch
 const sampleTicksURL = `/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
-...
+//...
+const fetcher = new Fetcher( defaultTick, fetchAPI, options );
+
+const chart = new Chart( parentElement, tickStep, getTick, options );
+
+// add a Volume indicator in 'row' mode ( stacked under main chart )
+chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 'sma' } );
+// add an MA indicators in 'layer' mode ( on chart )
+chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000' } } );
+
+// finally init display at the time you wish, originRatio is the displacement of time wanted along the screen width
+// ex: time now + .75 will scroll to place now time at 3/4 screen width from left
+// ex: time now + 0 will scroll to place now time at screen left
+chart.setX( Date.now(), { xOriginRatio } );
 ```
 
 Serve your public directory, you should see a chart with BTC H4 ticks.
@@ -65,25 +80,12 @@ Check and copy this example [demo/vanilla-ts](https://github.com/dmidz/tickschar
 ```typescript
 //__ main.ts
 import { Chart, Fetcher, defaultTick, intervalsMs } from '@dmidz/tickschart';
-...
+// ...
 // ! adapt this path to your public sample path
 const sampleTimeStart = 1684800000000;
 const ticksPerLoad = 1000;// must match the ticks count per fetch
 const sampleTicksURL = `/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
-...
-const fetcher = new Fetcher( defaultTick, fetchAPI, options );
-
-const chart = new Chart( parentElement, tickStep, getTick, options );
-
-// add a Volume indicator in 'row' mode ( stacked under main chart )
-chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 'sma' } );
-// add an MA indicators in 'layer' mode ( on chart )
-chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000' } } );
-
-// finally init display at the time you wish, originRatio is the displacement of time wanted along the screen width
-// ex: time now + .75 will scroll to place now time at 3/4 screen width from left
-// ex: time now + 0 will scroll to place now time at screen left
-chart.setX( Date.now(), { xOriginRatio } );
+// ...
 
 ```
 

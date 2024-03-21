@@ -80,7 +80,8 @@ export default abstract class Base<Options extends ObjKeyStr,
 	
 	abstract draw( index: number ): void;
 	abstract computeSetup(): ({ [key in CK]: ComputeFunc });
-	/*abstract */settings: {[key in keyof Options]?: InputOptions} = {};
+	public abstract label: string;
+	settings: {[key in keyof Options]?: InputOptions} = {};
 	
 	setOption<K extends keyof Options= keyof Options,V extends Options[K]=Options[K]>( key: K, value: V, reset = true ){
 		this.options[key] = value;

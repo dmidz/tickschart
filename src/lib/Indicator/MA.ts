@@ -20,6 +20,8 @@ type Computed = typeof defaultComputed;
 
 export default class MA extends Base<Required<Options>, Computed> {
 
+	label = 'SMA / EMA';
+
 	constructor ( options: Options & Partial<BaseOptions> ){
 		
 		const _options: ReverseRequired<Options> = {

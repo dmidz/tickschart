@@ -26,6 +26,8 @@ type Computed = typeof defaultComputed;
 
 export default class OBV extends Base<Required<Options>, Computed> {
 
+	label = 'OBV';
+
 	constructor ( options: Options & Partial<BaseOptions> = {} ){
 
 		const _options: ReverseRequired<Options> = {// force constructor optional options to be set here

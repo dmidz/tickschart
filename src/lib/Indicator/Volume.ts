@@ -21,6 +21,8 @@ type Computed = typeof defaultComputed;
 
 export default class Volume extends Base<Required<Options>, Computed> {
 	
+	label = 'Volume';
+	
 	settings: {
 		maType: InputOptionsList['select'],
 		maLength: InputOptionsList['number'],
@@ -49,7 +51,7 @@ export default class Volume extends Base<Required<Options>, Computed> {
 			min: 0,
 			max: 200,
 		},
-	}
+	};
 
 	constructor ( options: Options & Partial<BaseOptions> ){
 

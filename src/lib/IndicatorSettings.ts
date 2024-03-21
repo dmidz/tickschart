@@ -24,7 +24,7 @@ export default class IndicatorSettings {
 	constructor( options: Options = {} ){
 		Object.assign( this.options, options );
 		this.dialog = new Dialog( {
-			title: 'Settings',
+			title: 'Indicator Settings',
 			parentElement: this.options.parentElement,
 			buttons: {
 				ok: () => {
@@ -76,8 +76,9 @@ export default class IndicatorSettings {
 				this.elContent = null;
 			}
 		}
+
 		this.dialog.display( display, {
-			title: `Settings: ${ indicator.constructor.name }`,
+			title: `${ indicator.label }`,
 			content: this.elContent,
 		} );
 	}

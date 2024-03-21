@@ -1,3 +1,12 @@
+## [0.0.19](https://github.com/dmidz/tickschart/compare/v0.0.18...v0.0.19) (2024-03-21)
+
+
+### Bug Fixes
+
+* **dx:** prefix assets tickschart/ ([a4bfcfc](https://github.com/dmidz/tickschart/commit/a4bfcfcce3a18b61b94b6dd07330484114c04e64))
+
+
+
 ## [0.0.18](https://github.com/dmidz/tickschart/compare/v0.0.17...v0.0.18) (2024-03-21)
 
 

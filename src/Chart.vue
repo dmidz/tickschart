@@ -112,11 +112,11 @@ onMounted( async () => {
 		// }
 	} );
 	
-	// chart.addIndicator( 'Volume', 'row', { maLength: 14, maType: 'sma' } );
+	chart.addIndicator( 'Volume', 'row', { maLength: 14, maType: 'sma' } );
 	// chart.addIndicator( 'VolumeImpulse', 'row', { maLength: 14, maType: 'sma' } );
 	chart.addIndicator( 'OBV', 'row' );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'ema', style: { color: '#ffff00'} } );
-	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
+	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 21, type: 'sma' } );
@@ -139,34 +139,4 @@ onBeforeUnmount( () => {
 </template>
 
 <style lang="scss" scoped>
-.chart {
-	flex: 1 1;
-	background-color: #191919;
-	border: 1px solid #333333;
-	color: #cccccc;
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-	position: relative;
-
-	/*__ override :focus-visible ( keyboard focus ) */
-	:deep(*) {
-		&:focus-visible {
-			outline: none;
-			position: relative;
-			&:after {
-				content: "";
-				position: absolute;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				border: 1px solid #999999;
-				z-index: 100;
-			}
-
-		}
-	}
-}
-
 </style>

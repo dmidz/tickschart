@@ -1,6 +1,5 @@
 
 import { Chart, Fetcher, intervalsMs } from '@dmidz/tickschart';
-import './style.css';
 
 const { m1, h1, d1 } = intervalsMs;
 

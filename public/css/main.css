@@ -1,0 +1,208 @@
+:root {
+  --font: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --color-background: #191919;
+  --color-text: #cccccc;
+  --color-primary: #409eff;
+  --color-primary-light-9: #18222c;
+  --color-primary-light-5: #2a598a;  
+  --bt-bg-color: var(--color-primary-light-9);
+  --border-radius-base: 4px;
+  --bt-border: 1px solid var(--color-primary-light-5);
+  --bt-text-color: #bbbbbb;
+  --input-bg-color: rgba(0,0,0,.3);
+
+  line-height: 1.5;
+  font-weight: 400;
+  font-size: 14px;
+
+  color-scheme: dark light;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+}
+
+html, body, #app {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  margin: 0;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--font);
+}
+
+#app {
+  flex: 1 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.chart {
+  flex: 1 1;
+  background-color: var(--color-background);
+  border: 1px solid #333333;
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/*__ keyboard focus border */
+.chart *:focus-visible {
+  outline: none;
+  position: relative;
+}
+
+.chart *:focus-visible:after {
+  pointer-events: none;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 1px solid #999999;
+  z-index: 100;
+}
+
+.chart button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  //line-height: 1;
+  //height: 32px;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--bt-text-color);
+  text-align: center;
+  box-sizing: border-box;
+  outline: 0;
+  transition: .1s;
+  font-weight: 100;
+  user-select: none;
+  vertical-align: middle;
+  //background-color: var(--bt-bg-color);
+  background-color: transparent;
+  //border: 1px solid #;
+  border: var(--bt-border);
+  //border-bottom: 1px solid var(--color-primary);
+  padding: 8px 12px;
+  //font-size: var(--el-font-size-base);
+  border-radius: var(--border-radius-base);
+}
+
+.chart button:hover {
+  border: 1px solid var(--color-primary);
+  color: #ffffff;
+  //background-color: var(--color-primary);
+}
+
+.chart button:hover > .icon {
+  filter: brightness(0) invert(1);
+}
+
+.chart input {
+  padding: 7px 12px;
+  border: 1px solid #333333;
+  border-radius: 4px;
+  background: var(--input-bg-color);
+  color: var(--color-text);
+}
+.chart input:focus {
+  border: 1px solid var(--color-primary);
+}
+
+.chart select {
+  padding: 6px;
+  border: 1px solid #333333;
+  border-radius: 4px;
+  background: var(--input-bg-color);
+  color: var(--color-text);
+}
+
+.chart select:focus {
+  border: 1px solid var(--color-primary);
+}
+
+.chart option {
+  background: #161616;
+  border: 1px solid #333333;
+}
+
+.chart .icon {
+  background-size: contain;
+  background-repeat: no-repeat;
+  filter: brightness(0) invert(0.5);
+  color: #999999;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.chart .bt-link {
+  cursor: pointer;
+  font-size: 1rem;
+  color: #ffffff33;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.chart .bt-link:hover {
+  color: var(--color-primary);
+}
+
+.chart .bt-link:hover > .icon {
+  filter: brightness(0) invert(1);
+  //color: #ffffff;
+}
+
+/*__ dialog */
+.chart .dialog-wrapper {
+  background: rgba(0, 0, 0, .5);
+}
+
+.chart .dialog {
+  background-color: var(--color-background);
+  box-shadow: 0px 12px 32px 4px rgba(0, 0, 0, 0.36), 0px 8px 20px rgba(0, 0, 0, 0.72);
+}
+
+.chart .dlg-head {
+  padding: 0.5rem 3rem 0.5rem 1rem;
+}
+
+.chart .dlg-content {
+  background: rgba(0, 0, 0, .2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2rem 2rem;
+}
+
+.chart .dialog .bt-close {
+  border: none;
+}
+
+/*__  */
+.chart .row-ind .bt-ind-settings {
+  opacity: 0;
+}
+
+.chart .row-ind:hover .bt-ind-settings {
+  opacity: 1;
+}
+

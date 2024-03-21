@@ -31,7 +31,9 @@ const defaultComputed = {
 
 type Computed = typeof defaultComputed;
 
-export default class Volume extends Base<Required<Options>, Computed> {
+export default class VolumeImpulse extends Base<Required<Options>, Computed> {
+
+	label = 'Volume Impulse';
 
 	constructor ( options: Options & Partial<BaseOptions> ){
 

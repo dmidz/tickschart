@@ -1,3 +1,12 @@
+## [0.0.20](https://github.com/dmidz/tickschart/compare/v0.0.19...v0.0.20) (2024-03-28)
+
+
+### Features
+
+* **player:** [TC-3] Player class ( ticks replay ) ([#14](https://github.com/dmidz/tickschart/issues/14)) ([2165ee5](https://github.com/dmidz/tickschart/commit/2165ee5879bef71d9ecfe6669bfc3ad0c435db2c))
+
+
+
 ## [0.0.19](https://github.com/dmidz/tickschart/compare/v0.0.18...v0.0.19) (2024-03-21)
 
 

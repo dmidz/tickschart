@@ -1,5 +1,6 @@
 export { default as Chart } from './Chart.ts';
 export { default as Fetcher } from './Fetcher.ts';
+export { default as Player } from './Player.ts';
 
 export type TickProp = 'open' | 'high' | 'low' | 'close' | 'volume';
 
@@ -71,26 +72,39 @@ export function createElement ( tagName: string = 'div', parentNode?: HTMLElemen
 	return el;
 }
 
-export function addListenerFactory<T = any> ( listeners: T[] ){
-	return ( callback: T ) => {
-		removeListener<T>( listeners, callback );
-		listeners.push( callback );
+export class ListenerEventFactory<Callback extends (( ...args: any[] ) => void)> {
+	private listeners: Callback[] = [];
+	constructor (){
+	}
+	
+	add( callback: Callback ): this {
+		this.remove( callback );
+		this.listeners.push( callback );
+		return this;
+	}
+	
+	remove( callback: Callback ): this {
+		this.listeners.forEach( ( c, index) => {
+			if ( c === callback ){
+				this.listeners.splice( index, 1 );
+				return false;
+			}
+		} );
+		return this;
+	}
+	
+	dispatch( ...args: Parameters<Callback> ): this {
+		this.listeners.forEach( c => {
+			c( ...args );
+		});
+		return this;
+	}
+	
+	clear(){
+		this.listeners = [];
 	}
 }
 
-export function removeListenerFactory<T = any> ( listeners: T[] ){
-	return ( callback: T ) => removeListener( listeners, callback );
-}
-
-export function removeListener<T = any> ( listeners: T[], callback: T ){
-	const k: T[] = [ ...listeners ];
-	k.forEach( ( c, index ) => {
-		if ( c === callback ){
-			listeners.splice( index, 1 );
-		}
-	} );
-	return k;
-}
 
 //__ intervals
 const s1 = 1000;

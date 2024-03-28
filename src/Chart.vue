@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { Chart, Fetcher, intervalsMs } from '@/lib';
+import { Chart, Fetcher, Player, intervalsMs } from '@/lib';
 
 const { m1, h1, d1 } = intervalsMs;
 
@@ -31,6 +31,7 @@ const refChartWrapper = ref<HTMLElement>();
 let sampleTicks: DataTick | null = null;
 
 let chart: Chart<Tick>;
+let player: Player<Tick>;
 
 const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 	/*__ this example uses a unique local json file ( 1000 ticks ) served in dev mode, replace this by an API call
@@ -77,7 +78,7 @@ onMounted( async () => {
 	if( !refChartWrapper.value ){ return;}
 	let init = false;//__ using to prevent fetching until chart fully initialized ( timeScale, symbol, etc )
 	
-	chart = new Chart( refChartWrapper.value, timeScaleMs, ( index: number ) => {
+	chart = new Chart<Tick>( refChartWrapper.value, timeScaleMs, ( index: number ) => {
 		/*__ one would normally pass fetcher.getTick directly, but for the only one file sample
 					we can bypass it to always return a tick from the file ( 1692000000000 ) time range */
 		return fetcher.getMapTicks( index )?.[ sampleTimeStart + index % rangeLoadMs ] || defaultTick;
@@ -124,7 +125,9 @@ onMounted( async () => {
 	//__ can now apply the initial time & render
 	init = true;
 	chart.setX( currentTime.getTime(), { xOriginRatio } );
-	
+
+	//__ player
+	player = new Player( chart );
 });
 
 onBeforeUnmount( () => {

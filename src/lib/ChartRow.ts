@@ -26,7 +26,7 @@ export type Options = {
 
 export default class ChartRow {
 	options: Required<Options> = {
-		height: 150,
+		height: 120,
 		border: '1px solid #333333',
 		yScaleWidth: 100,
 		canvas: {
@@ -173,7 +173,6 @@ export default class ChartRow {
 				alignItems: 'stretch',
 				overflow: 'hidden',
 				borderTop: this.options.border,
-				zIndex: '1',
 			}
 		} );
 		this.elements.set('row', row );

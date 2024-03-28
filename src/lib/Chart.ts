@@ -80,7 +80,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		yScaleWidth: 100,
 		wheelScroll: true,
 		tickIndexMax: () => {
-			return Math.ceil( Date.now() / this.tickStep ) * this.tickStep;
+			return Math.floor( Date.now() / this.tickStep ) * this.tickStep;
 		},
 		uiElements: {
 			buttonGoMaxX: true,
@@ -317,6 +317,10 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		const _index = index - delta * this.tickStep;
 		return this._getTick( _index );
 	}
+	
+	getTickIndexMax(){
+		return this.tickIndexMax;
+	}
 
 	setTickStep( tickStep: number, { render = true, xOriginRatio = 0 } ){
 		this.tickStep = tickStep;
@@ -515,7 +519,6 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 
 		_xEnd = this.tickIndexMax;
 
-		//__ TODO: remove maxDisplayX, replaced by tickIndexMax() ( Player should use the latter )
 		if ( this.maxDisplayX ){
 			_xEnd = Math.min( _xEnd, this.maxDisplayX );
 		}
@@ -676,6 +679,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			}
 		}
 	}
+	
 	private onResize = ( event: UIEvent ) => {
 		// console.log('onResize', event );
 		this.resizing = true;
@@ -968,7 +972,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			if ( this.options.uiElements.buttonGoMaxX === true ){
 				this.elements.buttonGoMaxX = createElement( 'button', this.elements.candles, {
 					style: {
-						position: 'absolute', bottom: '0', right: '0', zIndex: '999', padding: '4px',
+						position: 'absolute', bottom: '1px', right: '1px', zIndex: '150', padding: '4px',
 					}
 				} );
 				createElement( 'span', this.elements.buttonGoMaxX, {
@@ -977,7 +981,6 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 						transform: 'rotate(90deg)',
 					}
 				} );
-				// this.elements.buttonGoMaxX.innerText = '>>';
 				this.elements.buttonGoMaxX.title = 'Scroll X to max';
 			} else {
 				this.elements.buttonGoMaxX = this.elements.candles.appendChild( this.options.uiElements.buttonGoMaxX );

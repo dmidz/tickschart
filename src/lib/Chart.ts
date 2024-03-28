@@ -2,7 +2,7 @@
 import merge from './utils/merge.ts';
 import { ScalingLinear, type Scale, type ScalingLinearOptions } from './utils/math.ts';
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
-import { addListenerFactory, removeListenerFactory, createElement, resizeCanvas, sharpCanvasValue,
+import { ListenerEventFactory, createElement, resizeCanvas, sharpCanvasValue,
 	type CandleTick, type GetTick, type ElementRect, type TickProp, type AbstractTick } from './index.ts';
 import indicators, { type List, type Indicator } from './Indicator/index.ts';
 import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
@@ -112,8 +112,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	private border = '1px solid #333333';
 	private maxDisplayX: number | null = null;
 	private chartRows: ChartRow[] = [];
-	private mouseEnterElement: ElementRect;
-	private mouseMoveElement: HTMLElement;
+	private mouseElement: ElementRect;
 	private mouseIndicator: ChartRow | null = null;
 	private mouseDragIndicator: ChartRow | null = null;
 	private layers: Indicator[] = [];
@@ -189,16 +188,15 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		} );
 
 		//___ events
-		this.mouseEnterElement = this.elements.candles;
-		this.mouseEnterElement.style.cursor = 'crosshair';
-		this.mouseEnterElement.addEventListener( 'mouseenter', this.onMouseEnterChart );
-		this.mouseEnterElement.addEventListener( 'mouseleave', this.onMouseLeaveChart );
-		this.mouseMoveElement = this.elements.candles;
-		this.mouseMoveElement.tabIndex = 0;
-		this.mouseMoveElement.addEventListener( 'mousedown', this.onMouseDown );
-		this.mouseMoveElement.addEventListener( 'keydown', this.onKeyDown );
+		this.mouseElement = this.elements.mouseArea;
+		this.mouseElement.style.cursor = 'crosshair';
+		this.mouseElement.addEventListener( 'mouseenter', this.onMouseEnterChart );
+		this.mouseElement.addEventListener( 'mouseleave', this.onMouseLeaveChart );
+		this.mouseElement.tabIndex = 0;
+		this.mouseElement.addEventListener( 'mousedown', this.onMouseDown );
+		this.mouseElement.addEventListener( 'keydown', this.onKeyDown );
 		if( this.options.wheelScroll ){
-			this.mouseMoveElement.addEventListener( 'wheel', this.onMouseWheel, { passive: false } );
+			this.mouseElement.addEventListener( 'wheel', this.onMouseWheel, { passive: false } );
 		}
 		document.addEventListener( 'mouseup', this.onMouseUp );
 		document.addEventListener( 'mousemove', this.onMouseMove );
@@ -270,14 +268,18 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	beforeDestroy (){
 		this.uiScaleX.beforeDestroy();
 		this.uiScaleY.beforeDestroy();
-		this.mouseEnterElement.removeEventListener( 'mouseenter', this.onMouseEnterChart );
-		this.mouseEnterElement.removeEventListener( 'mouseleave', this.onMouseLeaveChart );
-		this.mouseMoveElement.removeEventListener( 'mousedown', this.onMouseDown );
-		this.mouseMoveElement.removeEventListener( 'keydown', this.onKeyDown );
-		this.mouseMoveElement.removeEventListener( 'wheel', this.onMouseWheel );
+		this.mouseElement.removeEventListener( 'mouseenter', this.onMouseEnterChart );
+		this.mouseElement.removeEventListener( 'mouseleave', this.onMouseLeaveChart );
+		this.mouseElement.removeEventListener( 'mousedown', this.onMouseDown );
+		this.mouseElement.removeEventListener( 'keydown', this.onKeyDown );
+		this.mouseElement.removeEventListener( 'wheel', this.onMouseWheel );
 		document.removeEventListener( 'mouseup', this.onMouseUp );
 		document.removeEventListener( 'mousemove', this.onMouseMove );
 		window.removeEventListener( 'resize', this.onResize );
+		
+		this.mouseEnterLeaveListeners.clear();
+		this.mouseMoveListeners.clear();
+		this.mouseDownUpListeners.clear();
 
 		this.chartRows.forEach( row => {
 			row.beforeDestroy();
@@ -301,12 +303,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return this.elements[key];
 	}
 	
-	getMouseEnterElement(){
-		return this.mouseEnterElement;
-	}
-	
-	getMouseMoveElement(){
-		return this.mouseMoveElement;
+	getMouseElement(){
+		return this.mouseElement;
 	}
 	
 	setEnabledCrossHair( enabled: boolean ){
@@ -401,7 +399,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			changed = true;
 		}
 
-		this.elements.buttonGoMaxX.style.display = this.scalingX.scaleIn.max < Date.now() ? 'inline-block' : 'none';
+		this.elements.buttonGoMaxX.style.visibility = this.scalingX.scaleIn.max < Date.now() ? 'visible' : 'hidden';
 		
 		// console.log( 'updateX', this.xStart, this.options.crossHairLabelX( this.xStart ), scale, this.options.crossHairLabelX( scale.min ) );
 
@@ -577,14 +575,14 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return this.tickValue( this.getTick( index, delta ), prop );
 	}
 
-	//__
-	private mouseMoveListeners: ( ( x: number, y: number, xOut: number, event: MouseEvent ) => void )[] = [];
-	addMouseMoveListener = addListenerFactory( this.mouseMoveListeners );
-	removeMouseMoveListener = removeListenerFactory( this.mouseMoveListeners );
+	readonly mouseEnterLeaveListeners: ListenerEventFactory<( inside: boolean, event: MouseEvent ) => void>
+		= new ListenerEventFactory();
 
-	private mouseEnterLeaveListeners: ( ( inside: boolean, event: MouseEvent ) => void )[] = [];
-	addMouseEnterLeaveListener = addListenerFactory( this.mouseEnterLeaveListeners );
-	removeMouseEnterLeaveListener = removeListenerFactory( this.mouseEnterLeaveListeners );
+	readonly mouseMoveListeners: ListenerEventFactory<( xValue: number, yValue: number, x: number, event: MouseEvent ) => void>
+		= new ListenerEventFactory();
+
+	readonly mouseDownUpListeners: ListenerEventFactory<( isDown: boolean, event: MouseEvent ) => void>
+		= new ListenerEventFactory();
 
 	private onMouseEnterChart = ( event: MouseEvent ) => {
 		event.stopImmediatePropagation();
@@ -594,9 +592,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		}
 		this.elements.labelX.style.display = 'block';
 		this.elements.labelY.style.display = 'block';
-		this.mouseEnterLeaveListeners.forEach( callback => {
-			callback( true, event );
-		} );
+		this.mouseEnterLeaveListeners.dispatch( true, event );
 	}
 
 	private onMouseLeaveChart = ( event: MouseEvent ) => {
@@ -607,9 +603,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		}
 		this.elements.labelX.style.display = 'none';
 		this.elements.labelY.style.display = 'none';
-		this.mouseEnterLeaveListeners.forEach( callback => {
-			callback( false, event );
-		} );
+		this.mouseEnterLeaveListeners.dispatch( false, event );
 	}
 
 	private onMouseDown = ( event: MouseEvent ) => {
@@ -618,6 +612,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			this.position = { x: event.clientX, y: event.clientY };
 			this.drag = true;
 			document.body.style.userSelect = 'none';
+			this.mouseDownUpListeners.dispatch( true, event );
 		}
 	}
 
@@ -626,6 +621,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.mouseDragIndicator = null;
 		this.update();
 		document.body.style.userSelect = 'auto';
+		this.mouseDownUpListeners.dispatch( false, event );
 	}
 
 	private moveEvent: MouseEvent | null = null;
@@ -699,7 +695,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			this.moveEvent = null;
 
 			if ( this.mouseOverChart ){
-				//__ x
+				//__ crosshair
 				const x = this.scalingX.scaleToInv( event.offsetX - this.tickWidthHalf );
 				const tick = this.getTick( x );
 				if ( !this.maxDisplayX || x < this.maxDisplayX ){
@@ -720,7 +716,6 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 						, this.width - this.elements.labelX.clientWidth ) );
 				this.elements.labelX.style.transform = `translateX(${ px }px)`;
 
-				//__ y
 				const target = event.target as ElementRect;
 				let yPos = event.offsetY;
 				const hLabel = Math.ceil( this.elements.labelY.clientHeight );
@@ -731,7 +726,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 				let yValue = 0;
 
 				if ( this.mouseIndicator ){
-					const d = Math.floor( ( target.rect?.y || 0 ) - ( this.mouseEnterElement.rect?.y || 0 ) );
+					const d = Math.floor( ( target.rect?.y || 0 ) - ( this.mouseElement.rect?.y || 0 ) );
 					yPos += d;
 					yLabel += d;
 					yValue = this.mouseIndicator.scalingY.scaleToInv( event.offsetY );
@@ -744,9 +739,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 					: ( this.options.crossHairLabelY || this.uiScaleY.options.formatLabel )( yValue );
 				this.elements.labelY.style.transform = `translateY(${ Math.round( yLabel ) }px)`;
 
-				this.mouseMoveListeners.forEach( callback => {
-					callback( xValue, yValue, x, event );
-				} );
+				this.mouseMoveListeners.dispatch( xValue, yValue, x, event );
 			}
 
 			if ( this.drag ){
@@ -802,7 +795,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			const dw = this.width * this.tickStep;
 			this.scalingX.setDistInMax( dw );// force min tick width 1px
 			this.scalingX.setDistInMin( dw / 50 );// force max tick width px ( divider ) 
-			this.mouseEnterElement.rect = this.mouseEnterElement.getBoundingClientRect();
+			this.mouseElement.rect = this.mouseElement.getBoundingClientRect();
 			this.uiScaleX.setScaleOut( { min: 0, max: resized.width } );
 			this.uiScaleY.setScaleOut( {
 				min: resized.height - this.options.autoScaleYMargin,
@@ -887,6 +880,14 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 				borderLeft: this.border,
 			}
 		} );
+		//____ mouse area: main without yScale
+		this.elements.mouseArea = createElement( 'div', this.elements.main, {
+			className: 'mouse-move-area',
+			style: {
+				display: 'block', zIndex: '90', position: 'absolute', cursor: 'crosshair',
+				left: '0', top: '0', bottom: '0', right: this.elements.scaleY.style.width,
+			}
+		} );
 		//__ cross
 		const crossBorder = '1px solid #ffffff33';
 		this.elements.cross = createElement( 'div', this.elements.main, {
@@ -967,15 +968,13 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			if ( this.options.uiElements.buttonGoMaxX === true ){
 				this.elements.buttonGoMaxX = createElement( 'button', this.elements.candles, {
 					style: {
-						position: 'absolute', bottom: '0', right: '0', display: 'none', zIndex: '999',
-						cursor: 'pointer', padding: '2px 4px',
+						position: 'absolute', bottom: '0', right: '0', zIndex: '999', padding: '4px',
 					}
 				} );
 				createElement( 'span', this.elements.buttonGoMaxX, {
 					className: 'icon ic-chevron-double',
 					style: {
 						transform: 'rotate(90deg)',
-						marginBottom: '2px',
 					}
 				} );
 				// this.elements.buttonGoMaxX.innerText = '>>';

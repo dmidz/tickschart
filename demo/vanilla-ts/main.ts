@@ -1,5 +1,5 @@
 
-import { Chart, Fetcher, intervalsMs } from '@dmidz/tickschart';
+import { Chart, Fetcher, intervalsMs, Player } from '@dmidz/tickschart';
 
 const { m1, h1, d1 } = intervalsMs;
 
@@ -106,3 +106,6 @@ chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma'
 chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 
 chart.setX( currentTime.getTime(), { xOriginRatio } );
+
+//__ player
+const player: Player<Tick> = new Player( chart );

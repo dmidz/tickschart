@@ -44,7 +44,7 @@ Check and copy this example [demo/vanilla-js](https://github.com/dmidz/tickschar
 
 ```javascript
 //__ main.js
-import { Chart, Fetcher, defaultTick, intervalsMs } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart/+esm';
+import { Chart, Fetcher, defaultTick, intervalsMs } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart@0.0/+esm';
 
 //...
 // ! adapt this path to your public sample path

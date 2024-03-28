@@ -1,5 +1,5 @@
 
-import { Chart, Fetcher, intervalsMs } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart@0.0/+esm';
+import { Chart, Fetcher, intervalsMs, Player } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart@0.0/+esm';
 
 const { m1, h1, d1 } = intervalsMs;
 
@@ -103,3 +103,6 @@ chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma'
 chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 
 chart.setX( currentTime.getTime(), { xOriginRatio } );
+
+//__ player
+const player = new Player( chart );

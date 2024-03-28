@@ -8,7 +8,6 @@ export type PlayerOptions = {
 	buttonReplay?: HTMLElement | null,
 	actionsElement?: HTMLElement | null,
 	frameDuration?: number,// ms
-	// tickLength?: number,// ms
 	xOriginRatio?: number,
 	onTick?: ( time: number ) => void,
 	onSessionStart?: () => void,
@@ -22,7 +21,6 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 		buttonReplay: null,
 		actionsElement: null,
 		frameDuration: 1000,
-		// tickLength: 1000*60*60,
 		xOriginRatio: .75,
 		onTick: () => {},
 		onSessionStart: () => {},

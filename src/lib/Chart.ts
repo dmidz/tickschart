@@ -79,9 +79,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		autoScaleYMargin: 30,// px
 		yScaleWidth: 100,
 		wheelScroll: true,
-		tickIndexMax: () => {
-			return Math.floor( Date.now() / this.tickStep ) * this.tickStep;
-		},
+		tickIndexMax: () => Math.floor( Date.now() / this.tickStep ) * this.tickStep,
 		uiElements: {
 			buttonGoMaxX: true,
 		},
@@ -111,13 +109,15 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	private enabledCrossHair = true;
 	private border = '1px solid #333333';
 	private maxDisplayX: number | null = null;
+	private maxRenderX: number = Infinity;
 	private chartRows: ChartRow[] = [];
 	private mouseElement: ElementRect;
 	private mouseIndicator: ChartRow | null = null;
 	private mouseDragIndicator: ChartRow | null = null;
 	private layers: Indicator[] = [];
 	private indicatorSettings: IndicatorSettings;
-
+	private tickIndexMax: number = Infinity;
+	
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
 								getTick: GetTick<Tick>,
@@ -156,7 +156,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.tickWidthHalf = this.tickWidth / 2;
 		this.scalingX = new ScalingLinear( { min: 0, max: 100 }, { min: 0, max: this.width }, {
 			precisionIn: this.tickStep,
-			scaleInMax: this.options.tickIndexMax,
+			scaleInMax: () => this.updateTickIndexMax(),
 		} );
 		this.scalingY = new ScalingLinear( { min: 0, max: 100 },
 			{ min: this.height-this.options.autoScaleYMargin, max: this.options.autoScaleYMargin },
@@ -319,7 +319,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	}
 	
 	getTickIndexMax(){
-		return this.tickIndexMax;
+		return this.options.tickIndexMax?.() || Infinity;
 	}
 
 	setTickStep( tickStep: number, { render = true, xOriginRatio = 0 } ){
@@ -340,10 +340,20 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	//__ x
 	setMaxDisplayX( x: number | null, render = false ){
 		this.maxDisplayX = x;
-		if ( render ){
-			this.render();
-		}
+		this.updateTickIndexMax();
+		this.updateX( render, render );
 		return this;
+	}
+	
+	private updateTickIndexMax(){
+		this.tickIndexMax = Infinity;
+		if ( this.options.tickIndexMax ){
+			this.tickIndexMax = this.options.tickIndexMax();
+		}
+		if ( this.maxDisplayX ){
+			this.tickIndexMax = Math.min( this.tickIndexMax, this.maxDisplayX );
+		}
+		return this.tickIndexMax;
 	}
 	
 	translateX( delta: number, options?: { render?: boolean, xOriginRatio?: number, force?: boolean } ){
@@ -385,8 +395,6 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.updateX( render, force );
 	}
 
-	private tickIndexMax: number = this.xEnd;
-	
 	private updateX( render = true, force = false ){
 
 		this.cx = this.scalingX.distIn / this.scalingX.distOut;
@@ -394,21 +402,19 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		let changed = false;
 		const xStart = Math.floor( this.scalingX.scaleIn.min / this.tickStep ) * this.tickStep;
 		const xEnd = Math.ceil( this.scalingX.scaleIn.max / this.tickStep ) * this.tickStep;
-		if ( xStart !== this.xStart || xEnd !== this.xEnd ){
+		if ( force || xStart !== this.xStart || xEnd !== this.xEnd ){
 			this.xStart = xStart;
 			this.xEnd = xEnd;
-			if ( this.options.tickIndexMax ){
-				this.tickIndexMax = Math.min( this.xEnd, this.options.tickIndexMax() );
-			}
 			changed = true;
 		}
+		this.maxRenderX = Math.min( this.xEnd, this.tickIndexMax );
 
 		this.elements.buttonGoMaxX.style.visibility = this.scalingX.scaleIn.max < Date.now() ? 'visible' : 'hidden';
 		
 		// console.log( 'updateX', this.xStart, this.options.crossHairLabelX( this.xStart ), scale, this.options.crossHairLabelX( scale.min ) );
 
 		const after = () => {
-			requestAnimationFrame( this._updateX.bind( this, changed || force, render ) );
+			requestAnimationFrame( this._updateX.bind( this, changed, render ) );
 		}
 
 		const p = this.options.onScalingXChange( this.scalingX );
@@ -428,10 +434,10 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			const opts = {};
 			// console.log('### updateX', new Date( this.xStart).toUTCString(), new Date( this.xEnd ).toUTCString() );
 			this.chartRows.forEach( row => {
-				row.setViewXMinMax( this.xStart, this.tickIndexMax, opts );
+				row.setViewXMinMax( this.xStart, this.maxRenderX, opts );
 			} );
 			this.layers.forEach( indicator => {
-				indicator.setViewXMinMax( this.xStart, this.tickIndexMax, opts );
+				indicator.setViewXMinMax( this.xStart, this.maxRenderX, opts );
 			} );
 		}
 
@@ -480,9 +486,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		let max: number = -Infinity;
 		let t = this.xStart;
 		let tick: ReturnType<GetTick<Tick>>;
-		const xEnd = this.tickIndexMax;
 
-		while( t <= xEnd ){
+		while( t <= this.maxRenderX ){
 			tick = this.getTick( t );
 			min = Math.min( min, +this.tickValue( tick, 'low' ) );
 			max = Math.max( max, +this.tickValue( tick, 'high' ) );
@@ -517,11 +522,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		// console.log( 'render', { xStart, _xStart, xEnd, _xEnd, xPx, wPx,
 		// 	scaleXMin: this.scalingX.scaleIn.min, scaleXMax: this.scalingX.scaleIn.max, distIn: this.scalingX.distIn } );
 
-		_xEnd = this.tickIndexMax;
-
-		if ( this.maxDisplayX ){
-			_xEnd = Math.min( _xEnd, this.maxDisplayX );
-		}
+		_xEnd = Math.min( _xEnd, this.maxRenderX );
 
 		// console.log( '//_________ render', { _xStart: new Date( _xStart ).toUTCString(), xStart: new Date( xStart ).toUTCString(), thisxStart: new Date( this.xStart ).toUTCString() } );
 		let xPos: number;
@@ -702,7 +703,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 				//__ crosshair
 				const x = this.scalingX.scaleToInv( event.offsetX - this.tickWidthHalf );
 				const tick = this.getTick( x );
-				if ( !this.maxDisplayX || x < this.maxDisplayX ){
+				if ( x <= this.tickIndexMax ){
 					Object.keys( this.infosLabels ).forEach( key => {
 						const kv = `info-${ key }-value`;
 						this.elements[ kv ].innerText = `${ +tick[ key ] }`;

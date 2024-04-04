@@ -35,7 +35,6 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 	private playing = false;
 	private timer: ReturnType<typeof setTimeout> | undefined;
 	private elements: Record<string, HTMLElement> = {};
-	private moved = false;
 	private mouseTime = 0;
 
 	constructor ( private chart: Chart<Tick>, options: PlayerOptions = {} ){
@@ -76,6 +75,7 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 	enableTimeStartSelection( value: boolean ): this {
 		this.timeSelection = value;
 		const mouseArea = this.chart.getElement( 'mouseArea' );
+		this.setPlay( false );
 		if ( this.timeSelection ){
 			this.chart.setEnabledCrossHair( false );
 			this.elements.actions.style.opacity = '.5';
@@ -191,21 +191,16 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 	private onMouseMove = ( x: number, y: number, time: number/*, event: MouseEvent*/ ) => {
 		if( this.timeSelection ){
 			this.mouseTime = time;
-			this.moved = true;
 			this.elements.timeSelectMask.style.left = `${x}px`;
 		}
 	}
 
 	private onMouseUpDown = ( isDown: boolean, /*event: MouseEvent*/ ) => {
-		if( isDown ){
-			this.moved = false;
-		}else{
-			if ( this.timeSelection && !this.moved ){
-				this.enableTimeStartSelection( false );
-				this.time = this.mouseTime;
-				this.chart.setMaxDisplayX( this.time, true );
-				// this.goTo( this.mouseTime );
-			}
+		if ( !isDown && this.timeSelection ){
+			this.enableTimeStartSelection( false );
+			this.time = this.mouseTime;
+			this.chart.setMaxDisplayX( this.time, true );
+			// this.goTo( this.mouseTime );
 		}
 	}
 

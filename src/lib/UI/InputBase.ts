@@ -83,6 +83,10 @@ export default abstract class InputBase<Options extends ObjKeyStr = {}> {
 	protected inputValue(){
 		return this.elInput.value;
 	}
+	
+	getMainElement(){
+		return this.elements.wrapper;
+	}
 
 	remove(){
 		this.elements.wrapper.remove();

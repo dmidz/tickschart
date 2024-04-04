@@ -1,6 +1,6 @@
 
 import { Dialog, inputs, InputBase, type InputOptions } from './UI/index.ts';
-import type { Indicator } from '@/lib/Indicator';
+import type { Indicator, Settings } from '@/lib/Indicator';
 
 export type Options = {
 	parentElement?: HTMLElement,
@@ -55,19 +55,18 @@ export default class IndicatorSettings {
 					gap: '8px',
 				} )
 				Object.keys( indicator.settings ).forEach( key => {
-					const is = indicator.settings[ key as keyof typeof indicator.settings ] as InputOptions;
+					const is = indicator.settings[ key as keyof typeof indicator.settings ] as Settings;
 					const cl = inputs[ is.type ];
 					if ( cl ){
 						const opts = {
-							...is,
+							...is.options,
 							// @ts-ignore
 							value: indicator.getOption( key ),
 							parentElement: this.elContent,
-							onChange: ( value/*, key, inputinput*/ ) => {
+							onChange: ( value: any/*, key, inputinput*/ ) => {
 								this.inputsChanges[ key ] = value;
 							},
 						} as Extract<InputOptions, { type: typeof is.type }>;
-						// @ts-ignore
 						const input = new cl( key, opts );
 						this.inputs.push( input );
 					}

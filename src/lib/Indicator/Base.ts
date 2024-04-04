@@ -2,7 +2,7 @@
 import { ScalingLinear, type Point } from '../utils/math';
 import { type TickProp } from '../index';
 import Computation, { type ComputeFunc } from './Computation';
-import { type InputOptions } from '../UI/index.ts';
+import { InputOptionsList, type InputTypes } from '../UI/index.ts';
 
 //______
 export type BaseOptions = {
@@ -81,7 +81,7 @@ export default abstract class Base<Options extends ObjKeyStr,
 	abstract draw( index: number ): void;
 	abstract computeSetup(): ({ [key in CK]: ComputeFunc });
 	public abstract label: string;
-	settings: {[key in keyof Options]?: InputOptions} = {};
+	settings: {[key in keyof Options]?: Settings} = {};
 	
 	setOption<K extends keyof Options= keyof Options,V extends Options[K]=Options[K]>( key: K, value: V, reset = true ){
 		this.options[key] = value;
@@ -434,4 +434,9 @@ export default abstract class Base<Options extends ObjKeyStr,
 		}
 	}
 
+}
+
+export class Settings {
+	constructor ( public type: InputTypes, public options: InputOptionsList[typeof type] ){
+	}
 }

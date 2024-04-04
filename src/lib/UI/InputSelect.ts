@@ -2,7 +2,6 @@ import InputBase, { type BaseOptions } from './InputBase.ts';
 
 //_____
 export type Options = BaseOptions & {
-	type: 'select',
 	choices: {
 		label: string,
 		value: any,

@@ -2,6 +2,7 @@
 import merge from './utils/merge';
 import type Chart from './Chart';
 import { type AbstractTick, type CandleTick } from './index.ts';
+import InputSelect from './UI/InputSelect.ts';
 
 //______
 export type PlayerOptions = {
@@ -35,8 +36,10 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 	private playing = false;
 	private timer: ReturnType<typeof setTimeout> | undefined;
 	private elements: Record<string, HTMLElement> = {};
-	private moved = false;
 	private mouseTime = 0;
+	private playingSpeeds = [1,2,3] as const;
+	private playingSpeed: typeof this.playingSpeeds[number] = 1;
+	private inputSpeed?: InputSelect;
 
 	constructor ( private chart: Chart<Tick>, options: PlayerOptions = {} ){
 		this.options = merge( this.options, options );
@@ -76,6 +79,7 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 	enableTimeStartSelection( value: boolean ): this {
 		this.timeSelection = value;
 		const mouseArea = this.chart.getElement( 'mouseArea' );
+		this.setPlay( false );
 		if ( this.timeSelection ){
 			this.chart.setEnabledCrossHair( false );
 			this.elements.actions.style.opacity = '.5';
@@ -101,6 +105,10 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 		this.chart.setX( this.time, { render: true, xOriginRatio: this.options.xOriginRatio } );
 		return this;
 	}
+	
+	setPlayingSpeed( value: typeof this.playingSpeed ){
+		this.playingSpeed = value;
+	}
 
 	setPlay( play: boolean | 'toggle', time?: number ): this {
 		const _play = play === 'toggle' ? !this.playing : play;
@@ -112,7 +120,7 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 			this.goTo( time );
 		}
 		if( this.playing ){
-			this.timer = setTimeout( this.nextTick, this.options.frameDuration );
+			this.nextTick();
 		}
 		this.options.onPlayPause( this.playing );
 		return this;
@@ -130,7 +138,7 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 			this.time = tickIndexMax;
 			this.setPlay( false );
 		}else if ( this.playing ){
-			this.timer = setTimeout( this.nextTick, this.options.frameDuration );
+			this.timer = setTimeout( this.nextTick, this.options.frameDuration / this.playingSpeed );
 		}
 		this.chart.setMaxDisplayX( this.time );
 		this.chart.translateX( this.chart.tickStep, { render: true } );
@@ -191,21 +199,16 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 	private onMouseMove = ( x: number, y: number, time: number/*, event: MouseEvent*/ ) => {
 		if( this.timeSelection ){
 			this.mouseTime = time;
-			this.moved = true;
 			this.elements.timeSelectMask.style.left = `${x}px`;
 		}
 	}
 
 	private onMouseUpDown = ( isDown: boolean, /*event: MouseEvent*/ ) => {
-		if( isDown ){
-			this.moved = false;
-		}else{
-			if ( this.timeSelection && !this.moved ){
-				this.enableTimeStartSelection( false );
-				this.time = this.mouseTime;
-				this.chart.setMaxDisplayX( this.time, true );
-				// this.goTo( this.mouseTime );
-			}
+		if ( !isDown && this.timeSelection ){
+			this.enableTimeStartSelection( false );
+			this.time = this.mouseTime;
+			this.chart.setMaxDisplayX( this.time, true );
+			// this.goTo( this.mouseTime );
 		}
 	}
 
@@ -234,9 +237,17 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 			this.elements.actions.className = 'player-actions';
 			Object.assign( this.elements.actions.style, {
 				flex: 'none', alignSelf: 'center', display: 'flex', flexDirection: 'row', gap: '4px',
-				position: 'absolute', zIndex: 200, visibility: 'hidden',
+				position: 'absolute', zIndex: 200, visibility: 'hidden', alignItems: 'center',
 			} );
 
+			this.inputSpeed = new InputSelect('speed', {
+				choices: this.playingSpeeds.map( s => ({ label: `x${s}`, value: s })),
+				onChange: ( v ) => {
+					this.setPlayingSpeed( v );
+				}
+			});
+			this.elements.actions.append( this.inputSpeed.getMainElement() );
+			
 			this.elements.btPickTime = createButtonIcon( this.elements.actions, 'capacitor', 'Select time', this.onClickTime );
 
 			this.elements.btPlay = createButtonIcon( this.elements.actions, 'play', 'Play / Pause', this.onClickPlayStop);

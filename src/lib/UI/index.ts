@@ -13,6 +13,8 @@ export type InputOptionsList = {
 	select: SelectOptions,
 }
 
-export type InputOptions = InputOptionsList[keyof InputOptionsList];
+export type InputTypes = keyof InputOptionsList;
+
+export type InputOptions = InputOptionsList[InputTypes];
 
 export { Dialog, inputs, InputBase, InputNumber, InputSelect };

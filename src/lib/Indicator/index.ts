@@ -1,4 +1,5 @@
 import type Base from './Base.ts';
+import { type Settings } from './Base.ts';
 import MA from './MA.ts';
 import Volume from './Volume.ts';
 import VolumeImpulse from './VolumeImpulse.ts';
@@ -16,4 +17,4 @@ export type List = typeof indicators;
 
 export type Indicator = InstanceType<List[keyof List]>;
 
-export type { Base };
+export type { Base, Settings };

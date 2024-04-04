@@ -1,7 +1,6 @@
 
 import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type BarStyle, type LineStyle } from './Base.ts';
-import { type InputOptionsList } from '../UI/index.ts';
+import Base, { type BaseOptions, type BarStyle, type LineStyle, Settings } from './Base.ts';
 
 //__ contract of constructor arg options
 export type Options = {
@@ -23,12 +22,8 @@ export default class Volume extends Base<Required<Options>, Computed> {
 	
 	label = 'Volume';
 	
-	settings: {
-		maType: InputOptionsList['select'],
-		maLength: InputOptionsList['number'],
-	} = {
-		maType:{
-			type: 'select',
+	settings = {
+		maType: new Settings('select', {
 			label: 'MA type',
 			choices: [
 				{
@@ -44,13 +39,12 @@ export default class Volume extends Base<Required<Options>, Computed> {
 					value: 'ema',
 				},
 			],
-		},
-		maLength:{
-			type: 'number',
+		}),
+		maLength: new Settings('number', {
 			label: 'MA length',
 			min: 0,
 			max: 200,
-		},
+		}),
 	};
 
 	constructor ( options: Options & Partial<BaseOptions> ){

@@ -1,3 +1,17 @@
+## [0.0.21](https://github.com/dmidz/tickschart/compare/v0.0.20...v0.0.21) (2024-06-16)
+
+
+### Bug Fixes
+
+* **player:** [TC-26] few bugs + speed select ([#15](https://github.com/dmidz/tickschart/issues/15)) ([fb626f1](https://github.com/dmidz/tickschart/commit/fb626f1a9fb8d59a1638165011bb3f463a50866f))
+
+
+### Features
+
+* **core:** [TC-12] lib assets integration ([#16](https://github.com/dmidz/tickschart/issues/16)) ([af3ecf8](https://github.com/dmidz/tickschart/commit/af3ecf880b2eea9772f9cf407cacf2a716ddbb90))
+
+
+
 ## [0.0.20](https://github.com/dmidz/tickschart/compare/v0.0.19...v0.0.20) (2024-03-28)
 
 

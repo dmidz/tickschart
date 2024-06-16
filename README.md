@@ -28,15 +28,10 @@ derived repo and run:
 
 You should be able to browse the provided local address such `http://localhost:5173/` and see the Chart in action.
 
-The data comes from a unique file of real past 1000 BTC H4 ticks used in loop for the dev ( this why you will see
+The data comes from a unique file of real past 1000 BTC H4 ticks used in loop for the dev ( this is why you will see
 gap at joins ) but it is very easy to plug it to a real API.
 
 ## Usage
-- Before bind to your ticks API, you can download a copy of [this 1000 ticks sample data file](https://github.com/dmidz/tickschart/blob/develop/public/data/ticks_BTC_4h/1684800000000-1000.json)
-into your local public directory such `~/my-project/public/data/1684800000000-1000.json`
-- Assets ( css & svg icons ) are not part of the published lib ( yet ), you
-  can [download it here](https://github.com/dmidz/tickschart/tree/develop/public/tickschart/assets) to your local public directory
-( and override it in your own css )
 
 ### Vanilla JS
 
@@ -45,12 +40,9 @@ Check and copy this example [demo/vanilla-js](https://github.com/dmidz/tickschar
 ```javascript
 //__ main.js
 import { Chart, Fetcher, defaultTick, intervalsMs } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart@0.0/+esm';
-
 //...
-// ! adapt this path to your public sample path
-const sampleTimeStart = 1684800000000;
-const ticksPerLoad = 1000;// must match the ticks count per fetch
-const sampleTicksURL = `/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
+// ! adapt this path to your public sample path or API url
+const ticksURL = `https://dmidz.github.io/tickschart/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
 //...
 const fetcher = new Fetcher( defaultTick, fetchAPI, options );
 
@@ -81,10 +73,8 @@ Check and copy this example [demo/vanilla-ts](https://github.com/dmidz/tickschar
 //__ main.ts
 import { Chart, Fetcher, defaultTick, intervalsMs } from '@dmidz/tickschart';
 // ...
-// ! adapt this path to your public sample path
-const sampleTimeStart = 1684800000000;
-const ticksPerLoad = 1000;// must match the ticks count per fetch
-const sampleTicksURL = `/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
+// ! adapt this path to your public sample path or API url
+const ticksURL = `https://dmidz.github.io/tickschart/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
 // ...
 
 ```

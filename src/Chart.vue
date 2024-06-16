@@ -10,11 +10,13 @@ type DataTick = Record<string, Tick>;//__ structure of one ticks load
 //_____ main settings
 const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 } as const;//__ define the structure of your ticks
 // chart works with 5 minimal tick properties: open, high, low, close & volume, if your API returns different format,
-// adapt the map below to match these needed properties to your tick properties
+//   adapt the map below to match these needed properties to your tick properties
 const mapTickProps = { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'vol' } as const;
+// this example uses a unique local json file ( 1000 ticks ) served in dev mode, replace this by an API call
+//	 with passed params such startTime & limit + other such symbol & timeScale string ( 15m / 4h / d1... ) */
 const sampleTimeStart = 1684800000000;
 const ticksPerLoad = 1000;// must match the ticks count per fetch
-const sampleTicksURL = `/tickschart/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
+const ticksURL = `${ window.location.origin }/tickschart/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
 const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
 // const currentTime = new Date();// initial time position
 // const currentTime = new Date( Date.UTC(2023, 6, 13 ) );// initial time position
@@ -31,17 +33,14 @@ const refChartWrapper = ref<HTMLElement>();
 let sampleTicks: DataTick | null = null;
 
 let chart: Chart<Tick>;
-let player: Player<Tick>;
+// let player: Player<Tick>;
 
 const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
-	/*__ this example uses a unique local json file ( 1000 ticks ) served in dev mode, replace this by an API call
-	 with passed params such startTime & limit + other such symbol & timeScale string ( 15m / 4h / d1... ) */
-
 	if( sampleTicks ){ return sampleTicks;}
 
-	const url = new URL( sampleTicksURL, window.location.origin );
+	const url = new URL( ticksURL );
 	
-	url.search = new URLSearchParams( {// sample of params for API, useless here with local json fetch 
+	url.search = new URLSearchParams( {// sample of params for API ( useless with local json fetch ) 
 		symbol: 'BTCUSDT',
 		interval: '4h',// if API requires interval as a string choice, of course it must corresponds to timeScaleMs value
 		startTime: `${startTime}`,
@@ -127,7 +126,7 @@ onMounted( async () => {
 	chart.setX( currentTime.getTime(), { xOriginRatio } );
 
 	//__ player
-	player = new Player( chart );
+	/*player = */new Player( chart );
 });
 
 onBeforeUnmount( () => {

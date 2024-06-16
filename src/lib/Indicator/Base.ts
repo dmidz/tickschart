@@ -437,6 +437,6 @@ export default abstract class Base<Options extends ObjKeyStr,
 }
 
 export class Settings {
-	constructor ( public type: InputTypes, public options: InputOptionsList[typeof type] ){
+	constructor ( public type: InputTypes, public options: InputOptionsList[InputTypes] ){
 	}
 }

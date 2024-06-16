@@ -10,12 +10,14 @@ type DataTick = Record<string, Tick>;
 //_____ main settings
 const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 } as const;//__ define the structure of your ticks
 // Chart works with 5 minimal tick properties: open, high, low, close & volume, if your API returns different format,
-// adapt the map below to match these properties to your tick properties
+//   adapt the map below to match these properties to your tick properties
 const mapTickProps = { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'vol' } as const;
-// ! adapt this path to your public sample path ( native fetch needs absolute URL )
+// this example uses a unique local json file ( 1000 ticks ) served in dev mode, replace this by an API call
+//	 with passed params such startTime & limit + other such symbol & timeScale string ( 15m / 4h / d1... ) */
 const sampleTimeStart = 1684800000000;
 const ticksPerLoad = 1000;// must match the ticks count per fetch
-const sampleTicksURL = `/tickschart/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
+// ! adapt this path to your public sample path ( native fetch needs absolute URL )
+const ticksURL = `https://dmidz.github.io/tickschart/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
 const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
 const currentTime = new Date( Date.UTC( 2023, 9, 10 ) );// initial time position
 const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 
@@ -27,16 +29,13 @@ const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, {
 
 let sampleTicks: DataTick | null = null;
 const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
-	/*__ this example uses a unique local json file ( 1000 ticks ) served in dev mode, replace this by an API call
-	 with passed params such startTime & limit + other such symbol & timeScale string ( 15m / 4h / d1... ) */
-
 	if ( sampleTicks ){
 		return sampleTicks;
 	}
 
-	const url = new URL( sampleTicksURL, window.location.origin );
+	const url = new URL( ticksURL );
 
-	url.search = new URLSearchParams( {// sample of params for API, useless here with local json fetch 
+	url.search = new URLSearchParams( {// sample of params for API ( useless with local json fetch ) 
 		symbol: 'BTCUSDT',
 		interval: '4h',// if API requires interval as a string choice, of course it must corresponds to timeScaleMs value
 		startTime: `${ startTime }`,
@@ -108,4 +107,4 @@ chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' 
 chart.setX( currentTime.getTime(), { xOriginRatio } );
 
 //__ player
-const player: Player<Tick> = new Player( chart );
+/*const player: Player<Tick> =*/ new Player( chart );

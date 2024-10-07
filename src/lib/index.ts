@@ -1,3 +1,5 @@
+import '@public/assets/main.css';
+
 export { default as Chart } from './Chart.ts';
 export { default as Fetcher } from './Fetcher.ts';
 export { default as Player } from './Player.ts';

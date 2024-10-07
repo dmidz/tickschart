@@ -26,7 +26,7 @@ derived repo and run:
       npm install
       npm run dev
 
-You should be able to browse the provided local address such `http://localhost:5173/` and see the Chart in action.
+You should be able to browse the provided local address such `http://localhost:5173/` and watch the Chart ( vuejs version ) in action.
 
 The data comes from a unique file of real past 1000 BTC H4 ticks used in loop for the dev ( this is why you will see
 gap at joins ) but it is very easy to plug it to a real API.
@@ -59,7 +59,11 @@ chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma'
 chart.setX( Date.now(), { xOriginRatio } );
 ```
 
-Serve your public directory, you should see a chart with BTC H4 ticks.
+Serve your public directory or run:
+
+      npm run dev
+
+Navigate to `http://localhost:5173/demo/vanilla-js/index.html`
 
 ### Vanilla TS
 
@@ -79,7 +83,11 @@ const ticksURL = `https://dmidz.github.io/tickschart/data/ticks_BTC_4h/${ sample
 
 ```
 
-Compile ts file & serve the html page, you should see a chart with BTC H4 ticks.
+Compile ts file & serve the html page, you should see a chart with BTC H4 ticks. Or run:
+
+      npm run dev
+
+and navigate to `http://localhost:5173/demo/vanilla-ts/index.html`
 
 Once running correctly, you can start customizing, for ex the fetch so it binds to your ticks API.
 

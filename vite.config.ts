@@ -10,9 +10,9 @@ const res = ( path: string ) => resolve( __dirname, path );
 export default defineConfig({
   resolve: {
     alias: {
-      '@': resolve( __dirname, 'src' ),
-      '@dmidz/tickschart': resolve( __dirname, 'dist' ),// trick to compile demo/vanilla-ts using real world package path
-      '@public': resolve( __dirname, 'public/tickschart' ),
+      '@': res( 'src' ),
+      '@dmidz/tickschart': res( 'dist' ),// trick to compile demo/vanilla-ts using real world package path
+      '@public': res( 'public/tickschart' ),
     },
     // preserveSymlinks: true,
   },

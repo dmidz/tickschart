@@ -199,7 +199,7 @@ body {
 
 .chart .bt-link:hover > .icon {
   filter: brightness(0) invert(1);
-  //color: #ffffff;
+  /*color: #ffffff;*/
 }
 
 /*__ dialog */

@@ -1,3 +1,12 @@
+## [0.0.22](https://github.com/dmidz/tickschart/compare/v0.0.21...v0.0.22) (2024-10-07)
+
+
+### Features
+
+* **core:** css style integrated in published lib ([#17](https://github.com/dmidz/tickschart/issues/17)) ([2b73ab9](https://github.com/dmidz/tickschart/commit/2b73ab9d5f0f5646a718f233af6e425283de5bad))
+
+
+
 ## [0.0.21](https://github.com/dmidz/tickschart/compare/v0.0.20...v0.0.21) (2024-06-16)
 
 

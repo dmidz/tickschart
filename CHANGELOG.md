@@ -1,3 +1,12 @@
+## [0.0.23](https://github.com/dmidz/tickschart/compare/v0.0.22...v0.0.23) (2024-10-08)
+
+
+### Features
+
+* **core:** add "main" entry in package.json to setup jsdelivr default file ([0d75096](https://github.com/dmidz/tickschart/commit/0d75096f4b0f8f104ac4108e61d9125d2011dd85))
+
+
+
 ## [0.0.22](https://github.com/dmidz/tickschart/compare/v0.0.21...v0.0.22) (2024-10-07)
 
 

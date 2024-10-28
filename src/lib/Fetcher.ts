@@ -137,7 +137,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 		return res;
 	}
 	
-	getTick( time: number ): Tick {
+	getTick = ( time: number ): Tick => {
 		return this.getMapTicks( time )?.[ time ]||this.defaultTick;
 	}
 

@@ -18,9 +18,9 @@ const sampleTimeStart = 1684800000000;
 const ticksPerLoad = 1000;// must match the ticks count per fetch
 const ticksURL = `${ window.location.origin }/tickschart/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`;
 const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
-// const currentTime = new Date();// initial time position
+const currentTime = new Date();// initial time position
 // const currentTime = new Date( Date.UTC(2023, 6, 13 ) );// initial time position
-const currentTime = new Date( Date.UTC(2023, 7, 4 ) );// initial time position
+// const currentTime = new Date( Date.UTC(2023, 7, 4 ) );// initial time position
 const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 
 const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, { 
 	timeZone: 'UTC',

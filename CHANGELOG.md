@@ -1,3 +1,12 @@
+## [0.0.24](https://github.com/dmidz/tickschart/compare/v0.0.23...v0.0.24) (2024-10-28)
+
+
+### Bug Fixes
+
+* **core:** Fetcher getTick binding ([4239ebf](https://github.com/dmidz/tickschart/commit/4239ebfa9a37b1186caeb5df6dc2bfae8fb51314))
+
+
+
 ## [0.0.23](https://github.com/dmidz/tickschart/compare/v0.0.22...v0.0.23) (2024-10-08)
 
 

@@ -92,15 +92,18 @@ body {
 }
 
 .chart select {
-  padding: 6px;
+  padding: 3px;
   border: 1px solid #333333;
   border-radius: 4px;
-  background: var(--input-bg-color);
-  color: var(--color-text);
+  /*background: var(--input-bg-color);*/
+  background-color: var(--color-background);
+  border: var(--bt-border);
+  color: var(--bt-text-color);
 }
 
 .chart select:focus {
   border: 1px solid var(--color-primary);
+  color: #ffffff;
 }
 
 .chart option {

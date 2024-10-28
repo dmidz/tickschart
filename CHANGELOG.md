@@ -1,3 +1,13 @@
+## [1.0.1](https://github.com/dmidz/tickschart/compare/v1.0.0...v1.0.1) (2024-10-28)
+
+
+### Bug Fixes
+
+* **core:** package.json add css export entry ([7889c59](https://github.com/dmidz/tickschart/commit/7889c5932cf6c78a5a6f3d0fde2cc6502bb9cbff))
+* **core:** update select style ([1393820](https://github.com/dmidz/tickschart/commit/139382029ca4ace1826b255cdde86e449c9d57ea))
+
+
+
 # [1.0.0](https://github.com/dmidz/tickschart/compare/v0.0.24...v1.0.0) (2024-10-28)
 
 

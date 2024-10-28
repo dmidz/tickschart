@@ -1,3 +1,12 @@
+# [1.0.0](https://github.com/dmidz/tickschart/compare/v0.0.24...v1.0.0) (2024-10-28)
+
+
+### Bug Fixes
+
+* **core:** update packages ([4fa7ced](https://github.com/dmidz/tickschart/commit/4fa7ced2de2952ce1163cf12e1360de1c9518003))
+
+
+
 ## [0.0.24](https://github.com/dmidz/tickschart/compare/v0.0.23...v0.0.24) (2024-10-28)
 
 

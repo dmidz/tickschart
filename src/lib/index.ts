@@ -1,5 +1,6 @@
 import '@public/assets/main.css';
 
+export { Dialog, inputs, InputBase, InputNumber, InputSelect } from './UI/index.ts';
 export { default as Chart } from './Chart.ts';
 export { default as Fetcher } from './Fetcher.ts';
 export { default as Player } from './Player.ts';
@@ -53,11 +54,13 @@ export function resizeCanvas ( canvas: HTMLCanvasElement | undefined ){
 	return resized;
 }
 
-export function createElement ( tagName: string = 'div', parentNode?: HTMLElement, options: {
+export function createElement ( tagName: string = 'div', options: {
 	style?: Partial<CSSStyleDeclaration>,
 	className?: string,
 	innerText?: string,
-} = {} ): HTMLElement{
+	relativeElement?: HTMLElement | null,
+	relativePosition?: 'append' | 'prepend' | 'after' | 'before',
+} = {} ): HTMLElement {
 	const el = document.createElement( tagName );
 	if ( options.className ){
 		el.className = options.className;
@@ -68,8 +71,13 @@ export function createElement ( tagName: string = 'div', parentNode?: HTMLElemen
 	if ( options.innerText ){
 		el.innerText = options.innerText;
 	}
-	if ( parentNode ){
-		parentNode.append( el );
+	if ( options.relativeElement ){
+		switch( options.relativePosition ){
+			default:				options.relativeElement.append( el ); break;
+			case 'prepend':	options.relativeElement.prepend( el ); break;
+			case 'after':		options.relativeElement.after( el ); break;
+			case 'before':	options.relativeElement.before( el ); break;
+		}
 	}
 	return el;
 }

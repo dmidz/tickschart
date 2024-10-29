@@ -62,7 +62,7 @@ export default class IndicatorSettings {
 							...is.options,
 							// @ts-ignore
 							value: indicator.getOption( key ),
-							parentElement: this.elContent,
+							relativeElement: this.elContent,
 							onChange: ( value: any/*, key, inputinput*/ ) => {
 								this.inputsChanges[ key ] = value;
 							},

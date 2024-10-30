@@ -9,7 +9,7 @@ export type Options = {
 			necessary for long indicators ( ex MA 200 periods ) needing data far left of current view */
 	fetchOnDemand?: boolean,
 	/*__ onLoad gives opportunity to refresh display ( called only on true new load finish ) */
-	onLoad?: ( time: number, mightRefresh?: boolean, isPrefetch?: boolean ) => void,
+	onLoad?: ( loadedRange: LoadedTimeRange, mightRefresh?: boolean, isPrefetch?: boolean ) => void,
 	debug?: boolean,
 }
 
@@ -80,10 +80,14 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 								if ( !r ){
 									return Promise.reject( 'response is null' );
 								}
-								debug && console.log( 'loaded', time, new Date( time ).toUTCString(), Object.keys( r ).length );
 								this.mapTicks.set( time, r );
 								const res: LoadedTimeRange = { min: time, max: time + this.timePerLoad };
-								this.options.onLoad( time, this.mapRefresh.get( time ), !opts.prefetch );
+								debug && console.log( 'loaded', {
+									timeStart: `${ res.min } (${ new Date( res.min ).toUTCString() })`,
+									timeEnd: `${ res.max } (${ new Date( res.max ).toUTCString() })`,
+									count: Object.keys( r ).length,
+								} );
+								this.options.onLoad( res, this.mapRefresh.get( time ), !opts.prefetch );
 								this.mapRefresh.delete( time );
 								return res;
 							} )

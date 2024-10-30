@@ -1,21 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { Chart, Fetcher, Player, intervalsMs } from '@/lib';
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
+import { Chart, Fetcher, Player, intervalsMs, InputSelect } from '@/lib';
 
 const { m1, h1, d1 } = intervalsMs;
 
 type Tick = typeof defaultTick;
 type DataTick = Record<string, Tick>;//__ structure of one ticks load
 
-//_____ main settings
+//_____ SETTINGS
 const API_BASE = import.meta.env.VITE_API_BASE;
-const SAMPLE_MODE = !API_BASE;//__ either using unique json data  (true) or normal API mode ( false )
+const SAMPLE_MODE = !API_BASE;//__ either using unique sample data json file  (true) or normal API mode ( false )
 const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 } as const;//__ define the structure of your ticks
 // chart works with 5 minimal tick properties: open, high, low, close & volume, if your API returns different format,
-//   adapt the map below to match these needed properties to your tick properties
+//   adapt the map below to match these needed properties to your tick properties ( notice tick prop 'vol' for 'volume'
 const mapTickProps = { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'vol' } as const;
-// this example uses a unique local json file ( 1000 ticks ) served in dev mode, replace this by an API call
-//	 with passed params such startTime & limit + other such symbol & timeScale string ( 15m / 4h / d1... ) */
 const sampleTimeStart = 1684800000000;
 const ticksPerLoad = SAMPLE_MODE ? 1000 : 500;// must match the ticks count per fetch
 const ticksURL = SAMPLE_MODE
@@ -29,14 +27,28 @@ const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, {
 	timeZone: 'UTC',
 	weekday: 'short', year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
 } );
+//________ /SETTINGS
 
-//__
+//___
 const refChartWrapper = ref<HTMLElement>();
 
 let sampleTicks: DataTick | null = null;
 
 let chart: Chart<Tick>;
 // let player: Player<Tick>;
+
+const INTERVALS = {
+	'1h': h1,
+	'4h': h1*4,
+}
+type Intervals = keyof typeof INTERVALS;
+
+const interval = ref<Intervals>('4h');
+
+watch([() => interval.value], () => {
+	fetcher.setTimeScale( INTERVALS[ interval.value ] );
+	chart.setTickStep( INTERVALS[interval.value] );
+});
 
 const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 	if( SAMPLE_MODE && sampleTicks ){ return sampleTicks;}
@@ -45,10 +57,10 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 	
 	url.search = new URLSearchParams( {// sample of params for API ( useless when SAMPLE_MODE ) 
 		symbol: 'BTCUSDT',
-		interval: '4h',// if API requires interval as a string choice, of course it must corresponds to timeScaleMs value
+		interval: interval.value,// if API requires interval as a string choice, of course it must corresponds to timeScaleMs value
 		startTime: `${startTime}`,
 		limit: `${limit}`,
-		token: import.meta.env.VITE_API_TOKEN,
+		token: import.meta.env.VITE_API_TOKEN,// this could be used to easily allow request when protected API
 	} ).toString();
 	
 	const response = await fetch( new Request( url, {  method: 'GET' } ) );
@@ -66,8 +78,7 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 	ticksPerLoad,
 	prefetchMargin: 1,
 	cacheSize: 2,
-	onLoad: ( time, mightRefresh ) => {
-		// console.log('onLoad', { time, mightRefresh });
+	onLoad: ( loadedRange, mightRefresh ) => {
 		//__ refresh when new loaded so long indicators ( ex: ma 200 ) have their data progressively without waiting whole loaded
 		if ( mightRefresh ){
 			chart.refresh();
@@ -110,20 +121,36 @@ onMounted( async () => {
 			precisionIn: .001,//__ might be set from current symbol properties
 		},
 		autoScaleY: true,
-		// tickWidth: 15,
+		// tickWidth: 50,
 		// chartRow: {
 		// 	height: 200,
 		// }
 	} );
 	
-	// chart.addIndicator( 'Volume', 'row', { maLength: 14, maType: 'sma' } );
+	chart.addIndicator( 'Volume', 'row', { maLength: 14, maType: 'sma' } );
 	// chart.addIndicator( 'VolumeImpulse', 'row', { maLength: 14, maType: 'sma' } );
 	// chart.addIndicator( 'OBV', 'row' );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'ema', style: { color: '#ffff00'} } );
-	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
+	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 21, type: 'sma' } );
+	
+	//__ in API mode, add a select input for timeframe to test 
+	if(!SAMPLE_MODE){
+		const infos = chart.getElement( 'infos' );
+		if ( infos ){
+			new InputSelect( 'timeframe', {
+				relativeElement: infos,
+				relativePosition: 'prepend',
+				value: interval.value,
+				choices: Object.keys( INTERVALS ).map( ( value ) => ( { value, label: value } ) ),
+				onChange: ( value ) => {
+					interval.value = value;
+				},
+			} );
+		}
+	}
 	
 	//__ can now apply the initial time & render
 	init = true;

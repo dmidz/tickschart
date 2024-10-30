@@ -1,3 +1,12 @@
+# [1.1.0](https://github.com/dmidz/tickschart/compare/v1.0.1...v1.1.0) (2024-10-30)
+
+
+### Features
+
+* **dx:** API sample ([#18](https://github.com/dmidz/tickschart/issues/18)) ([2baf488](https://github.com/dmidz/tickschart/commit/2baf48891443a420d5555cfddc8e664ba05832aa))
+
+
+
 ## [1.0.1](https://github.com/dmidz/tickschart/compare/v1.0.0...v1.0.1) (2024-10-28)
 
 

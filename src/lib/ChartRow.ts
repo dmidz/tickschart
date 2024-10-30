@@ -163,7 +163,8 @@ export default class ChartRow {
 	}
 
 	private createElements( parentElement: HTMLElement ): { canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, mouseArea: HTMLElement }{
-		const row = createElement( 'div', parentElement, {
+		const row = createElement( 'div', {
+			relativeElement: parentElement,
 			className: `row-ind ind-${ this.key }`,
 			style: {
 				position: 'relative',
@@ -177,7 +178,8 @@ export default class ChartRow {
 		} );
 		this.elements.set('row', row );
 
-		const draw = createElement( 'div', row, {
+		const draw = createElement( 'div', {
+			relativeElement: row,
 			className: `row-ind-draw indctr-${ this.key }`,
 			style: { flex: '1 1', overflow: 'hidden', cursor: 'crosshair' }
 		} );
@@ -195,7 +197,8 @@ export default class ChartRow {
 		draw.append( canvas );
 		this.elements.set( 'canvas', canvas );
 
-		const scaleY = createElement( 'div', row, {
+		const scaleY = createElement( 'div', {
+			relativeElement: row,
 			className: 'scale scale-y',
 			style: {
 				borderLeft: this.options.border,
@@ -206,7 +209,8 @@ export default class ChartRow {
 		this.elements.set( 'scaleY', scaleY );
 
 		//____ mouse area: main without yScale
-		const mouseArea = createElement( 'div', row, {
+		const mouseArea = createElement( 'div', {
+			relativeElement: row,
 			className: 'mouse-area',
 			style: {
 				display: 'block', zIndex: '95', position: 'absolute', cursor: 'crosshair',
@@ -222,7 +226,8 @@ export default class ChartRow {
 		mouseArea.addEventListener( 'mousedown', this.onMouseDown );
 		
 		//__ bt settings
-		const name = createElement( 'div', row, {
+		const name = createElement( 'div', {
+			relativeElement: row,
 			innerText: this.indicator.label,
 			className: 'bt-link bt-ind-settings',
 			style: {
@@ -234,7 +239,8 @@ export default class ChartRow {
 		} );
 		this.elements.set( 'name', name );
 		if( Object.keys( this.indicator.settings||{} ).length ){
-			createElement( 'div', name, {
+			createElement( 'div', {
+				relativeElement: name,
 				className: 'icon ic-settings',
 				style: {
 					marginLeft: '4px',

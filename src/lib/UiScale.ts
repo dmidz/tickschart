@@ -1,6 +1,7 @@
 
 import merge from './utils/merge.ts';
 import { decimal, roundPrecision, ScalingLinear, type Scale } from './utils/math.ts';
+import { createElement } from './index.ts';
 
 //__
 export type Options = {
@@ -72,17 +73,18 @@ export default class UiScale {
 		}
 		
 		parentElement.style.position = 'relative';
-		this.element = document.createElement( 'div' );
-		this.element.className = 'labels';
-		parentElement.append( this.element );
-		Object.assign( this.element.style, {
-			position: 'absolute',
-			inset: 0,
-			overflow: 'hidden',
-			cursor: this.isDirX ? 'ew-resize' : 'ns-resize',
-			userSelect: 'none',
-			lineHeight: '1em',
-		});
+		this.element = createElement( 'div', {
+			relativeElement: parentElement,
+			className: 'labels',
+			style: {
+				position: 'absolute',
+				inset: '0',
+				overflow: 'hidden',
+				cursor: this.isDirX ? 'ew-resize' : 'ns-resize',
+				userSelect: 'none',
+				lineHeight: '1em',
+			}
+		} );
 
 		//__ events
 		this.element.addEventListener( 'dblclick', this.onDoubleClick );
@@ -194,14 +196,15 @@ export default class UiScale {
 			let el = this.element.children[i++] as HTMLElement;
 			
 			if( !el ){
-				el = document.createElement( 'div' );
-				Object.assign( el.style, {
-					position: 'absolute',
-					// pointerEvents: 'none',
-					[ this.isDirX ? 'top' : 'left' ]: '4px',
+				el = createElement( 'div', {
+					relativeElement: this.element,
+					style: {
+						position: 'absolute',
+						// pointerEvents: 'none',
+						[ this.isDirX ? 'top' : 'left' ]: '4px',
+					}
 				} );
 				this.element.tabIndex = 0;
-				this.element.append( el );
 			}
 
 			Object.assign( el.style, {

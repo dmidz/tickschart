@@ -1,7 +1,7 @@
 
 import merge from './utils/merge';
 import type Chart from './Chart';
-import { type AbstractTick, type CandleTick } from './index.ts';
+import { type AbstractTick, type CandleTick, createElement } from './index.ts';
 import InputSelect from './UI/InputSelect.ts';
 
 //______
@@ -233,11 +233,13 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 		if( this.options.actionsElement ){
 			this.elements.actions = this.options.actionsElement;
 		}else{
-			this.elements.actions = document.createElement( 'div' );
-			this.elements.actions.className = 'player-actions';
-			Object.assign( this.elements.actions.style, {
-				flex: 'none', alignSelf: 'center', display: 'flex', flexDirection: 'row', gap: '4px',
-				position: 'absolute', zIndex: 200, visibility: 'hidden', alignItems: 'center',
+			this.elements.actions = createElement( 'div', {
+				relativeElement: parent,
+				className: 'player-actions',
+				style: {
+					flex: 'none', alignSelf: 'center', display: 'flex', flexDirection: 'row', gap: '4px',
+					position: 'absolute', zIndex: '200', visibility: 'hidden', alignItems: 'center',
+				}
 			} );
 
 			this.inputSpeed = new InputSelect('speed', {
@@ -258,7 +260,6 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 			this.elements.btClose = createButtonIcon( this.elements.actions, 'close', 'Close replay', this.onClickClose );
 		}
 
-		parent.append( this.elements.actions );
 		Object.assign( this.elements.actions.style, {
 			bottom: '1px',
 			left: `${ ( parent.clientWidth - this.elements.actions.clientWidth ) / 2 }px`,
@@ -267,26 +268,28 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 		//__
 		const mouseArea = this.chart.getElement('mouseArea');
 		this.zIndexOrigin = mouseArea.style.zIndex;
-		this.elements.timeSelect = document.createElement( 'div' );
-		this.elements.timeSelect.className = 'time-select';
-		Object.assign( this.elements.timeSelect.style, {
-			position: 'absolute',
-			inset: 0,
-			pointerEvents: 'none',
-			display: 'none',
-			zIndex: 500,
+		this.elements.timeSelect = createElement( 'div', {
+			relativeElement: mouseArea,
+			className: 'time-select',
+			style: {
+				position: 'absolute',
+				inset: '0',
+				pointerEvents: 'none',
+				display: 'none',
+				zIndex: '500',
+			}
 		} );
-		mouseArea.append( this.elements.timeSelect );
 
-		this.elements.timeSelectMask = document.createElement( 'div' );
-		this.elements.timeSelectMask.className = 'time-select-mask';
-		Object.assign( this.elements.timeSelectMask.style, {
-			position: 'absolute',
-			inset: '0',
-			borderLeft: '1px solid #ffff00',
-			backgroundColor: `#161616ee`,
+		this.elements.timeSelectMask = createElement( 'div', {
+			relativeElement: this.elements.timeSelect,
+			className: 'time-select-mask',
+			style: {
+				position: 'absolute',
+				inset: '0',
+				borderLeft: '1px solid #ffff00',
+				backgroundColor: `#161616ee`,
+			}
 		} );
-		this.elements.timeSelect.append( this.elements.timeSelectMask );
 
 		// __ mark
 		// this.elements.markCenterX = document.createElement( 'div' );

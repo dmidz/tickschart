@@ -89,6 +89,16 @@ Compile ts file & serve the html page, you should see a chart with BTC H4 ticks.
 
 and navigate to `http://localhost:5173/demo/vanilla-ts/index.html`
 
+### API binding
+
 Once running correctly, you can start customizing, for ex the fetch so it binds to your ticks API.
 
-// TODO: provide demo/node-api example with Binance public market ticks API for ex
+Create an .env file at project root and define these used variables:
+```
+# if set, will run in API mode ( instead json sample file mode )
+VITE_API_BASE=http://localhost:3000
+# optional: this will be added to API ticks request.query.token
+VITE_API_TOKEN="some-long-pwd-to-easily-pass-your-api-protection"
+```
+Checkout src/Chart.vue sample to fully understand how to bind to your
+API and customize your ticks full URL.

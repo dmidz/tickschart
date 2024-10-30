@@ -322,7 +322,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return this.options.tickIndexMax?.() || Infinity;
 	}
 
-	setTickStep( tickStep: number, { render = true, xOriginRatio = 0 } ){
+	setTickStep( tickStep: number, { render = true, xOriginRatio = 0 } = {} ){
 		this.tickStep = tickStep;
 		this.scalingX.setOption( 'precisionIn', this.tickStep );
 		const dw = this.width * this.tickStep;
@@ -822,7 +822,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			overflow: 'hidden',
 		} );
 		//____ main
-		this.elements.main = createElement( 'div', this.parentElement, {
+		this.elements.main = createElement( 'div', {
+			relativeElement: this.parentElement,
 			className: 'main',
 			style: {
 				flex: '1 1',
@@ -834,7 +835,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			}
 		} );
 		//____ row Candles
-		this.elements.rowCandles = createElement( 'div', this.elements.main, {
+		this.elements.rowCandles = createElement( 'div', {
+			relativeElement: this.elements.main,
 			className: 'row-candles',
 			style: {
 				flex: '1 1',
@@ -844,13 +846,15 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 				overflow: 'hidden',
 			}
 		} );
-		this.elements.candles = createElement( 'div', this.elements.rowCandles, {
+		this.elements.candles = createElement( 'div', {
+			relativeElement: this.elements.rowCandles,
 			className: 'candles',
 			style: {
 				flex: '1 1', position: 'relative', overflow: 'hidden',
 			}
 		} );
-		this.elements.scaleY = createElement( 'div', this.elements.rowCandles, {
+		this.elements.scaleY = createElement( 'div', {
+			relativeElement: this.elements.rowCandles,
 			className: 'scale scale-y',
 			style: {
 				borderLeft: this.border,
@@ -859,7 +863,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			}
 		} );
 		//____ foot
-		this.elements.foot = createElement( 'div', this.parentElement, {
+		this.elements.foot = createElement( 'div', {
+			relativeElement: this.parentElement,
 			className: 'foot',
 			style: {
 				height: '24px',
@@ -870,7 +875,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			}
 		} );
 		//____ scaleX
-		this.elements.scaleX = createElement( 'div', this.elements.foot, {
+		this.elements.scaleX = createElement( 'div', {
+			relativeElement: this.elements.foot,
 			className: 'scale scale-x',
 			style: {
 				flex: '1 1',
@@ -878,7 +884,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			}
 		} );
 		//____ foot corner
-		this.elements.corner = createElement( 'div', this.elements.foot, {
+		this.elements.corner = createElement( 'div', {
+			relativeElement: this.elements.foot,
 			className: 'corner',
 			style: {
 				width: `${ this.options.yScaleWidth }px`,
@@ -886,7 +893,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			}
 		} );
 		//____ mouse area: main without yScale
-		this.elements.mouseArea = createElement( 'div', this.elements.main, {
+		this.elements.mouseArea = createElement( 'div', {
+			relativeElement: this.elements.main,
 			className: 'mouse-move-area',
 			style: {
 				display: 'block', zIndex: '90', position: 'absolute', cursor: 'crosshair',
@@ -895,7 +903,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		} );
 		//__ cross
 		const crossBorder = '1px solid #ffffff33';
-		this.elements.cross = createElement( 'div', this.elements.main, {
+		this.elements.cross = createElement( 'div', {
+			relativeElement: this.elements.main,
 			className: 'cross',
 			style: {
 				display: 'none', position: 'absolute', inset: `0 ${ this.elements.scaleY.style.width } 0 0`, zIndex: '95',
@@ -903,7 +912,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			}
 		} );
 		//____ cross x
-		this.elements.crossX = createElement( 'div', this.elements.cross, {
+		this.elements.crossX = createElement( 'div', {
+			relativeElement: this.elements.cross,
 			className: 'cross-x',
 			style: {
 				display: 'block',
@@ -912,7 +922,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			}
 		} );
 		//____ cross y
-		this.elements.crossY = createElement( 'div', this.elements.cross, {
+		this.elements.crossY = createElement( 'div', {
+			relativeElement: this.elements.cross,
 			className: 'cross-y',
 			style: {
 				display: 'block',
@@ -926,14 +937,16 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			fontWeight: '400',
 			position: 'absolute', top: '0',
 		};
-		this.elements.labelX = createElement( 'div', this.elements.scaleX, {
+		this.elements.labelX = createElement( 'div', {
+			relativeElement: this.elements.scaleX,
 			className: 'cross-label-x',
 			style: {
 				...crossLabelStyle,
 				left: '0', height: this.elements.foot.style.height,
 			}
 		} );
-		this.elements.labelY = createElement( 'div', this.elements.main, {
+		this.elements.labelY = createElement( 'div', {
+			relativeElement: this.elements.main,
 			className: 'cross-label-y',
 			style: {
 				...crossLabelStyle,
@@ -943,7 +956,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.elements.labelY.innerText = '0';
 		this.elements.labelY.style.marginTop = `${ -Math.round( this.elements.labelY.clientHeight / 2 ) }px`;
 		//____ infos
-		this.elements.infos = createElement( 'div', this.elements.main, {
+		this.elements.infos = createElement( 'div', {
+			relativeElement: this.elements.main,
 			className: 'infos',
 			style: {
 				background: '#161616cc', padding: '0 8px',
@@ -953,7 +967,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		} );
 		Object.entries( this.infosLabels ).forEach( ( [ key, label ] ) => {
 			const k = `info-${ key }`;
-			this.elements[ k ] = createElement( 'div', this.elements.infos, {
+			this.elements[ k ] = createElement( 'div', {
+				relativeElement: this.elements.infos,
 				className: k,
 				style: {
 					display: 'flex', flexDirection: 'row', gap: '4px', justifyContent: 'flex-start',
@@ -962,7 +977,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			this.elements[ k ].innerText = `${ label }:`;
 
 			const kv = `${ k }-value`;
-			this.elements[ kv ] = createElement( 'div', this.elements[ k ], {
+			this.elements[ kv ] = createElement( 'div', {
+				relativeElement: this.elements[ k ],
 				className: kv,
 				style: {}
 			} );
@@ -971,12 +987,14 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		//__ options elements
 		if ( this.options.uiElements.buttonGoMaxX ){
 			if ( this.options.uiElements.buttonGoMaxX === true ){
-				this.elements.buttonGoMaxX = createElement( 'button', this.elements.candles, {
+				this.elements.buttonGoMaxX = createElement( 'button', {
+					relativeElement: this.elements.candles,
 					style: {
 						position: 'absolute', bottom: '1px', right: '1px', zIndex: '150', padding: '4px',
 					}
 				} );
-				createElement( 'span', this.elements.buttonGoMaxX, {
+				createElement( 'span', {
+					relativeElement: this.elements.buttonGoMaxX,
 					className: 'icon ic-chevron-double',
 					style: {
 						transform: 'rotate(90deg)',

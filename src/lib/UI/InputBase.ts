@@ -1,7 +1,9 @@
+import { createElement } from '../index.ts';
 
 //_____
 export type BaseOptions = {
-	parentElement?: HTMLElement | null,
+	relativeElement?: HTMLElement | null,
+	relativePosition?: Required<Parameters<typeof createElement>>[1]['relativePosition'],
 	label?: string | null,
 	onChange?: ( value: any, key: string, emitter: InputBase ) => void,
 	value?: any,
@@ -17,8 +19,9 @@ export default abstract class InputBase<Options extends ObjKeyStr = {}> {
 	protected abstract buildInput(): typeof this.elInput;
 	
 	constructor( public key: string, options: Options ){
-		this.options = Object.assign( { 
-			parentElement: null,
+		this.options = Object.assign( {
+			relativeElement: null,
+			relativePosition: 'append' as const,
 			label: null,
 			onChange: () => {},
 			value: null,
@@ -26,22 +29,26 @@ export default abstract class InputBase<Options extends ObjKeyStr = {}> {
 		
 		// console.log('InputBase', this.key, this.options );
 
-		this.elements.wrapper = document.createElement( 'div' );
-		this.elements.wrapper.className = 'input-field';
-		Object.assign( this.elements.wrapper.style, {
-			display: 'flex',
-			flexDirection: 'row',
-			alignItems: 'center',
-			gap: '8px',
+		this.elements.wrapper = createElement( 'div', {
+			relativeElement: this.options.relativeElement,
+			relativePosition: this.options.relativePosition,
+			className: 'input-field',
+			style: {
+				display: 'flex',
+				flexDirection: 'row',
+				alignItems: 'center',
+				gap: '8px',
+			}
 		} );
 		
 		if( this.options.label ){
-			this.elements.label = document.createElement( 'label' );
-			this.elements.wrapper.append( this.elements.label );
-			this.elements.label.innerText = this.options.label;
-			Object.assign( this.elements.label.style, {
-				flex: '1',
-				textAlign: 'right',
+			this.elements.label = createElement( 'label', {
+				relativeElement: this.elements.wrapper,
+				innerText: this.options.label,
+				style: {
+					flex: '1',
+					textAlign: 'right',
+				},
 			} );
 		}
 		
@@ -56,11 +63,6 @@ export default abstract class InputBase<Options extends ObjKeyStr = {}> {
 			flex: '2',
 		} );
 		this.elements.wrapper.append( this.elInput );
-		
-		if ( this.options.parentElement ){
-			this.options.parentElement.append( this.elements.wrapper );
-		}
-
 	}
 
 	protected value: any;

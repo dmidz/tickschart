@@ -35,7 +35,8 @@ export default class Dialog {
 	
 	buildElements(){
 		
-		this.elements.wrapper = createElement('div', this.options.parentElement, {
+		this.elements.wrapper = createElement('div', {
+			relativeElement: this.options.parentElement,
 			className: 'dialog-wrapper',
 			style: {
 				display: 'none',
@@ -50,7 +51,8 @@ export default class Dialog {
 		});
 		this.elements.wrapper.addEventListener( 'mousedown', this.handleClose );
 
-		this.elements.dialog = createElement('div', this.elements.wrapper, {
+		this.elements.dialog = createElement('div', {
+			relativeElement: this.elements.wrapper,
 			className: 'dialog',
 			style: {
 				position: 'absolute',
@@ -67,7 +69,8 @@ export default class Dialog {
 		this.elements.dialog.tabIndex = 0;
 		this.elements.dialog.addEventListener( 'keydown', this.handleKeydown );
 
-		this.elements.head = createElement( 'div', this.elements.dialog, {
+		this.elements.head = createElement( 'div', {
+			relativeElement: this.elements.dialog,
 			className: 'dlg-head',
 			style: {
 				position: 'relative',
@@ -75,7 +78,8 @@ export default class Dialog {
 			}
 		} );
 
-		this.elements.title = createElement( 'div', this.elements.head, {
+		this.elements.title = createElement( 'div', {
+			relativeElement: this.elements.head,
 			className: 'dlg-title',
 			style: {
 				fontSize: '1.5rem',
@@ -87,7 +91,8 @@ export default class Dialog {
 			this.elements.title.innerText = this.options.title;
 		}
 
-		this.elements.btClose = createElement( 'button', this.elements.head, {
+		this.elements.btClose = createElement( 'button', {
+			relativeElement: this.elements.head,
 			className: 'bt-close',
 			style: {
 				position: 'absolute',
@@ -104,7 +109,8 @@ export default class Dialog {
 		// this.elements.btClose.innerText = '-';
 		this.elements.btClose.addEventListener( 'click', this.handleClose );
 
-		createElement( 'span', this.elements.btClose, {
+		createElement( 'span', {
+			relativeElement: this.elements.btClose,
 			className: 'icon ic-close',
 			style: {
 				width: '24px',
@@ -112,14 +118,16 @@ export default class Dialog {
 			}
 		} );
 
-		this.elements.content = createElement( 'div', this.elements.dialog, {
+		this.elements.content = createElement( 'div', {
+			relativeElement: this.elements.dialog,
 			className: 'dlg-content',
 			style: {
 				flex: '1 1',
 			}
 		} );
 
-		this.elements.foot = createElement( 'div', this.elements.dialog, {
+		this.elements.foot = createElement( 'div', {
+			relativeElement: this.elements.dialog,
 			className: 'dlg-foot',
 			style: {
 				padding: '1rem 1.5rem',
@@ -131,20 +139,18 @@ export default class Dialog {
 		} );
 		
 		if( this.options.buttons?.cancel ){
-			this.elements.cancel = createElement( 'button', this.elements.foot, {
+			this.elements.cancel = createElement( 'button', {
+				relativeElement: this.elements.foot,
 				// className: 'btOk',
-				style: {
-				}
 			} );
 			this.elements.cancel.innerText = 'Cancel';
 			this.elements.cancel.addEventListener( 'click', this.handleClose );
 		}
 
 		if( this.options.buttons?.ok ){
-			this.elements.btOk = createElement( 'button', this.elements.foot, {
+			this.elements.btOk = createElement( 'button', {
+				relativeElement: this.elements.foot,
 				// className: 'btOk',
-				style: {
-				}
 			} );
 			this.elements.btOk.innerText = 'OK';
 			this.elements.btOk.addEventListener( 'click', this.handleOk );

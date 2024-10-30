@@ -322,7 +322,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return this.options.tickIndexMax?.() || Infinity;
 	}
 
-	setTickStep( tickStep: number, { render = true, xOriginRatio = 0 } ){
+	setTickStep( tickStep: number, { render = true, xOriginRatio = 0 } = {} ){
 		this.tickStep = tickStep;
 		this.scalingX.setOption( 'precisionIn', this.tickStep );
 		const dw = this.width * this.tickStep;

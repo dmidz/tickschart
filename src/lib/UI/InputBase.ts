@@ -63,8 +63,6 @@ export default abstract class InputBase<Options extends ObjKeyStr = {}> {
 			flex: '2',
 		} );
 		this.elements.wrapper.append( this.elInput );
-		
-
 	}
 
 	protected value: any;

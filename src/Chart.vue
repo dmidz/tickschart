@@ -8,8 +8,8 @@ type Tick = typeof defaultTick;
 type DataTick = Record<string, Tick>;//__ structure of one ticks load
 
 //_____ main settings
-const API_URL = import.meta.env.VITE_API_URL;
-const SAMPLE_MODE = !API_URL;//__ either using unique json data  (true) or normal API mode ( false )
+const API_BASE = import.meta.env.VITE_API_BASE;
+const SAMPLE_MODE = !API_BASE;//__ either using unique json data  (true) or normal API mode ( false )
 const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 } as const;//__ define the structure of your ticks
 // chart works with 5 minimal tick properties: open, high, low, close & volume, if your API returns different format,
 //   adapt the map below to match these needed properties to your tick properties
@@ -20,7 +20,7 @@ const sampleTimeStart = 1684800000000;
 const ticksPerLoad = SAMPLE_MODE ? 1000 : 500;// must match the ticks count per fetch
 const ticksURL = SAMPLE_MODE
 	? `${ window.location.origin }/tickschart/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`
-	: API_URL;
+	: `${ window.location.origin }/api/exch/market-ticks`;
 const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
 // const currentTime = new Date();// initial time position
 const currentTime = new Date( Date.UTC( 2023, 10, 9 ) );

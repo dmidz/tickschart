@@ -962,7 +962,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			style: {
 				background: '#161616cc', padding: '0 8px',
 				position: 'absolute', left: '1px', top: '1px', zIndex: '96',
-				display: 'flex', flexDirection: 'row', gap: '8px', justifyContent: 'flex-start',
+				display: 'flex', flexDirection: 'row', gap: '8px', justifyContent: 'flex-start', alignItems: 'center'
 			}
 		} );
 		Object.entries( this.infosLabels ).forEach( ( [ key, label ] ) => {

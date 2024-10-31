@@ -21,7 +21,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
+  
+  font-family: var(--font);
 }
 
 html, body, #app {
@@ -39,7 +40,6 @@ body {
 
 * {
   box-sizing: border-box;
-  font-family: var(--font);
 }
 
 #app {

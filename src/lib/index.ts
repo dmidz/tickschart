@@ -54,12 +54,20 @@ export function resizeCanvas ( canvas: HTMLCanvasElement | undefined ){
 	return resized;
 }
 
-export function createElement ( tagName: string = 'div', options: {
+type ElementOptions = {
 	style?: Partial<CSSStyleDeclaration>,
 	className?: string,
 	innerText?: string,
 	relativeElement?: HTMLElement | null,
 	relativePosition?: 'append' | 'prepend' | 'after' | 'before',
+	attr?: { [ key: string ]: string },
+	events?: {//type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions
+		[key: string]: EventListenerOrEventListenerObject,
+	}
+}
+
+export function createElement ( tagName: string = 'div', options: ElementOptions & {
+	icon?: ElementOptions
 } = {} ): HTMLElement {
 	const el = document.createElement( tagName );
 	if ( options.className ){
@@ -70,6 +78,23 @@ export function createElement ( tagName: string = 'div', options: {
 	}
 	if ( options.innerText ){
 		el.innerText = options.innerText;
+	}
+	if( options.attr ){
+		for( const key in options.attr ){
+			el.setAttribute( key, options.attr[key]);
+		}
+	}
+	if( options.icon ){
+		createElement( 'span', {
+			...options.icon,
+			relativeElement: el,
+			className: `icon ic-${ options.icon.className }`,
+		});
+	}
+	if( options.events ){
+		for(const key in options.events){
+			el.addEventListener( key, options.events[key] );
+		}
 	}
 	if ( options.relativeElement ){
 		switch( options.relativePosition ){

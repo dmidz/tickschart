@@ -178,6 +178,10 @@ body {
   
 }
 
+.chart button > .icon {
+  pointer-events: none;
+}
+
 .chart button:hover {
   border: 1px solid var(--color-primary);
   color: #ffffff;
@@ -239,3 +243,28 @@ body {
   opacity: 1;
 }
 
+/*__ tick infos */
+.chart .tick-infos {
+  background: rgba(22, 22, 22, 0.8);
+  padding: 0 8px;
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  z-index: 96;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  justify-content: flex-start;
+  align-items: center;  
+}
+
+.chart .tick-infos .tick-info {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  justify-content: flex-start;
+}
+
+.chart .tick-infos .tick-info .tick-info-value {
+  color: #999999;
+}

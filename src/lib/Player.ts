@@ -225,9 +225,13 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 		if( this.options.buttonReplay ){
 			this.elements.btReplay = this.options.buttonReplay;
 		}else{
-			this.elements.btReplay = createButtonIcon( parent, 'replay', 'Replay', this.onClickReplay, {
-				position: 'absolute', zIndex: '200', right: '1px', top: '1px',
-			});
+			this.elements.btReplay = createElement( 'button', {
+				relativeElement: this.chart.getElement( 'toolbarTop' ),
+				style: { padding: '4px' },
+				attr: { title: 'Replay' },
+				icon: { className: 'replay' },
+				events: { click: this.onClickReplay }
+			} );
 		}
 
 		if( this.options.actionsElement ){
@@ -250,14 +254,39 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 			});
 			this.elements.actions.append( this.inputSpeed.getMainElement() );
 			
-			this.elements.btPickTime = createButtonIcon( this.elements.actions, 'capacitor', 'Select time', this.onClickTime );
+			this.elements.btPickTime = createElement( 'button', {
+				relativeElement: this.elements.actions,
+				style: { padding: '4px' },
+				attr: { title: 'Select time' },
+				icon: { className: 'capacitor' },
+				events: { click: this.onClickTime }
+			} );
 
-			this.elements.btPlay = createButtonIcon( this.elements.actions, 'play', 'Play / Pause', this.onClickPlayStop);
+			this.elements.btPlay = createElement( 'button', {
+				relativeElement: this.elements.actions,
+				style: { padding: '4px' },
+				attr: { title: 'Play / Pause' },
+				icon: { className: 'play' },
+				events: { click: this.onClickPlayStop }
+			} );
+
 			this.elements.iconPlay = this.elements.btPlay.querySelector('.icon') as HTMLElement;
 
-			this.elements.btSkip = createButtonIcon( this.elements.actions, 'step', 'Next tick', this.onClickSkip );
+			this.elements.btSkip = createElement( 'button', {
+				relativeElement: this.elements.actions,
+				style: { padding: '4px' },
+				attr: { title: 'Next tick' },
+				icon: { className: 'step' },
+				events: { click: this.onClickSkip }
+			} );
 
-			this.elements.btClose = createButtonIcon( this.elements.actions, 'close', 'Close replay', this.onClickClose );
+			this.elements.btClose = createElement( 'button', {
+				relativeElement: this.elements.actions,
+				style: { padding: '4px' },
+				attr: { title: 'Close replay' },
+				icon: { className: 'close' },
+				events: { click: this.onClickClose }
+			} );
 		}
 
 		Object.assign( this.elements.actions.style, {
@@ -306,20 +335,4 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 		// this.chart.getElement( 'candles' ).append( this.elements.markCenterX );
 
 	}
-}
-
-function createButtonIcon( parent: HTMLElement, iconClass: string, title: string, clickHandler: ( ev: MouseEvent ) => void, style?: Partial<CSSStyleDeclaration> ){
-	const button = document.createElement( 'button' );
-	button.style.padding = '4px';
-	button.setAttribute( 'title', title );
-	const icon = document.createElement( 'span' );
-	icon.className = `icon ic-${ iconClass}`;
-	button.append( icon );
-	if( style ){
-		Object.assign( button.style, style );
-	}
-	parent.append( button );
-	button.addEventListener( 'click', clickHandler );
-	return button;
-
 }

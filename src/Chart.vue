@@ -18,6 +18,8 @@ const sampleTimeStart = 1684800000000;
 const ticksPerLoad = SAMPLE_MODE ? 1000 : 500;// must match the ticks count per fetch
 const ticksURL = SAMPLE_MODE
 	? `${ window.location.origin }/tickschart/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`
+	//__ WARN: do no use API_BASE here, instead use current location with '/api' prefix to avoid all CORS problems for dev
+	//__ '/api' url requests will be proxied by vite server which will use API_BASE, check vite.config.js server entry
 	: `${ window.location.origin }/api/exch/market-ticks`;
 const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
 // const currentTime = new Date();// initial time position

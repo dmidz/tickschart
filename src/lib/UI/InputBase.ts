@@ -7,6 +7,7 @@ export type BaseOptions = {
 	label?: string | null,
 	onChange?: ( value: any, key: string, emitter: InputBase ) => void,
 	value?: any,
+	inputAttr?: { [ key: string ]: string },
 }
 
 //______
@@ -25,6 +26,7 @@ export default abstract class InputBase<Options extends ObjKeyStr = {}> {
 			label: null,
 			onChange: () => {},
 			value: null,
+			inputAttr: {},
 		}, options );
 		
 		// console.log('InputBase', this.key, this.options );
@@ -55,6 +57,10 @@ export default abstract class InputBase<Options extends ObjKeyStr = {}> {
 		this.elInput = this.buildInput();
 		this.elInput.setAttribute('name', this.key );
 		this.elInput.setAttribute('tabIndex', '1' );
+		for ( const key in this.options.inputAttr ){
+			this.elInput.setAttribute( key, this.options.inputAttr[ key ] );
+		}
+
 		if( this.options.value ){
 			this.value = this.options.value;
 			this.elInput.value = this.options.value;

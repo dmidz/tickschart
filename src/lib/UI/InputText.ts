@@ -2,8 +2,6 @@ import InputBase, { type BaseOptions } from './InputBase.ts';
 
 //_____
 export type Options = BaseOptions & {
-	min?: number,
-	max?: number
 }
 
 //______

@@ -7,7 +7,8 @@ export type Options = {
 	buttons?: null | {
 		ok?: () => void,
 		cancel?: () => void,
-	}
+	},
+	content?: HTMLElement | null,
 }
 
 //______
@@ -19,6 +20,7 @@ export default class Dialog {
 			cancel: () => {},
 			ok: () => {},
 		},
+		content: null,
 	}
 	
 	private elements: {[key:string]: HTMLElement} = {};
@@ -28,6 +30,8 @@ export default class Dialog {
 			buttons: { ...this.options.buttons, ...options.buttons },
 		} );
 		this.buildElements();
+		
+		this.setContent( options.content );
 
 		//___
 		Dialog.dialogs.push( this );
@@ -106,7 +110,6 @@ export default class Dialog {
 				// overflow: 'hidden',
 			}
 		} );
-		// this.elements.btClose.innerText = '-';
 		this.elements.btClose.addEventListener( 'click', this.handleClose );
 
 		createElement( 'span', {
@@ -159,19 +162,26 @@ export default class Dialog {
 	}
 	
 	private elContent: HTMLElement | null = null;
-	display( show = true, opts: { title?: string | null, content?: HTMLElement | null } = {} ){
-		if( show ){
-			if ( opts.title ){
-				this.elements.title.innerText = opts.title;
+	
+	setContent( content?: HTMLElement | null ){
+		if ( content !== this.elContent ){
+			if ( this.elContent ){
+				this.elContent.remove();
 			}
-			if( opts.content !== this.elContent ){
-				if ( this.elContent ){
-					this.elContent.remove();
-				}
-				if( opts.content ){
-					this.elContent = opts.content;
-					this.elements.content.append( this.elContent );
-				}
+			if ( content ){
+				this.elContent = content;
+				this.elements.content.append( this.elContent );
+			}
+		}
+	}
+	
+	display( show = true, options: { title?: string | null, content?: HTMLElement | null } = {} ){
+		if( show ){
+			if ( options.title ){
+				this.elements.title.innerText = options.title;
+			}
+			if( options.content ){
+				this.setContent( options.content );
 			}
 			setTimeout( () =>{
 				this.elements.dialog.focus();

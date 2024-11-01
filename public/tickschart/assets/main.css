@@ -92,7 +92,7 @@ body {
 }
 
 .chart select {
-  padding: 3px;
+  padding: 0.25rem;
   border: 1px solid #333333;
   border-radius: 4px;
   /*background: var(--input-bg-color);*/
@@ -153,6 +153,10 @@ body {
 
 .icon.ic-capacitor {
   background-image: url("icons/clarity-capacitor.svg");
+}
+
+.icon.ic-chart-line {
+  background-image: url("icons/clarity-chart-line.svg");
 }
 
 /*__ buttons */
@@ -243,6 +247,14 @@ body {
   opacity: 1;
 }
 
+.chart .toolbar {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  align-items: center;
+  position: absolute;
+}
+
 /*__ tick infos */
 .chart .tick-infos {
   background: rgba(22, 22, 22, 0.8);
@@ -267,4 +279,12 @@ body {
 
 .chart .tick-infos .tick-info .tick-info-value {
   color: #999999;
+}
+
+/*__ chart toolbar-top */
+.chart .toolbar-top {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  z-index: 150;
 }

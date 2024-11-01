@@ -239,10 +239,9 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 		}else{
 			this.elements.actions = createElement( 'div', {
 				relativeElement: parent,
-				className: 'player-actions',
+				className: 'toolbar player-actions',
 				style: {
-					flex: 'none', alignSelf: 'center', display: 'flex', flexDirection: 'row', gap: '4px',
-					position: 'absolute', zIndex: '200', visibility: 'hidden', alignItems: 'center',
+					position: 'absolute', zIndex: '200', visibility: 'hidden',
 				}
 			} );
 

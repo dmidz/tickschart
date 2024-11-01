@@ -138,22 +138,19 @@ onMounted( async () => {
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 21, type: 'sma' } );
 	
-	//__ in API mode, add a select input for timeframe to test 
+	//__ in API mode, add a select input for timeframe to test change
 	if(!SAMPLE_MODE){
-		const infos = chart.getElement( 'infos' );
-		if ( infos ){
-			new InputSelect( 'timeframe', {
-				relativeElement: infos,
-				relativePosition: 'prepend',
-				value: interval.value,
-				choices: Object.keys( INTERVALS ).map( ( value ) => ( { value, label: value } ) ),
-				onChange: ( value ) => {
-					interval.value = value;
-				},
-			} );
-		}
+		new InputSelect( 'timeframe', {
+			relativeElement: chart.getElement( 'infos' ),
+			relativePosition: 'prepend',
+			value: interval.value,
+			choices: Object.keys( INTERVALS ).map( ( value ) => ( { value, label: value } ) ),
+			onChange: ( value ) => {
+				interval.value = value;
+			},
+		} );
 	}
-	
+
 	//__ can now apply the initial time & render
 	init = true;
 	chart.setX( currentTime.getTime(), { xOriginRatio } );

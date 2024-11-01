@@ -947,40 +947,31 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		} );
 		this.elements.labelY = createElement( 'div', {
 			relativeElement: this.elements.main,
+			innerText: '0',
 			className: 'cross-label-y',
 			style: {
 				...crossLabelStyle,
 				right: '0', width: this.elements.scaleY.style.width,
 			}
 		} );
-		this.elements.labelY.innerText = '0';
 		this.elements.labelY.style.marginTop = `${ -Math.round( this.elements.labelY.clientHeight / 2 ) }px`;
 		//____ infos
 		this.elements.infos = createElement( 'div', {
-			relativeElement: this.elements.main,
-			className: 'infos',
-			style: {
-				background: '#161616cc', padding: '0 8px',
-				position: 'absolute', left: '1px', top: '1px', zIndex: '96',
-				display: 'flex', flexDirection: 'row', gap: '8px', justifyContent: 'flex-start', alignItems: 'center'
-			}
+			relativeElement: this.elements.candles,
+			className: 'tick-infos',
 		} );
 		Object.entries( this.infosLabels ).forEach( ( [ key, label ] ) => {
 			const k = `info-${ key }`;
 			this.elements[ k ] = createElement( 'div', {
 				relativeElement: this.elements.infos,
-				className: k,
-				style: {
-					display: 'flex', flexDirection: 'row', gap: '4px', justifyContent: 'flex-start',
-				}
+				className: `tick-info ${k}`,
 			} );
 			this.elements[ k ].innerText = `${ label }:`;
 
 			const kv = `${ k }-value`;
 			this.elements[ kv ] = createElement( 'div', {
 				relativeElement: this.elements[ k ],
-				className: kv,
-				style: {}
+				className: `tick-info-value ${kv}`,
 			} );
 		} );
 
@@ -988,19 +979,20 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		if ( this.options.uiElements.buttonGoMaxX ){
 			if ( this.options.uiElements.buttonGoMaxX === true ){
 				this.elements.buttonGoMaxX = createElement( 'button', {
+					attr: {
+						title: 'Scroll X to max',
+					},
 					relativeElement: this.elements.candles,
 					style: {
 						position: 'absolute', bottom: '1px', right: '1px', zIndex: '150', padding: '4px',
+					},
+					icon: {
+						className: 'icon ic-chevron-double',
+						style: {
+							transform: 'rotate(90deg)',
+						}
 					}
 				} );
-				createElement( 'span', {
-					relativeElement: this.elements.buttonGoMaxX,
-					className: 'icon ic-chevron-double',
-					style: {
-						transform: 'rotate(90deg)',
-					}
-				} );
-				this.elements.buttonGoMaxX.title = 'Scroll X to max';
 			} else {
 				this.elements.buttonGoMaxX = this.elements.candles.appendChild( this.options.uiElements.buttonGoMaxX );
 			}

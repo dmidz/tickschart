@@ -228,7 +228,7 @@ export default class ChartRow {
 		//__ bt settings
 		const name = createElement( 'div', {
 			relativeElement: row,
-			innerText: this.indicator.label,
+			innerText: this.indicator.getLabel(),
 			className: 'bt-link bt-ind-settings',
 			style: {
 				position: 'absolute',

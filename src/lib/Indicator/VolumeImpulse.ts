@@ -33,7 +33,7 @@ type Computed = typeof defaultComputed;
 
 export default class VolumeImpulse extends Base<Required<Options>, Computed> {
 
-	label = 'Volume Impulse';
+	static name = 'Volume Impulse';
 
 	settings = {
 		maType: new Settings( 'select', {

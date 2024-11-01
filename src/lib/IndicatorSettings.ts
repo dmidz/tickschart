@@ -1,6 +1,7 @@
 
 import { Dialog, inputs, InputBase, type InputOptions } from './UI/index.ts';
 import type { Indicator, Settings } from '@/lib/Indicator';
+import { createElement } from './index.ts';
 
 export type Options = {
 	parentElement?: HTMLElement,
@@ -47,13 +48,14 @@ export default class IndicatorSettings {
 			this.inputsChanges = {};
 			//__ build settings inputs
 			if ( indicator.settings ){
-				this.elContent = document.createElement( 'div' );
-				this.elContent.className = 'fields';
-				Object.assign( this.elContent.style, {
-					display: 'flex',
-					flexDirection: 'column',
-					gap: '8px',
-				} )
+				this.elContent = createElement( 'div', {
+					className: 'fields',
+					style: {
+						display: 'flex',
+						flexDirection: 'column',
+						gap: '8px',
+					},
+				} );
 				Object.keys( indicator.settings ).forEach( key => {
 					const is = indicator.settings[ key as keyof typeof indicator.settings ] as Settings;
 					const cl = inputs[ is.type ];
@@ -77,7 +79,7 @@ export default class IndicatorSettings {
 		}
 
 		this.dialog.display( display, {
-			title: `${ indicator.label }`,
+			title: `${ indicator.getLabel() }`,
 			content: this.elContent,
 		} );
 	}

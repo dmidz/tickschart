@@ -20,7 +20,7 @@ type Computed = typeof defaultComputed;
 
 export default class MA extends Base<Required<Options>, Computed> {
 
-	label = 'SMA / EMA';
+	static label = 'SMA / EMA';
 
 	constructor ( options: Options & Partial<BaseOptions> ){
 		

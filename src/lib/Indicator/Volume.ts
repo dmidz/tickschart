@@ -20,8 +20,6 @@ type Computed = typeof defaultComputed;
 
 export default class Volume extends Base<Required<Options>, Computed> {
 	
-	label = 'Volume';
-	
 	settings = {
 		maType: new Settings('select', {
 			label: 'MA type',

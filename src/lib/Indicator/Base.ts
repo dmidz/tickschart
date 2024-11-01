@@ -41,6 +41,9 @@ export default abstract class Base<Options extends ObjKeyStr,
 			Computed extends ObjKeyStr,
 			CK extends KeyOfString<Computed> = KeyOfString<Computed>,
 			TCK extends TickProp | CK = TickProp | CK> {
+	
+	static label: string;
+	
 	private compute: { [key in CK]: ComputeFunc };
 	public options: /*BaseOptions &*/ Options;
 	protected tickValue!: ( index: number, prop: TickProp, delta?: number ) => any;
@@ -80,7 +83,12 @@ export default abstract class Base<Options extends ObjKeyStr,
 	
 	abstract draw( index: number ): void;
 	abstract computeSetup(): ({ [key in CK]: ComputeFunc });
-	public abstract label: string;
+	
+	getLabel(){
+		// @ts-ignore
+		return this.constructor.label || this.constructor.name;
+	}
+
 	settings: {[key in keyof Options]?: Settings} = {};
 	
 	setOption<K extends keyof Options= keyof Options,V extends Options[K]=Options[K]>( key: K, value: V, reset = true ){

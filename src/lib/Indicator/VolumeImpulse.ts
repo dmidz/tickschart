@@ -31,7 +31,7 @@ const defaultComputed = {
 
 type Computed = typeof defaultComputed;
 
-export default class VolumeImpulse extends Base<Required<Options>, Computed> {
+export default class VolumeImpulse extends Base<Options, Computed> {
 
 	static name = 'Volume Impulse';
 
@@ -62,8 +62,7 @@ export default class VolumeImpulse extends Base<Required<Options>, Computed> {
 
 	constructor ( options: Options & Partial<BaseOptions> ){
 
-		/*__ force optional constructor options to be set here */
-		const _options: ReverseRequired<Options> = {
+		const _options: ReverseRequired<Options> & Partial<BaseOptions> = {// force constructor optional options to be set here
 			maType: 'ema',
 			maLength: 14,
 			styleBars: {

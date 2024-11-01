@@ -24,11 +24,11 @@ const defaultComputed = {
 
 type Computed = typeof defaultComputed;
 
-export default class OBV extends Base<Required<Options>, Computed> {
+export default class OBV extends Base<Options, Computed> {
 
-	constructor ( options: Options & Partial<BaseOptions> = {} ){
+	constructor ( options: Options & Partial<BaseOptions> ){
 
-		const _options: ReverseRequired<Options> = {// force constructor optional options to be set here
+		const _options: ReverseRequired<Options> & Partial<BaseOptions> = {// force constructor optional options to be set here
 			style: {
 				color: '#0080c5'
 			},

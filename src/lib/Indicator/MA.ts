@@ -18,13 +18,13 @@ const defaultComputed = {
 
 type Computed = typeof defaultComputed;
 
-export default class MA extends Base<Required<Options>, Computed> {
+export default class MA extends Base<Options, Computed> {
 
 	static label = 'SMA / EMA';
 
 	constructor ( options: Options & Partial<BaseOptions> ){
 		
-		const _options: ReverseRequired<Options> = {
+		const _options: ReverseRequired<Options> & Partial<BaseOptions> = {// force constructor optional options to be set here
 			type: 'sma',
 			length: 10,
 			style: {

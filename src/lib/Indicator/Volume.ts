@@ -18,7 +18,7 @@ const defaultComputed = {
 
 type Computed = typeof defaultComputed;
 
-export default class Volume extends Base<Required<Options>, Computed> {
+export default class Volume extends Base<Options, Computed> {
 	
 	settings = {
 		maType: new Settings('select', {
@@ -44,11 +44,10 @@ export default class Volume extends Base<Required<Options>, Computed> {
 			max: 200,
 		}),
 	};
-
+	
 	constructor ( options: Options & Partial<BaseOptions> ){
 
-		/*__ force optional constructor options to be set here */
-		const _options: ReverseRequired<Options> = {
+		const _options: ReverseRequired<Options> & Partial<BaseOptions> = {// force constructor optional options to be set here
 			maType: 'sma',
 			maLength: 10,
 			styleBars: {

@@ -6,7 +6,7 @@ import { InputOptionsList, type InputTypes } from '../UI/index.ts';
 
 //______
 export type BaseOptions = {
-	debug: boolean,
+	debug?: boolean,
 }
 
 export type BarStyle = {
@@ -45,7 +45,7 @@ export default abstract class Base<Options extends ObjKeyStr,
 	static label: string;
 	
 	private compute: { [key in CK]: ComputeFunc };
-	public options: /*BaseOptions &*/ Options;
+	public options: /*BaseOptions &*/ Required<Options>;
 	protected tickValue!: ( index: number, prop: TickProp, delta?: number ) => any;
 	private ctx!: CanvasRenderingContext2D;
 	protected scalingY!: ScalingLinear;
@@ -66,10 +66,10 @@ export default abstract class Base<Options extends ObjKeyStr,
 		index: 0,
 	}
 
-	constructor ( private readonly defaultComputed: Computed, options: Options ){
+	constructor ( private readonly defaultComputed: Computed, options: Required<Options> & Partial<BaseOptions> ){
 
 		const baseOptions: BaseOptions = {
-			debug: true,
+			// debug: true,
 		};
 		this.options = Object.assign( baseOptions, options );
 
@@ -91,14 +91,14 @@ export default abstract class Base<Options extends ObjKeyStr,
 
 	settings: {[key in keyof Options]?: Settings} = {};
 	
-	setOption<K extends keyof Options= keyof Options,V extends Options[K]=Options[K]>( key: K, value: V, reset = true ){
+	setOption<K extends keyof (Options & BaseOptions) = keyof (Options & BaseOptions),V extends Options[K]=Options[K]>( key: K, value: V, reset = true ){
 		this.options[key] = value;
 		if( reset ){
 			this.reset();
 		}
 	}
 	
-	setOptions( options: Partial<Options>, reset = true ){
+	setOptions( options: Partial<Options & BaseOptions>, reset = true ){
 		Object.assign( this.options, options );
 		if ( reset ){
 			this.reset();

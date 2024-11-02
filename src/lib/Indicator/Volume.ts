@@ -85,4 +85,3 @@ export default class Volume extends Base<Options, Computed> {
 		return this.computed( index, 'volume' );
 	}
 }
-

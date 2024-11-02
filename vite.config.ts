@@ -19,7 +19,7 @@ export default defineConfig( ( { command, mode } ) => {
     resolve: {
       alias: {
         '@': res( 'src' ),
-        '@dmidz/tickschart': res( 'dist' ),// trick to compile demo/vanilla-ts using real world package path
+        '@dmidz/tickschart': res( 'dist' ),
         '@public': res( 'public/tickschart' ),
       },
       // preserveSymlinks: true,

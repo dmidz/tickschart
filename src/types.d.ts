@@ -18,3 +18,10 @@ declare type PickRequired<T extends object> = { [K in keyof T as ( undefined ext
 declare type ReverseRequired<T extends object> = Required<PickOptional<T>> & Partial<PickRequired<T>>;
 
 declare type ObjKeyStr = { [ key: string ]: any };
+
+declare type SelectItem = {
+	label: string;
+	value: Literal;
+}
+
+declare type Literal = string | number | boolean;

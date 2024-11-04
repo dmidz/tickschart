@@ -42,6 +42,35 @@ body {
   box-sizing: border-box;
 }
 
+.row, .col {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+*::-webkit-scrollbar {
+  width: 9px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  background-clip: content-box;
+  border-radius: 5px;
+  border: 2px solid rgba(0, 0, 0, 0.5);
+  position: absolute;
+  box-sizing: content-box;
+  
+}
+
+.col {
+  flex-direction: column;
+}
+
 #app {
   flex: 1 1;
   display: flex;
@@ -220,7 +249,7 @@ body {
 
 .chart .dialog {
   background-color: var(--color-background);
-  box-shadow: 0px 12px 32px 4px rgba(0, 0, 0, 0.36), 0px 8px 20px rgba(0, 0, 0, 0.72);
+  box-shadow: 0 12px 32px 4px rgba(0, 0, 0, 0.36), 0px 8px 20px rgba(0, 0, 0, 0.72);
 }
 
 .chart .dlg-head {
@@ -232,6 +261,9 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: 2rem 2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart .dialog .bt-close {

@@ -11,7 +11,7 @@ export type BaseOptions = {
 }
 
 //______
-export default abstract class InputBase<Options extends ObjKeyStr = {}> {
+export default abstract class InputBase<Options extends BaseOptions = {}> {
 
 	protected options: Required<BaseOptions> & Options;
 	protected elements: {[key:string]: HTMLElement} = {};
@@ -29,8 +29,6 @@ export default abstract class InputBase<Options extends ObjKeyStr = {}> {
 			inputAttr: {},
 		}, options );
 		
-		// console.log('InputBase', this.key, this.options );
-
 		this.elements.wrapper = createElement( 'div', {
 			relativeElement: this.options.relativeElement,
 			relativePosition: this.options.relativePosition,
@@ -88,7 +86,7 @@ export default abstract class InputBase<Options extends ObjKeyStr = {}> {
 		this.options.onChange( value, this.key, this );
 	}
 
-	protected inputValue(){
+	protected inputValue(): Literal | null {
 		return this.elInput.value;
 	}
 	

@@ -1,24 +1,27 @@
 
-import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type BarStyle, type LineStyle, Setting } from './Base.ts';
+import { merge, indicator } from '@/lib';
+
+//__ custom ( out of lib ) indicator sample ( copy of VOlume )
 
 //__ contract of constructor arg options
 export type Options = {
 	maType: 'sma' | 'ema' | false,
 	maLength: number,
-	styleBars: BarStyle,
-	styleMa: LineStyle,
+	styleBars: indicator.BarStyle,
+	styleMa: indicator.LineStyle,
 }
 
 //__ define the computed propertied used in computeSetup & draw
-type Computed = { 
+type Computed = {
 	ma: number,
 };
 
-export default class Volume extends Base<Options, Computed> {
+export default class Volume2 extends indicator.Base<Options, Computed> {
+	
+	displayMode: indicator.DisplayMode = 'row';
 	
 	settings = {
-		maType: new Setting('select', {
+		maType: new indicator.Setting('select', {
 			label: 'MA type',
 			choices: [
 				{
@@ -35,16 +38,16 @@ export default class Volume extends Base<Options, Computed> {
 				},
 			],
 		}),
-		maLength: new Setting('number', {
+		maLength: new indicator.Setting('number', {
 			label: 'MA length',
 			min: 0,
 			max: 200,
 		}),
 	} as const;
 	
-	constructor ( options: Partial<Options & BaseOptions> = {} ){
+	constructor ( options: Partial<Options & indicator.BaseOptions> = {} ){
 
-		const _options: Required<Options> & Partial<BaseOptions> = {// force set default options
+		const _options: Required<Options> & Partial<indicator.BaseOptions> = {// force set default options
 			maType: 'sma',
 			maLength: 10,
 			styleBars: {

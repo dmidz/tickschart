@@ -35,22 +35,35 @@ export type DrawOptions = {
 	yDelta?: number,
 }
 
+export class Setting<T extends InputTypes = InputTypes> {
+	constructor ( public readonly type: T, public readonly options: InputOptionsList[T] ){
+	}
+}
+
 const defaultShapeFillColor = '#ffffff';
 
-export default abstract class Base<Options extends ObjKeyStr,
-			Computed extends ObjKeyStr,
-			CK extends KeyOfString<Computed> = KeyOfString<Computed>,
-			TCK extends TickProp | CK = TickProp | CK> {
+export type DisplayMode = 'row' | 'layer';
+
+type ComputeSetup<K extends string> = { [ key in K ]: ComputeFunc };
+
+export default abstract class Base<
+	Options extends ObjKeyStr = ObjKeyStr,
+	Computed extends ObjKeyStr = ObjKeyStr,
+	CK extends KeyOfString<Computed> = KeyOfString<Computed>,
+	TCK extends TickProp | CK = TickProp | CK,
+> {
 	
+	//__ static
 	static label: string;
 
 	static getLabel (){
 		return this.label || this.name;
 	}
-
-	private compute: { [key in CK]: ComputeFunc };
-	public options: /*BaseOptions &*/ Required<Options>;
-	protected tickValue!: ( index: number, prop: TickProp, delta?: number ) => any;
+	
+	//__ instance
+	private compute: ComputeSetup<CK>;
+	public options: Options;
+	tickValue!: ( index: number, prop: TickProp, delta?: number ) => any;
 	private ctx!: CanvasRenderingContext2D;
 	protected scalingY!: ScalingLinear;
 	protected scalingX!: ScalingLinear;
@@ -62,33 +75,29 @@ export default abstract class Base<Options extends ObjKeyStr,
 	private cacheComputed: Map<CK,Map<number,number>> = new Map();
 	private cacheMin = +Infinity;
 	private cacheMax = -Infinity;
-	private readonly computeKeys: Map<CK,true> = new Map();
 	protected lib: Computation<TCK>;
 	private drawing = {
 		x: 0,
 		width: 0,
 		index: 0,
 	}
+	displayMode: DisplayMode = 'row';
 
-	constructor ( private readonly defaultComputed: Computed, options: Required<Options> & Partial<BaseOptions> ){
+	constructor ( options: Options & Partial<BaseOptions> ){
 
 		const baseOptions: BaseOptions = {
 			// debug: true,
 		};
 		this.options = Object.assign( baseOptions, options );
 
-		//___
-		(Object.keys( this.defaultComputed ) as CK[]).forEach( (key: CK) => {
-			this.computeKeys.set( key, true );
-		} );
 		this.lib = new Computation<TCK>( this.tickStep, this.computed.bind( this ) );
 		this.compute = this.computeSetup();
 	}
-	
+
+	abstract computeSetup(): ComputeSetup<CK>;
 	abstract draw( index: number ): void;
-	abstract computeSetup(): ({ [key in CK]: ComputeFunc });
 	
-	settings: {[key in keyof Options]?: Settings} = {};
+	settings: {[key in keyof Options]?: Setting} = {};
 
 	getLabel (){
 		// @ts-ignore
@@ -109,7 +118,7 @@ export default abstract class Base<Options extends ObjKeyStr,
 		}
 	}
 	
-	getOption<K extends keyof Options= keyof Options>( key: K){
+	getOption<K extends keyof Options = keyof Options>( key: K){
 		return this.options[key];
 	}
 	
@@ -255,16 +264,17 @@ export default abstract class Base<Options extends ObjKeyStr,
 	computed( index: number, prop: TCK, delta = 0 ): number {
 		const _index = index - delta * this.tickStep;
 		const pc = prop as CK;
-		const isComputeKey = this.computeKeys.get( pc );
 		let value = this.cacheGet( pc, _index );
 		if ( typeof value !== 'undefined' ){
 			return value;
 		}
-		if ( isComputeKey ){
+
+		if ( this.compute[pc] ){
 			value = Computation.asNumber( this.compute[ pc ]( _index, this.cacheGet( pc, _index-this.tickStep ) ) );
 		} else {
-			value = Computation.asNumber( this.tickValue( index, prop as TickProp, delta ) )
+			value = Computation.asNumber( this.tickValue( _index, prop as TickProp ) );
 		}
+		
 		this.cacheSet( pc, _index, value );
 		return value;
 	}
@@ -446,9 +456,4 @@ export default abstract class Base<Options extends ObjKeyStr,
 		}
 	}
 
-}
-
-export class Settings {
-	constructor ( public type: InputTypes, public options: InputOptionsList[InputTypes] ){
-	}
 }

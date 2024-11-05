@@ -2,7 +2,7 @@
 import merge from './utils/merge.ts';
 import { ScalingLinear, type Scale } from './utils/math.ts';
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
-import type { Indicator } from './Indicator/index.ts';
+import type { Base } from './Indicator/index.ts';
 import { createElement, resizeCanvas, type ElementRect } from './index';
 
 //______
@@ -24,7 +24,7 @@ export type Options = {
 	onClickSettings?: ( event: MouseEvent, emitter: ChartRow ) => void,
 }
 
-export default class ChartRow {
+export default class ChartRow<Indicator extends Base = Base> {
 	options: Required<Options> = {
 		height: 120,
 		border: '1px solid #333333',
@@ -88,7 +88,7 @@ export default class ChartRow {
 		this.setIndicator( indicator, tickValue, scalingX, chartCanvasContext, charScalingY );
 	}
 
-	setIndicator( indicator: ChartRow['indicator'], tickValue: Indicator['tickValue'], scalingX: ScalingLinear,
+	setIndicator( indicator: Indicator, tickValue: Indicator['tickValue'], scalingX: ScalingLinear,
 				chartCanvasContext: CanvasRenderingContext2D, charScalingY: ScalingLinear ){
 		this.indicator = indicator;
 		this.indicator.setContext( tickValue, this.ctx, this.scalingY, scalingX, chartCanvasContext, charScalingY );

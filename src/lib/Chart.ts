@@ -4,10 +4,13 @@ import { ScalingLinear, type Scale, type ScalingLinearOptions } from './utils/ma
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
 import { ListenerEventFactory, createElement, resizeCanvas, sharpCanvasValue,
 	type CandleTick, type GetTick, type ElementRect, type TickProp, type AbstractTick } from './index.ts';
-import indicators, { type List, type Indicator } from './Indicator/index.ts';
+import { list, type Base } from './Indicator/index.ts';
 import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
 import { Dialog, InputBase } from './UI/index.ts';
 import IndicatorSettings from './IndicatorSettings.ts';
+import IndicatorSelection from './IndicatorSelection.ts';
+
+const indicators = list;
 
 //______
 export type Options<Tick extends AbstractTick> = {
@@ -43,9 +46,10 @@ export type Options<Tick extends AbstractTick> = {
 	},
 	chartRow: ChartRowOptions,
 	mapTickProps: { [key in TickProp]: keyof Tick},
+	// readonly indicators: { [key:string]: { new ( ...args: any[] ): Base } }
 }
 
-export default class Chart<Tick extends AbstractTick = CandleTick> {
+export default class Chart<Tick extends AbstractTick = CandleTick,Indicators extends ObjKeyStr = ObjKeyStr> {
 
 	private parentElement: HTMLElement;
 	private _getTick: GetTick<Tick>;
@@ -85,6 +89,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		},
 		chartRow: {},
 		mapTickProps: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
+		// indicators: { MA: indicators.MA },
 	};
 
 	private elements: Record<string,HTMLElement> = {};
@@ -114,8 +119,9 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	private mouseElement: ElementRect;
 	private mouseIndicator: ChartRow | null = null;
 	private mouseDragIndicator: ChartRow | null = null;
-	private layers: Indicator[] = [];
+	private layers: Base[] = [];
 	private indicatorSettings: IndicatorSettings;
+	private indicatorSelection: IndicatorSelection<typeof indicators[keyof typeof indicators]>;
 	private tickIndexMax: number = Infinity;
 	
 	constructor ( parentElement: HTMLElement | null,
@@ -206,6 +212,15 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.resizeCanvas();
 
 		//__
+		this.indicatorSelection = new IndicatorSelection<typeof indicators[keyof typeof indicators]>({
+			parentElement: this.parentElement,
+			indicators,
+			onUpdate: ( indicator ) => {
+				this.addIndicator( new indicator() );
+				this.refresh();
+			},
+		});
+		
 		this.indicatorSettings = new IndicatorSettings({
 			parentElement: this.parentElement,
 			onUpdate: () => {
@@ -217,13 +232,11 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return this;
 	}
 
-	addIndicator<K extends keyof List> ( type: K, mode: 'layer'|'row' = 'row', ...params: ConstructorParameters<List[K]> ){
-		// @ts-ignore
-		const indicator = new indicators[ type ]( ...params );
+	addIndicator<I extends Base> ( indicator: I ){
 		indicator.setTickStep( this.tickStep );
-		
-		switch( mode ){
-			case 'row': {
+
+		switch ( indicator.displayMode ){
+			case 'row':{
 				const row = new ChartRow( this.chartRows.length, indicator, this.tickIndexValue, this.elements.main,
 					this.scalingX, this.ctxTicks, this.scalingY,
 					( scaling, row ) => {
@@ -248,22 +261,28 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 							this.indicatorSettings.diplay( emitter.getIndicator(), true );
 						},
 					} );
-				
+
 				this.chartRows.push( row );
 				break;
 			}
-			case 'layer': {
+			case 'layer':{
 				indicator.setContext( this.tickIndexValue, this.ctxTicks, this.scalingY, this.scalingX, this.ctxTicks, this.scalingY );
 				this.layers.push( indicator );
 				break;
 			}
-			default: break;
+			default:
+				break;
 		}
 
 		this.resizeCanvas();
 
 		return this;
+
 	}
+	
+	// 	addIndicator<K extends keyof List> ( type: K, mode: 'layer'|'row' = 'row', ...params: ConstructorParameters<List[K]> ){
+	// 		// @ts-ignore
+	// 		const indicator = new indicators[ type ]( ...params );
 
 	beforeDestroy (){
 		this.uiScaleX.beforeDestroy();
@@ -973,6 +992,24 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 				relativeElement: this.elements[ k ],
 				className: `tick-info-value ${kv}`,
 			} );
+		} );
+
+		//___ toolbar top
+		this.elements.toolbarTop = createElement( 'div', {
+			relativeElement: this.elements.candles,
+			className: 'toolbar toolbar-top',
+		} );
+
+		createElement( 'button', {
+			relativeElement: this.elements.toolbarTop,
+			style: { padding: '4px' },
+			attr: { title: 'Add an indicator...' },
+			icon: { className: 'chart-line' },
+			events: {
+				click: () => {
+					this.indicatorSelection.diplay();
+				}
+			}
 		} );
 
 		//__ options elements

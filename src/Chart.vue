@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { Chart, Fetcher, Player, intervalsMs, InputSelect } from '@/lib';
+import { Chart, Fetcher, Player, intervalsMs, InputSelect, indicator } from '@/lib';
+
+import Volume2 from './custom-indicators/Volume2';// "custom" indicator sample
+
+const indicators = { ...indicator.list, Volume2 } as const;
 
 const { m1, h1, d1 } = intervalsMs;
 
@@ -129,11 +133,14 @@ onMounted( async () => {
 		// }
 	} );
 	
-	chart.addIndicator( 'Volume', 'row', { maLength: 14, maType: 'sma' } );
-	// chart.addIndicator( 'VolumeImpulse', 'row', { maLength: 14, maType: 'sma' } );
+	// chart.addIndicator( new indicators.Volume( { maLength: 14, maType: 'ema' } ) );
+	// chart.addIndicator( new indicators.Volume2( { maLength: 14, maType: 'sma' }) );
+	
+	// chart.addIndicator( new indicators.VolumeImpulse( { maLength: 14, maType: 'sma' } ) );
+	chart.addIndicator( new indicators.OBV() );
 	// chart.addIndicator( 'OBV', 'row' );
-	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'ema', style: { color: '#ffff00'} } );
-	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
+
+	chart.addIndicator( new indicators.MA({ length: 200, type: 'sma', style: { color: '#ff0000'} } ) );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
 	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 21, type: 'sma' } );

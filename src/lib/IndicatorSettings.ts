@@ -1,6 +1,6 @@
 
 import { Dialog, inputs, InputBase, type InputOptions } from './UI/index.ts';
-import type { Indicator, Settings } from '@/lib/Indicator';
+import type { Setting, Base } from '@/lib/Indicator';
 import { createElement } from './index.ts';
 
 export type Options = {
@@ -9,7 +9,7 @@ export type Options = {
 }
 
 //______
-export default class IndicatorSettings {
+export default class IndicatorSettings<Indicator extends Base = Base> {
 
 	private options: Required<Options> = {
 		parentElement: document.body,
@@ -57,12 +57,11 @@ export default class IndicatorSettings {
 					},
 				} );
 				Object.keys( indicator.settings ).forEach( key => {
-					const is = indicator.settings[ key as keyof typeof indicator.settings ] as Settings;
+					const is = indicator.settings[ key as keyof typeof indicator.settings ] as Setting;
 					const cl = inputs[ is.type ];
 					if ( cl ){
 						const opts = {
 							...is.options,
-							// @ts-ignore
 							value: indicator.getOption( key ),
 							relativeElement: this.elContent,
 							onChange: ( value: any/*, key, inputinput*/ ) => {

@@ -1,9 +1,16 @@
 import '@public/assets/main.css';
 
+import * as math from './utils/math.ts';
+export { math };
+export { default as merge } from './utils/merge.ts';
+
 export { Dialog, inputs, InputBase, InputNumber, InputSelect } from './UI/index.ts';
 export { default as Chart } from './Chart.ts';
 export { default as Fetcher } from './Fetcher.ts';
 export { default as Player } from './Player.ts';
+
+import * as indicator from './Indicator';
+export { indicator };
 
 export type TickProp = 'open' | 'high' | 'low' | 'close' | 'volume';
 
@@ -66,9 +73,7 @@ type ElementOptions = {
 	}
 }
 
-export function createElement ( tagName: string = 'div', options: ElementOptions & {
-	icon?: ElementOptions
-} = {} ): HTMLElement {
+export function createElement ( tagName: string = 'div', options: ElementOptions & { icon?: ElementOptions } = {} ): HTMLElement {
 	const el = document.createElement( tagName );
 	if ( options.className ){
 		el.className = options.className;

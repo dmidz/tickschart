@@ -24,9 +24,8 @@
     "baseUrl": ".",
     "allowJs": true,
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@public/*": ["./public/tickschart/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue","demo/**/*.ts"],

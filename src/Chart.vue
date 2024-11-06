@@ -127,6 +127,7 @@ onMounted( async () => {
 			precisionIn: .001,//__ might be set from current symbol properties
 		},
 		autoScaleY: true,
+		indicators,
 		// tickWidth: 50,
 		// chartRow: {
 		// 	height: 200,

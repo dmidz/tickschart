@@ -4,16 +4,16 @@ import { ScalingLinear, type Scale, type ScalingLinearOptions } from './utils/ma
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
 import { ListenerEventFactory, createElement, resizeCanvas, sharpCanvasValue,
 	type CandleTick, type GetTick, type ElementRect, type TickProp, type AbstractTick } from './index.ts';
-import { list, type Base } from './Indicator/index.ts';
+import { Base } from './Indicator/index.ts';
 import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
 import { Dialog, InputBase } from './UI/index.ts';
 import IndicatorSettings from './IndicatorSettings.ts';
 import IndicatorSelection from './IndicatorSelection.ts';
 
-const indicators = list;
+type Indicator = { getLabel: () => string, new (): any }
 
 //______
-export type Options<Tick extends AbstractTick> = {
+export type Options<Tick extends AbstractTick,I extends Indicator = Indicator> = {
 	tickWidth: number,
 	canvas: {
 		imageSmoothingEnabled: boolean,
@@ -46,14 +46,14 @@ export type Options<Tick extends AbstractTick> = {
 	},
 	chartRow: ChartRowOptions,
 	mapTickProps: { [key in TickProp]: keyof Tick},
-	// readonly indicators: { [key:string]: { new ( ...args: any[] ): Base } }
+	indicators?: Readonly<{[key: string]: I }>,
 }
 
-export default class Chart<Tick extends AbstractTick = CandleTick,Indicators extends ObjKeyStr = ObjKeyStr> {
+export default class Chart<Tick extends AbstractTick = CandleTick, I extends Indicator = Indicator> {
 
 	private parentElement: HTMLElement;
 	private _getTick: GetTick<Tick>;
-	private options: Options<Tick> = {
+	private options: Options<Tick,I> = {
 		tickWidth: 4,
 		canvas: {
 			imageSmoothingEnabled: false,
@@ -89,7 +89,6 @@ export default class Chart<Tick extends AbstractTick = CandleTick,Indicators ext
 		},
 		chartRow: {},
 		mapTickProps: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
-		// indicators: { MA: indicators.MA },
 	};
 
 	private elements: Record<string,HTMLElement> = {};
@@ -121,13 +120,13 @@ export default class Chart<Tick extends AbstractTick = CandleTick,Indicators ext
 	private mouseDragIndicator: ChartRow | null = null;
 	private layers: Base[] = [];
 	private indicatorSettings: IndicatorSettings;
-	private indicatorSelection: IndicatorSelection<typeof indicators[keyof typeof indicators]>;
+	private indicatorSelection: IndicatorSelection<I>;
 	private tickIndexMax: number = Infinity;
 	
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
 								getTick: GetTick<Tick>,
-								options: Partial<Options<Tick>> = {} ){
+								options: Partial<Options<Tick,I>> = {} ){
 		
 		if( !parentElement ){
 			throw new Error('parentElement must be a valid HTMLElement');
@@ -212,9 +211,9 @@ export default class Chart<Tick extends AbstractTick = CandleTick,Indicators ext
 		this.resizeCanvas();
 
 		//__
-		this.indicatorSelection = new IndicatorSelection<typeof indicators[keyof typeof indicators]>({
+		this.indicatorSelection = new IndicatorSelection/*<typeof indicators[keyof typeof indicators]>*/({
 			parentElement: this.parentElement,
-			indicators,
+			indicators: this.options.indicators,
 			onUpdate: ( indicator ) => {
 				this.addIndicator( new indicator() );
 				this.refresh();

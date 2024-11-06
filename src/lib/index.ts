@@ -4,7 +4,7 @@ import * as math from './utils/math.ts';
 export { math };
 export { default as merge } from './utils/merge.ts';
 
-export { Dialog, inputs, InputBase, InputNumber, InputSelect } from './UI/index.ts';
+export * as ui from './UI/index.ts';
 export { default as Chart } from './Chart.ts';
 export { default as Fetcher } from './Fetcher.ts';
 export { default as Player } from './Player.ts';

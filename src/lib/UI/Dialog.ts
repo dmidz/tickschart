@@ -230,6 +230,7 @@ export default class Dialog {
 		this.dialogs.forEach( dialog => {
 			dialog.remove();
 		});
+		this.dialogs = [];
 	}
 
 }

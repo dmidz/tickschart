@@ -67,6 +67,8 @@ export default abstract class InputBase<Options extends BaseOptions = {}> {
 			flex: '2',
 		} );
 		this.elements.wrapper.append( this.elInput );
+		
+		InputBase.instances.push( this );
 	}
 
 	protected value: any;
@@ -105,6 +107,7 @@ export default abstract class InputBase<Options extends BaseOptions = {}> {
 		this.instances.forEach( instance => {
 			instance.remove();
 		} );
+		this.instances = [];
 	}
 }
 

@@ -1,8 +1,7 @@
 
 import merge from './utils/merge';
 import type Chart from './Chart';
-import { type AbstractTick, type CandleTick, createElement } from './index.ts';
-import InputSelect from './UI/InputSelect.ts';
+import { type AbstractTick, type CandleTick, createElement, ui } from './index.ts';
 
 //______
 export type PlayerOptions = {
@@ -39,11 +38,11 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 	private mouseTime = 0;
 	private playingSpeeds = [1,2,3] as const;
 	private playingSpeed: typeof this.playingSpeeds[number] = 1;
-	private inputSpeed?: InputSelect;
+	private inputSpeed?: ui.InputSelect;
 
 	constructor ( private chart: Chart<Tick>, options: PlayerOptions = {} ){
 		this.options = merge( this.options, options );
-		
+
 		this.createElements();
 
 		//___ events
@@ -245,7 +244,7 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 				}
 			} );
 
-			this.inputSpeed = new InputSelect('speed', {
+			this.inputSpeed = new ui.InputSelect('speed', {
 				choices: this.playingSpeeds.map( s => ({ label: `x${s}`, value: s })),
 				onChange: ( v ) => {
 					this.setPlayingSpeed( v );

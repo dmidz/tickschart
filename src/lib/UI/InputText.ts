@@ -5,7 +5,7 @@ export type Options = BaseOptions & {
 }
 
 //______
-export default class InputNumber extends InputBase<Options> {
+export default class InputText extends InputBase<Options> {
 	constructor( key: string, options: Options = {} ){
 
 		super( key, options );

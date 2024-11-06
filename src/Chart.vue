@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { Chart, Fetcher, Player, intervalsMs, InputSelect, indicator } from '@/lib';
+import { Chart, Fetcher, Player, intervalsMs, indicator, ui } from '@/lib';
 
 import Volume2 from './custom-indicators/Volume2';// "custom" indicator sample
 
@@ -148,7 +148,7 @@ onMounted( async () => {
 	
 	//__ in API mode, add a select input for timeframe to test change
 	if(!SAMPLE_MODE){
-		new InputSelect( 'timeframe', {
+		new ui.InputSelect( 'timeframe', {
 			relativeElement: chart.getElement( 'infos' ),
 			relativePosition: 'prepend',
 			value: interval.value,

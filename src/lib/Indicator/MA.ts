@@ -26,9 +26,9 @@ export default class MA extends Base<Options, Computed> {
 		const _options: Required<Options> & Partial<BaseOptions> = {// force set default options
 			property: 'close',
 			type: 'sma',
-			length: 10,
+			length: 50,
 			style: {
-				color: '#40e9ff'
+				color: '#ffff00'
 			},
 		};
 		

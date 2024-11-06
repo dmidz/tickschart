@@ -23,8 +23,9 @@ export default class IndicatorSelection<I extends Indicator = Indicator> {
 	}
 
 	private dialog: Dialog;
-	private elSelect: HTMLElement | null = null;
-	private selIndicator: I | null = null;
+	private elSelect: HTMLElement | null | undefined;
+	private selIndicatorKey: keyof typeof this.options.indicators | null | undefined;
+	private items = new Map<keyof typeof this.options.indicators,HTMLElement>();
 	// private indicator: Indicator | null = null;
 	// private elContent: HTMLElement | null = null;
 	// private inputsChanges: { [ key: string ]: any } = {};
@@ -67,49 +68,56 @@ export default class IndicatorSelection<I extends Indicator = Indicator> {
 			return 0;
 		});
 		
-		let key: typeof orderedKeys[number];
-		for( let i = 0, max = orderedKeys.length; i < max; i++ ){
-			key = orderedKeys[i];
-			const el = createElement('div', {
+		orderedKeys.forEach( key => {
+			const el = createElement( 'div', {
 				relativeElement: list,
-				className: `item indicator-${key}`,
-				innerText: this.options.indicators[key].getLabel(),
+				className: `item indicator-${ key }`,
+				innerText: this.options.indicators[ key ].getLabel(),
 				events: {
 					click: () => {
-						if( this.elSelect ){
-							this.elSelect.classList.remove('select');
-						}
-						if( el === this.elSelect ){
-							this.elSelect = null;
-							this.selIndicator = null;
-							return;
-						}
-						this.elSelect = el;
-						this.elSelect.classList.add( 'select' );
-						this.selIndicator = this.options.indicators[key];
+						this.setSelection( key );
 					}
 				},
 				// icon: { className: 'play' }
-			});
-		}
+			} );
+			this.items.set( key, el );
+		});
 
 		this.dialog = new Dialog( {
 			title: 'Add an indicator',
 			parentElement: this.options.parentElement,
 			buttons: {
 				ok: () => {
-					if( this.selIndicator ){
-						this.options.onUpdate( this.selIndicator );
+					if( this.selIndicatorKey ){
+						this.options.onUpdate( this.options.indicators[this.selIndicatorKey] );
 					}
 				},
 			},
 			content,
 		} );
 	}
+	
+	setSelection( key: typeof this.selIndicatorKey ){
+		let _key = key;
+		if( this.elSelect ){		this.elSelect.classList.remove('select');}
+		const prev = this.selIndicatorKey;
+		this.elSelect = null;
+		this.selIndicatorKey = null;
+		if ( prev === _key ){		_key = null;}
+		if( !_key ){ return;}
+		this.selIndicatorKey = _key;
+		this.elSelect = this.items.get( _key );
+		this.elSelect?.classList.add( 'select' );
+	}
 
 	diplay ( display = true ){
+		this.reset();
 		this.dialog.display( display, {
 		} );
+	}
+	
+	reset(){
+		this.setSelection( null );
 	}
 	
 	remove(){

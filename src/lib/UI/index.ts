@@ -20,4 +20,4 @@ export type InputTypes = keyof InputOptionsList;
 
 export type InputOptions = InputOptionsList[InputTypes];
 
-export { Dialog, inputs, InputBase, InputNumber, InputSelect };
+export { Dialog, inputs, InputBase, InputText, InputNumber, InputSelect };

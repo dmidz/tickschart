@@ -1,6 +1,13 @@
 
 import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type LineStyle, type ShapeStyle, type DrawOptions } from './Base.ts';
+import Base, {
+	type BaseOptions,
+	type LineStyle,
+	type ShapeStyle,
+	type DrawOptions,
+	Settings,
+	Setting
+} from './Base.ts';
 
 //__ contract of constructor arg options
 export type Options = {
@@ -22,6 +29,9 @@ type Computed = {
 };
 
 export default class OBV extends Base<Options, Computed> {
+
+	settings: Settings<Options> = {
+	} as const;
 
 	constructor ( options: Partial<Options & BaseOptions> = {} ){
 

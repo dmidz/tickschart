@@ -1,6 +1,7 @@
 
 import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type LineStyle, DisplayMode } from './Base.ts';
+import { defaultTick } from '../index.ts';
+import Base, { type BaseOptions, type LineStyle, DisplayMode, Settings, Setting } from './Base.ts';
 
 //______
 export type Options = {
@@ -20,7 +21,23 @@ export default class MA extends Base<Options, Computed> {
 	static label = 'SMA / EMA';
 	
 	displayMode: DisplayMode = 'layer';
-	
+
+	settings: Settings<Options> = {
+		property: new Setting( 'select', {
+			label: 'Property',
+			choices: Object.keys( defaultTick ).map( ( key ) => ({ label: key, value: key })),
+		} ),
+		type: new Setting( 'select', {
+			label: 'Type',
+			choices: ['sma','ema'].map( ( key ) => ({ label: key, value: key })),
+		} ),
+		length: new Setting( 'number', {
+			label: 'length',
+			min: 0,
+			max: 200,
+		} ),
+	} as const;
+
 	constructor ( options: Partial<Options & BaseOptions> = {} ){
 		
 		const _options: Required<Options> & Partial<BaseOptions> = {// force set default options

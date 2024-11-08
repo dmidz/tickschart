@@ -1,6 +1,6 @@
 
 import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type BarStyle, type LineStyle, Setting } from './Base.ts';
+import Base, { type BaseOptions, type BarStyle, type LineStyle, Setting, Settings } from './Base.ts';
 
 //__ contract of constructor arg options
 export type Options = {
@@ -17,7 +17,7 @@ type Computed = {
 
 export default class Volume extends Base<Options, Computed> {
 	
-	settings = {
+	settings: Settings<Options> = {
 		maType: new Setting('select', {
 			label: 'MA type',
 			choices: [
@@ -46,7 +46,7 @@ export default class Volume extends Base<Options, Computed> {
 
 		const _options: Required<Options> & Partial<BaseOptions> = {// force set default options
 			maType: 'sma',
-			maLength: 10,
+			maLength: 14,
 			styleBars: {
 				fillColor: '#444444',
 			},

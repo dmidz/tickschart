@@ -135,10 +135,9 @@ onMounted( async () => {
 	} );
 	
 	// chart.addIndicator( new indicators.Volume( { maLength: 14, maType: 'ema' } ) );
-	// chart.addIndicator( new indicators.Volume2( { maLength: 14, maType: 'sma' }) );
-	
+	chart.addIndicator( new indicators.Volume2( { maLength: 14, maType: 'sma' }) );
 	// chart.addIndicator( new indicators.VolumeImpulse( { maLength: 14, maType: 'sma' } ) );
-	chart.addIndicator( new indicators.OBV() );
+	// chart.addIndicator( new indicators.OBV() );
 	// chart.addIndicator( 'OBV', 'row' );
 
 	chart.addIndicator( new indicators.MA({ length: 200, type: 'sma', style: { color: '#ff0000'} } ) );

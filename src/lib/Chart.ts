@@ -137,7 +137,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 		this.options = merge( this.options, options );
 		
 		//__ build dom elements
-		this.createDomElements();
+		this.createElements();
 
 		//__ canvas ticks
 		this.canvas = document.createElement( 'canvas' );
@@ -211,7 +211,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 		this.resizeCanvas();
 
 		//__
-		this.indicatorSelection = new IndicatorSelection/*<typeof indicators[keyof typeof indicators]>*/({
+		this.indicatorSelection = new IndicatorSelection({
 			parentElement: this.parentElement,
 			indicators: this.options.indicators,
 			onUpdate: ( indicator ) => {
@@ -267,6 +267,18 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 			case 'layer':{
 				indicator.setContext( this.tickIndexValue, this.ctxTicks, this.scalingY, this.scalingX, this.ctxTicks, this.scalingY );
 				this.layers.push( indicator );
+				this.elements.rowIdcCount.innerText = `${this.layers.length}`;
+				createElement('div', {
+					relativeElement: this.elements.idcsInfos,
+					className: `row row-${this.layers.length}`,
+					innerText: indicator.getLabel(),
+					icon: {	className: 'settings', },
+					events: {
+						click: () => {
+							this.indicatorSettings.diplay( indicator, true );
+						}
+					}
+				});
 				break;
 			}
 			default:
@@ -278,10 +290,6 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 		return this;
 
 	}
-	
-	// 	addIndicator<K extends keyof List> ( type: K, mode: 'layer'|'row' = 'row', ...params: ConstructorParameters<List[K]> ){
-	// 		// @ts-ignore
-	// 		const indicator = new indicators[ type ]( ...params );
 
 	beforeDestroy (){
 		this.uiScaleX.beforeDestroy();
@@ -833,7 +841,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 		return resized;
 	}
 
-	private createDomElements (){
+	private createElements (){
 		Object.assign( this.parentElement.style, {
 			display: 'flex',
 			'flex-direction': 'column',
@@ -992,6 +1000,38 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 				className: `tick-info-value ${kv}`,
 			} );
 		} );
+		//____ indicator settings
+		this.elements.idcsBar = createElement('div', {
+			relativeElement: this.elements.candles,
+			className: 'idcs-bar',
+		});
+		this.elements.btToggleIdcsSettings = createElement('button', {
+			relativeElement: this.elements.idcsBar,
+			className: 'bt-toggle-display',
+			icon: { className: 'chevron-down' },
+			events: {
+				'click': () => {
+					const display = this.elements.idcsInfos.style.display === 'none';
+					this.elements.idcsInfos.style.display = display ? 'flex' : 'none';
+					if( this.elements.btToggleIdcsSettingsIcon ){
+						this.elements.btToggleIdcsSettingsIcon.style.transform = `rotate(${ display ? 0 : 180}deg)`;
+					}
+				}
+			}
+		});
+		this.elements.btToggleIdcsSettingsIcon = this.elements.btToggleIdcsSettings.querySelector( '.icon' ) as HTMLElement;
+		this.elements.rowIdcCount = createElement('div', {
+			relativeElement: this.elements.btToggleIdcsSettings,
+			relativePosition: 'prepend',
+			innerText: '0',
+		});
+		this.elements.idcsInfos = createElement('div', {
+			relativeElement: this.elements.idcsBar,
+			className: 'col idcs-infos',
+			style: {
+				display: 'none',
+			}
+		});
 
 		//___ toolbar top
 		this.elements.toolbarTop = createElement( 'div', {
@@ -1023,10 +1063,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 						position: 'absolute', bottom: '1px', right: '1px', zIndex: '150', padding: '4px',
 					},
 					icon: {
-						className: 'icon ic-chevron-double',
-						style: {
-							transform: 'rotate(90deg)',
-						}
+						className: 'icon ic-chevron-double-right',
 					}
 				} );
 			} else {

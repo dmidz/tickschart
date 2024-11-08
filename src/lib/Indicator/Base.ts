@@ -40,6 +40,8 @@ export class Setting<T extends InputTypes = InputTypes> {
 	}
 }
 
+export type Settings<Options,K extends keyof Options = keyof Options> = { [key in K]?: Setting }
+
 const defaultShapeFillColor = '#ffffff';
 
 export type DisplayMode = 'row' | 'layer';
@@ -97,7 +99,7 @@ export default abstract class Base<
 	abstract computeSetup(): ComputeSetup<CK>;
 	abstract draw( index: number ): void;
 	
-	settings: {[key in keyof Options]?: Setting} = {};
+	abstract settings: Settings<Options>;
 
 	getLabel (){
 		// @ts-ignore
@@ -432,6 +434,10 @@ export default abstract class Base<
 	//__________
 	beforeDestroy(){
 		return this;
+	}
+	
+	hasAnySetting(){
+		return Object.keys( this.settings ).length;
 	}
 
 	protected cacheGet( prop: CK, index: number = 0 ): number | undefined {

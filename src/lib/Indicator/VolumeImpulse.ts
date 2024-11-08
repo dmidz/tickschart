@@ -1,6 +1,6 @@
 
 import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type BarStyle, type LineStyle, type ShapeStyle, Setting } from './Base.ts';
+import Base, { type BaseOptions, type BarStyle, type LineStyle, type ShapeStyle, Setting, Settings } from './Base.ts';
 
 //__ contract of constructor arg options
 export type Options = {
@@ -32,24 +32,7 @@ export default class VolumeImpulse extends Base<Options, Computed> {
 
 	static name = 'Volume Impulse';
 
-	settings = {
-		maType: new Setting( 'select', {
-			label: 'MA type',
-			choices: [
-				{
-					label: 'None',
-					value: false,
-				},
-				{
-					label: 'SMA',
-					value: 'sma',
-				},
-				{
-					label: 'EMA',
-					value: 'ema',
-				},
-			],
-		} ),
+	settings: Settings<Options> = {
 		maLength: new Setting( 'number', {
 			label: 'MA length',
 			min: 0,

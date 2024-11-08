@@ -20,7 +20,7 @@ export default class Volume2 extends indicator.Base<Options, Computed> {
 	
 	displayMode: indicator.DisplayMode = 'row';
 	
-	settings = {
+	settings: indicator.Settings<Options> = {
 		maType: new indicator.Setting('select', {
 			label: 'MA type',
 			choices: [
@@ -49,7 +49,7 @@ export default class Volume2 extends indicator.Base<Options, Computed> {
 
 		const _options: Required<Options> & Partial<indicator.BaseOptions> = {// force set default options
 			maType: 'sma',
-			maLength: 10,
+			maLength: 14,
 			styleBars: {
 				fillColor: '#444444',
 			},

@@ -226,7 +226,7 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 		}else{
 			this.elements.btReplay = createElement( 'button', {
 				relativeElement: this.chart.getElement( 'toolbarTop' ),
-				style: { padding: '4px' },
+				className: 'btn small',
 				attr: { title: 'Replay' },
 				icon: { className: 'replay' },
 				events: { click: this.onClickReplay }
@@ -254,7 +254,7 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 			
 			this.elements.btPickTime = createElement( 'button', {
 				relativeElement: this.elements.actions,
-				style: { padding: '4px' },
+				className: 'btn small',
 				attr: { title: 'Select time' },
 				icon: { className: 'capacitor' },
 				events: { click: this.onClickTime }
@@ -262,7 +262,7 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 
 			this.elements.btPlay = createElement( 'button', {
 				relativeElement: this.elements.actions,
-				style: { padding: '4px' },
+				className: 'btn small',
 				attr: { title: 'Play / Pause' },
 				icon: { className: 'play' },
 				events: { click: this.onClickPlayStop }
@@ -272,7 +272,7 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 
 			this.elements.btSkip = createElement( 'button', {
 				relativeElement: this.elements.actions,
-				style: { padding: '4px' },
+				className: 'btn small',
 				attr: { title: 'Next tick' },
 				icon: { className: 'step' },
 				events: { click: this.onClickSkip }
@@ -280,7 +280,7 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 
 			this.elements.btClose = createElement( 'button', {
 				relativeElement: this.elements.actions,
-				style: { padding: '4px' },
+				className: 'btn small',
 				attr: { title: 'Close replay' },
 				icon: { className: 'close' },
 				events: { click: this.onClickClose }

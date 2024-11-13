@@ -69,7 +69,7 @@ type ElementOptions = {
 	relativePosition?: 'append' | 'prepend' | 'after' | 'before',
 	attr?: { [ key: string ]: string },
 	events?: {//type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions
-		[key: string]: EventListenerOrEventListenerObject,
+		[key: string]: EventListenerOrEventListenerObject | undefined,
 	}
 }
 
@@ -98,7 +98,9 @@ export function createElement ( tagName: string = 'div', options: ElementOptions
 	}
 	if( options.events ){
 		for(const key in options.events){
-			el.addEventListener( key, options.events[key] );
+			if( options.events[ key ] ){
+				el.addEventListener( key, options.events[ key ] as EventListenerOrEventListenerObject );
+			}
 		}
 	}
 	if ( options.relativeElement ){
@@ -118,7 +120,7 @@ export class ListenerEventFactory<Callback extends (( ...args: any[] ) => void)>
 	}
 	
 	add( callback: Callback ): this {
-		this.remove( callback );
+		// this.remove( callback );
 		this.listeners.push( callback );
 		return this;
 	}
@@ -145,6 +147,10 @@ export class ListenerEventFactory<Callback extends (( ...args: any[] ) => void)>
 	}
 }
 
+// function clickOut( elementOut: HTMLElement, handler: () => {}){
+//	
+// 	document.body.addEventListener('click', handler );
+// }
 
 //__ intervals
 const s1 = 1000;

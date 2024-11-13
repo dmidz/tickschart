@@ -38,7 +38,7 @@ export default class IndicatorSettings<Indicator extends Base = Base> {
 		} );
 	}
 
-	diplay ( indicator: Indicator, display = true ){
+	display ( indicator: Indicator, display = true ){
 		if ( indicator !== this.indicator ){
 			this.indicator = indicator;
 			this.inputs.forEach( input => {

@@ -6,9 +6,10 @@ import { ListenerEventFactory, createElement, resizeCanvas, sharpCanvasValue,
 	type CandleTick, type GetTick, type ElementRect, type TickProp, type AbstractTick } from './index.ts';
 import { Base } from './Indicator/index.ts';
 import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
-import { Dialog, InputBase } from './UI/index.ts';
+import { Dialog, Popover, InputBase } from './UI/index.ts';
 import IndicatorSettings from './IndicatorSettings.ts';
 import IndicatorSelection from './IndicatorSelection.ts';
+import IndicatorHeader from '@/lib/IndicatorHeader.ts';
 
 type Indicator = { getLabel: () => string, new (): any }
 
@@ -51,7 +52,7 @@ export type Options<Tick extends AbstractTick,I extends Indicator = Indicator> =
 
 export default class Chart<Tick extends AbstractTick = CandleTick, I extends Indicator = Indicator> {
 
-	private parentElement: HTMLElement;
+	readonly parentElement: HTMLElement;
 	private _getTick: GetTick<Tick>;
 	private options: Options<Tick,I> = {
 		tickWidth: 4,
@@ -236,7 +237,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 
 		switch ( indicator.displayMode ){
 			case 'row':{
-				const row = new ChartRow( this.chartRows.length, indicator, this.tickIndexValue, this.elements.main,
+				const row = new ChartRow( this, this.chartRows.length, indicator, this.tickIndexValue, this.elements.main,
 					this.scalingX, this.ctxTicks, this.scalingY,
 					( scaling, row ) => {
 						this.render();
@@ -256,9 +257,6 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 							this.onMouseDown( event );
 						},
 						onMouseWheel: this.onMouseWheel,
-						onClickSettings: ( event, emitter ) => {
-							this.indicatorSettings.diplay( emitter.getIndicator(), true );
-						},
 					} );
 
 				this.chartRows.push( row );
@@ -268,17 +266,11 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 				indicator.setContext( this.tickIndexValue, this.ctxTicks, this.scalingY, this.scalingX, this.ctxTicks, this.scalingY );
 				this.layers.push( indicator );
 				this.elements.rowIdcCount.innerText = `${this.layers.length}`;
-				createElement('div', {
-					relativeElement: this.elements.idcsInfos,
-					className: `row row-${this.layers.length}`,
-					innerText: indicator.getLabel(),
-					icon: {	className: 'settings', },
-					events: {
-						click: () => {
-							this.indicatorSettings.diplay( indicator, true );
-						}
-					}
-				});
+
+				new IndicatorHeader( this.elements.idcsInfos, this.parentElement, indicator, {
+					onClickSettings: this.displayIndicatorSettings,
+					onClickRemove: this.removeIndicator,
+				} );
 				break;
 			}
 			default:
@@ -288,7 +280,33 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 		this.resizeCanvas();
 
 		return this;
-
+	}
+	
+	removeIndicator = <I extends Base> ( indicator: I ) => {
+		switch ( indicator.displayMode ){
+			case 'row':{
+				const row = this.chartRows.find( item => item.getIndicator() === indicator );
+				if( !row ){return;}
+				row.beforeDestroy();
+				row.getElement('row')?.remove();
+				this.onResize();
+				break;
+			}
+			case 'layer':{
+				const index = this.layers.findIndex( item => item === indicator );
+				if ( index === -1 ){
+					return;
+				}
+				this.layers.splice( index, 1 );
+				this.elements.rowIdcCount.innerText = `${ this.layers.length }`;
+				break;
+			}
+		}
+		this.refresh();
+	}
+	
+	displayIndicatorSettings = <I extends Base>( indicator: I ) => {
+		this.indicatorSettings.display( indicator, true );
 	}
 
 	beforeDestroy (){
@@ -313,6 +331,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 		
 		Dialog.beforeDestroy();
 		InputBase.beforeDestroy();
+		Popover.beforeDestroy();
+		IndicatorHeader.beforeDestroy();
 	}
 
 	refresh (){
@@ -325,7 +345,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 		this.updateX( true, true );
 	}
 	
-	getElement( key: keyof Chart['elements'] ){
+	getElement( key: keyof Chart<Tick>['elements'] ){
 		return this.elements[key];
 	}
 	
@@ -707,12 +727,11 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 		}
 	}
 	
-	private onResize = ( event: UIEvent ) => {
-		// console.log('onResize', event );
+	private onResize = () => {
 		this.resizing = true;
 		requestAnimationFrame( this.update );
 	}
-
+	
 	private update = () => {
 		let render = false;
 
@@ -1041,7 +1060,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 
 		createElement( 'button', {
 			relativeElement: this.elements.toolbarTop,
-			style: { padding: '4px' },
+			className: 'btn small',
 			attr: { title: 'Add an indicator...' },
 			icon: { className: 'chart-line' },
 			events: {

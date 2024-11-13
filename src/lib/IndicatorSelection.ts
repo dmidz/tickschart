@@ -119,9 +119,5 @@ export default class IndicatorSelection<I extends Indicator = Indicator> {
 	reset(){
 		this.setSelection( null );
 	}
-	
-	remove(){
-		this.dialog.remove();
-	}
 }
 

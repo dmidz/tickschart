@@ -18,11 +18,8 @@ export default class InputText extends InputBase<Options> {
 		return input;
 	}
 
-	remove (){
+	beforeDestroy (){
 		this.elInput.removeEventListener( 'input', this.handleChange );
-
-		super.remove();
 	}
-
 }
 

@@ -68,7 +68,7 @@ export default abstract class InputBase<Options extends BaseOptions = {}> {
 		} );
 		this.elements.wrapper.append( this.elInput );
 		
-		InputBase.instances.push( this );
+		InputBase.add( this );
 	}
 
 	protected value: any;
@@ -97,15 +97,22 @@ export default abstract class InputBase<Options extends BaseOptions = {}> {
 	}
 
 	remove(){
+		this.beforeDestroy();
 		this.elements.wrapper.remove();
 	}
+
+	abstract beforeDestroy(): void
 
 	//___ static
 	static instances: InputBase[] = [];
 
+	static add ( instance: InputBase ){
+		this.instances.push( instance );
+	}
+
 	static beforeDestroy (){
 		this.instances.forEach( instance => {
-			instance.remove();
+			instance.beforeDestroy();
 		} );
 		this.instances = [];
 	}

@@ -20,11 +20,8 @@ export default class InputNumber extends InputBase<Options> {
 		return input;
 	}
 
-	remove (){
+	beforeDestroy (){
 		this.elInput.removeEventListener( 'input', this.handleChange );
-
-		super.remove();
 	}
-
 }
 

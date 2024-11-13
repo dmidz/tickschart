@@ -82,9 +82,5 @@ export default class IndicatorSettings<Indicator extends Base = Base> {
 			content: this.elContent,
 		} );
 	}
-	
-	remove(){
-		this.dialog.remove();
-	}
 }
 

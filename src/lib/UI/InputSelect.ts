@@ -29,10 +29,8 @@ export default class InputSelect extends InputBase<Options> {
 		return this.options.choices[index].value;
 	}
 
-	remove (){
+	beforeDestroy (){
 		this.elInput.removeEventListener( 'change', this.handleChange );
-
-		super.remove();
 	}
 }
 

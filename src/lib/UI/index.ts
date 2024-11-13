@@ -3,6 +3,7 @@ import InputText, { type Options as TextOptions } from './InputText.ts';
 import InputNumber, { type Options as NumberOptions } from './InputNumber.ts';
 import InputSelect, { type Options as SelectOptions } from './InputSelect.ts';
 import Dialog from './Dialog.ts';
+import Popover from './Popover.ts';
 
 const inputs = {
 	text: InputText,
@@ -20,4 +21,4 @@ export type InputTypes = keyof InputOptionsList;
 
 export type InputOptions = InputOptionsList[InputTypes];
 
-export { Dialog, inputs, InputBase, InputText, InputNumber, InputSelect };
+export { Dialog, Popover, inputs, InputBase, InputText, InputNumber, InputSelect };

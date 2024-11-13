@@ -42,13 +42,6 @@ body {
   box-sizing: border-box;
 }
 
-.row, .col {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: stretch;
-}
-
 *::-webkit-scrollbar {
   width: 9px;
 }
@@ -65,10 +58,6 @@ body {
   position: absolute;
   box-sizing: content-box;
   
-}
-
-.col {
-  flex-direction: column;
 }
 
 #app {
@@ -106,6 +95,21 @@ body {
   bottom: 0;
   border: 1px solid #999999;
   z-index: 100;
+}
+
+.chart .no-bdr {
+  border: 0;
+}
+
+.chart .row, .col {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.chart .col {
+  flex-direction: column;
 }
 
 /*__ inputs */
@@ -200,6 +204,14 @@ body {
   background-image: url("icons/clarity-chart-line.svg");
 }
 
+.icon.ic-ellipsis {
+  background-image: url("icons/clarity-ellipsis.svg");
+}
+
+.icon.ic-trash {
+  background-image: url("icons/clarity-trash.svg");
+}
+
 /*__ buttons */
 .chart button {
   display: flex;
@@ -220,7 +232,6 @@ body {
   border: var(--bt-border);
   padding: 8px 12px;
   border-radius: var(--border-radius-base);
-  
 }
 
 .chart button > .icon {
@@ -232,8 +243,16 @@ body {
   color: #ffffff;
 }
 
+.chart button.no-bdr:hover {
+  border: 0;
+}
+
 .chart button:hover > .icon {
   filter: brightness(0) invert(1);
+}
+
+.chart button.small {
+  padding: 4px;
 }
 
 .chart .bt-link {
@@ -254,6 +273,20 @@ body {
   /*color: #ffffff;*/
 }
 
+/*__ menu */
+.chart .menu-item {
+  cursor: pointer;
+  font-size: 1rem;
+  flex-direction: row;
+  align-items: center;
+  display: flex;
+  /*color: #ffffff33;*/
+}
+
+.chart .menu-item:hover {
+  color: #ffffff;
+}
+
 /*__ dialog */
 .chart .dialog-wrapper {
   background: rgba(0, 0, 0, .5);
@@ -262,6 +295,7 @@ body {
 .chart .dialog {
   background-color: var(--color-background);
   box-shadow: 0 12px 32px 4px rgba(0, 0, 0, 0.36), 0px 8px 20px rgba(0, 0, 0, 0.72);
+  border-radius: 4px;
 }
 
 .chart .dlg-head {
@@ -286,14 +320,25 @@ body {
 .chart .popover {
   background-color: var(--color-background);
   box-shadow: 0 12px 32px 4px rgba(0, 0, 0, 0.36), 0px 8px 20px rgba(0, 0, 0, 0.72);
+  border-radius: 4px;
 }
 
-/*__  */
-.chart .row-ind .bt-ind-settings {
+/*__ indicator header */
+.chart .idctr-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chart .row-ind .idctr-header {
   opacity: 0;
+  position: absolute;
+  left: 4px;
+  top: 0;
+  z-index: 150;
 }
 
-.chart .row-ind:hover .bt-ind-settings {
+.chart .row-ind:hover .idctr-header, .chart .row-ind .idctr-header:focus-within {
   opacity: 1;
 }
 
@@ -343,7 +388,7 @@ body {
   flex-direction: row;
   gap: 8px;
   justify-content: flex-start;
-  align-items: center;  
+  align-items: flex-start; 
 }
 
 .chart .idcs-bar .bt-toggle-display {
@@ -372,10 +417,11 @@ body {
 .chart .list-indicators .item {
   padding: 0.5rem 1rem;
   cursor: pointer;
+  border-bottom: 1px dotted rgba(255,255,255,.15);
 }
 .chart .list-indicators .item.select {
   border-left: 2px solid #ffffff;
 }
 .chart .list-indicators .item:hover {
-  background: rgba(255,255,255,.1);
+  background: rgba(255,255,255,.05);
 }

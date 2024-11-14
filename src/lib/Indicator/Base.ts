@@ -2,7 +2,7 @@
 import { ScalingLinear, type Point } from '../utils/math';
 import { type TickProp } from '../index';
 import Computation, { type ComputeFunc } from './Computation';
-import { InputOptionsList, type InputTypes } from '../UI/index.ts';
+import { InputOptions, type InputTypes } from '../UI/index.ts';
 
 //______
 export type BaseOptions = {
@@ -36,7 +36,7 @@ export type DrawOptions = {
 }
 
 export class Setting<T extends InputTypes = InputTypes> {
-	constructor ( public readonly type: T, public readonly options: InputOptionsList[T] ){
+	constructor ( public readonly type: T, public readonly options: InputOptions[T] ){
 	}
 }
 

@@ -11,13 +11,13 @@ const inputs = {
 	select: InputSelect,
 } as const;
 
-export type InputOptionsList = {
+export type InputOptions = {
 	text: TextOptions,
 	number: NumberOptions,
 	select: SelectOptions,
 }
 
-export type InputTypes = keyof InputOptionsList;
+export type InputTypes = keyof typeof inputs;
 
 export type InputOptions = InputOptionsList[InputTypes];
 

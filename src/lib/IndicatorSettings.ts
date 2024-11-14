@@ -64,7 +64,7 @@ export default class IndicatorSettings<Indicator extends Base = Base> {
 							...is.options,
 							value: indicator.getOption( key ),
 							relativeElement: this.elContent,
-							onChange: ( value: any/*, key, inputinput*/ ) => {
+							onChange: ( value: any ) => {
 								this.inputsChanges[ key ] = value;
 							},
 						} as Extract<InputOptions, { type: typeof is.type }>;

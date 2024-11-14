@@ -152,6 +152,11 @@ export default class ChartRow<Indicator extends Base = Base> {
 		this.ctx.clearRect( x, 0, w, this.canvas.height );
 	}
 
+	remove(){
+		this.beforeDestroy();
+		this.getElement( 'row' )?.remove();
+	}
+	
 	beforeDestroy(){
 		const mouseArea = this.elements.get( 'mouseArea' );
 

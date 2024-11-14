@@ -84,7 +84,7 @@ export default class IndicatorSelection<I extends Indicator = Indicator> {
 		});
 
 		this.dialog = new Dialog( {
-			title: 'Add an indicator',
+			title: 'Add indicator',
 			parentElement: this.options.parentElement,
 			buttons: {
 				ok: () => {

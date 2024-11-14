@@ -120,6 +120,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 	private mouseIndicator: ChartRow | null = null;
 	private mouseDragIndicator: ChartRow | null = null;
 	private layers: Base[] = [];
+	private layersHeader: IndicatorHeader[] = [];
 	private indicatorSettings: IndicatorSettings;
 	private indicatorSelection: IndicatorSelection<I>;
 	private tickIndexMax: number = Infinity;
@@ -264,13 +265,13 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 			}
 			case 'layer':{
 				indicator.setContext( this.tickIndexValue, this.ctxTicks, this.scalingY, this.scalingX, this.ctxTicks, this.scalingY );
-				this.layers.push( indicator );
-				this.elements.rowIdcCount.innerText = `${this.layers.length}`;
-
-				new IndicatorHeader( this.elements.idcsInfos, this.parentElement, indicator, {
+				const index = this.layers.length;
+				this.layers[index] = indicator;
+				this.layersHeader[index] = new IndicatorHeader<Base>( this.elements.idcsInfos, this.parentElement, indicator, {
 					onClickSettings: this.displayIndicatorSettings,
 					onClickRemove: this.removeIndicator,
 				} );
+				this.elements.rowIdcCount.innerText = `${ index+1 }`;
 				break;
 			}
 			default:
@@ -287,8 +288,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 			case 'row':{
 				const row = this.chartRows.find( item => item.getIndicator() === indicator );
 				if( !row ){return;}
-				row.beforeDestroy();
-				row.getElement('row')?.remove();
+				row.remove();
 				this.onResize();
 				break;
 			}
@@ -298,6 +298,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 					return;
 				}
 				this.layers.splice( index, 1 );
+				this.layersHeader[index].remove();
+				this.layersHeader.splice( index, 1 );
 				this.elements.rowIdcCount.innerText = `${ this.layers.length }`;
 				break;
 			}
@@ -1061,7 +1063,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 		createElement( 'button', {
 			relativeElement: this.elements.toolbarTop,
 			className: 'btn small',
-			attr: { title: 'Add an indicator...' },
+			attr: { title: 'Add sindicator...' },
 			icon: { className: 'chart-line' },
 			events: {
 				click: () => {

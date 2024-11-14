@@ -17,13 +17,14 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 		onClickRemove(){},
 	};
 	
+	private elRoot!: HTMLElement;
 	private popMenu!: Popover;
 	private btSettings!: HTMLElement;
 	private btMenu!: HTMLElement;
 	private btRemove!: HTMLElement;
 	
 	constructor ( private parentElement: HTMLElement, private chartElement: HTMLElement, 
-				private indicator: Indicator, options: Partial<Options<Indicator>> ){
+				readonly indicator: Indicator, options: Partial<Options<Indicator>> ){
 
 		this.options = merge( this.options, options );
 
@@ -31,7 +32,7 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 	}
 	
 	private createElements(){
-		const name = createElement( 'div', {
+		this.elRoot = createElement( 'div', {
 			relativeElement: this.parentElement,
 			innerText: this.indicator.getLabel(),
 			className: 'idctr-header',
@@ -42,7 +43,7 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 		
 		if( this.indicator.hasAnySetting() ){
 			this.btSettings = createElement( 'button', {
-				relativeElement: name,
+				relativeElement: this.elRoot,
 				className: 'btn small no-bdr',
 				icon: {
 					className: 'settings'
@@ -82,7 +83,7 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 		} );
 
 		this.btMenu = createElement( 'button', {
-			relativeElement: name,
+			relativeElement: this.elRoot,
 			className: 'btn small no-bdr',
 			icon: {
 				className: 'ellipsis'
@@ -110,6 +111,11 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 	private onClickRemove = ( event: MouseEvent ) => {
 		this.options.onClickRemove( this.indicator );
 		this.popMenu.display( false );
+	}
+	
+	remove(){
+		this.beforeDestroy();
+		this.elRoot.remove();
 	}
 
 	beforeDestroy (){

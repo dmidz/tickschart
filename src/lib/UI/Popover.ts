@@ -33,7 +33,12 @@ export default class Popover {
 				content?: HTMLElement,
 				relativeElement?: HTMLElement, relativeAnchor?: AnchorPosition, popoverAnchor?: AnchorPosition } = {
 	} ){
-		this.isDisplayed = display === 'toggle' ? !this.isDisplayed : display;
+		const _display = display === 'toggle' ? !this.isDisplayed : display;
+		if( _display === this.isDisplayed ){ return;}
+		this.isDisplayed = _display;
+		if( this.isDisplayed ){
+			Popover.hideAll( this );
+		}
 		if( this.isDisplayed ){
 			if( options.content ){
 				this.setContent( options.content );
@@ -87,26 +92,18 @@ export default class Popover {
 				zIndex: '999',
 			},
 			events: {
-				mousedown: this.onClickIn as EventListenerOrEventListenerObject,
+				click: this.onClickIn as EventListenerOrEventListenerObject,
 			},
 		} );
 
-		document.body.addEventListener( 'click', this.onClickOut );
 	}
 
 	private onClickIn = ( ev: MouseEvent ) => {
 		ev.stopImmediatePropagation();
 	}
 	
-	private onClickOut = () => {
-		if( this.isDisplayed ){
-			this.display( false );
-		}
-	}
-
 	beforeDestroy (){
-		this.elWrapper.removeEventListener( 'click', this.onClickOut );
-		document.body.removeEventListener( 'click', this.onClickOut );
+		this.elWrapper.removeEventListener( 'click', this.onClickIn );
 		this.elWrapper?.remove();
 	}
 
@@ -116,10 +113,27 @@ export default class Popover {
 	static add( instance: Popover ){
 		this.instances.push( instance );
 	}
+	
+	static hideAll = ( butInstance?: Popover ) => {
+		this.instances.forEach( inst => {
+			if( ( !butInstance || butInstance !== inst ) ){
+				inst.display( false );
+			}
+		} );
+	}
 
 	static beforeDestroy (){
+		document.body.removeEventListener( 'click', Popover.onClickOut );
 		this.instances.forEach( el => { el.beforeDestroy();} );
 		this.instances = [];
+	}
+
+	private static onClickOut = () => {
+		Popover.hideAll();
+	}
+
+	static {
+		document.body.addEventListener( 'click', Popover.onClickOut );
 	}
 
 }

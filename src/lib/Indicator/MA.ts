@@ -22,7 +22,7 @@ export default class MA extends Base<Options, Computed> {
 	
 	displayMode: DisplayMode = 'layer';
 
-	settings: Settings<Options> = {
+	userSettings: Settings<Options> = {
 		property: new Setting( 'select', {
 			label: 'Property',
 			choices: Object.keys( defaultTick ).map( ( key ) => ({ label: key, value: key })),

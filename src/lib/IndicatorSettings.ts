@@ -47,7 +47,7 @@ export default class IndicatorSettings<Indicator extends Base = Base> {
 			this.inputs = [];
 			this.inputsChanges = {};
 			//__ build settings inputs
-			if ( indicator.settings ){
+			if ( indicator.hasAnySetting() ){
 				this.elContent = createElement( 'div', {
 					className: 'fields',
 					style: {
@@ -56,8 +56,8 @@ export default class IndicatorSettings<Indicator extends Base = Base> {
 						gap: '8px',
 					},
 				} );
-				Object.keys( indicator.settings ).forEach( key => {
-					const is = indicator.settings[ key as keyof typeof indicator.settings ] as Setting;
+				Object.keys( indicator.userSettings ).forEach( key => {
+					const is = indicator.userSettings[ key as keyof typeof indicator.userSettings ] as Setting;
 					const cl = inputs[ is.type ];
 					if ( cl ){
 						const opts = {

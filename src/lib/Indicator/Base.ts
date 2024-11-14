@@ -99,7 +99,7 @@ export default abstract class Base<
 	abstract computeSetup(): ComputeSetup<CK>;
 	abstract draw( index: number ): void;
 	
-	abstract settings: Settings<Options>;
+	abstract userSettings: Settings<Options>;
 
 	getLabel (){
 		// @ts-ignore
@@ -437,7 +437,7 @@ export default abstract class Base<
 	}
 	
 	hasAnySetting(){
-		return Object.keys( this.settings ).length;
+		return Object.keys( this.userSettings ).length;
 	}
 
 	protected cacheGet( prop: CK, index: number = 0 ): number | undefined {

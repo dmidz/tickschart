@@ -16,8 +16,8 @@ type Computed = {
 };
 
 export default class Volume extends Base<Options, Computed> {
-	
-	settings: Settings<Options> = {
+
+	userSettings: Settings<Options> = {
 		maType: new Setting('select', {
 			label: 'MA type',
 			choices: [

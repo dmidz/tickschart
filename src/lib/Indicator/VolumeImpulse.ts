@@ -32,7 +32,7 @@ export default class VolumeImpulse extends Base<Options, Computed> {
 
 	static label = 'Volume Impulse';
 
-	settings: Settings<Options> = {
+	userSettings: Settings<Options> = {
 		maLength: new Setting( 'number', {
 			label: 'MA length',
 			min: 0,

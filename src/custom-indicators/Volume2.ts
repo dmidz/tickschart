@@ -22,7 +22,7 @@ export default class Volume2 extends indicator.Base<Options, Computed> {
 
 	displayMode: indicator.DisplayMode = 'row';
 
-	settings: indicator.Settings<Options> = {
+	userSettings: indicator.Settings<Options> = {
 		maType: new indicator.Setting('select', {
 			label: 'MA type',
 			choices: [

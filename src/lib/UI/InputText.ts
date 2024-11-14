@@ -1,4 +1,5 @@
 import InputBase, { type BaseOptions } from './InputBase.ts';
+import { createElement } from '../index';
 
 //_____
 export type Options = BaseOptions & {
@@ -12,10 +13,14 @@ export default class InputText extends InputBase<Options> {
 	}
 	
 	protected buildInput(){
-		const input = document.createElement( 'input' );
-		input.setAttribute('type', 'text');
-		input.addEventListener('input', this.handleChange );
-		return input;
+		return createElement( 'input', {
+			attr: {
+				type: 'text',
+			},
+			events: {
+				input: this.handleChange,
+			}
+		} ) as HTMLInputElement;
 	}
 
 	beforeDestroy (){

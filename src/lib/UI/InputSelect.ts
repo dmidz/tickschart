@@ -1,4 +1,5 @@
 import InputBase, { type BaseOptions } from './InputBase.ts';
+import { createElement } from '@/lib';
 
 //_____
 export type Options = BaseOptions & Readonly<{
@@ -12,14 +13,19 @@ export default class InputSelect extends InputBase<Options> {
 	}
 
 	protected buildInput (){
-		const input = document.createElement( 'select' );
+		const input = createElement( 'select', {
+			events: {
+				change: this.handleChange,
+			},
+		} ) as HTMLSelectElement;
+
 		this.options.choices.forEach( choice => {
 			const option = document.createElement( 'option' );
 			option.innerText = choice.label;
 			option.value = `${choice.value}`;
 			input.append( option );
 		});
-		input.addEventListener( 'change', this.handleChange );
+
 		return input;
 	}
 

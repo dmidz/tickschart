@@ -27,6 +27,7 @@
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
   },
   "devDependencies": {
+    "@optimize-lodash/rollup-plugin": "^5.0.0",
     "@types/lodash": "^4.17.13",
     "@types/node": "^20.11.7",
     "@vitejs/plugin-vue": "^4.5.2",

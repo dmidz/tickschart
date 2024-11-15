@@ -3,6 +3,7 @@ import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import dts from 'vite-plugin-dts';
 import { resolve } from 'node:path';
+import { optimizeLodashImports } from "@optimize-lodash/rollup-plugin";
 
 const res = ( path: string ) => resolve( __dirname, path );
 
@@ -31,6 +32,7 @@ export default defineConfig( ( { command, mode } ) => {
         rollupTypes: true,
         include: [ 'src/lib/**/*.ts', 'src/types.d.ts' ],
       } ),
+      optimizeLodashImports(),
     ],
     build: {
       copyPublicDir: false,

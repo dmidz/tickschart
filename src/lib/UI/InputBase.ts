@@ -64,7 +64,7 @@ export default abstract class InputBase<Options extends BaseOptions = {}> {
 			this.elInput.value = this.options.value;
 		}
 		Object.assign( this.elInput.style, {
-			flex: '2',
+			flex: '2 1 100px',
 		} );
 		this.elements.wrapper.append( this.elInput );
 		

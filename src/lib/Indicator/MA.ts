@@ -41,14 +41,13 @@ export default class MA extends Base<Options, Computed> {
 			choices: [ 'sma', 'ema' ].map( ( key ) => ( { label: key, value: key } ) ),
 		} ),
 		new Setting( 'length', 'number', {
-			label: 'length',
+			label: 'Length',
 			min: 0,
 			max: 200,
 		} ),
-		// ['ma2.property', new Setting( 'select', {
-		// 	label: 'Property',
-		// 	choices: properties.map( ( key ) => ( { label: key, value: key } ) ),
-		// } )],
+		new Setting( 'style.color', 'color', {
+			label: 'Color',
+		} ),
 	];
 
 	constructor ( options: Partial<Options & BaseOptions> = {} ){

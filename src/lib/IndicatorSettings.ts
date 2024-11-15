@@ -1,4 +1,4 @@
-
+import { set } from 'lodash';
 import { Dialog, inputs, InputBase, type InputOptions } from './UI/index.ts';
 import { Base, SettingGroup } from '@/lib/Indicator';
 import { createElement } from './index.ts';
@@ -66,7 +66,7 @@ export default class IndicatorSettings<Indicator extends Base = Base> {
 							value: indicator.getOption( is.key ),
 							relativeElement: this.elContent,
 							onChange: ( value: any ) => {
-								this.inputsChanges[ is.key ] = value;
+								set( this.inputsChanges, is.key, value );
 							},
 						} as Extract<InputOptions, { type: typeof is.type }>;
 						const input = new cl( is.key, opts );

@@ -1,4 +1,5 @@
-import { get } from 'lodash';
+import { get, set } from 'lodash';
+import merge from '../utils/merge.ts';
 import { ScalingLinear, type Point } from '../utils/math';
 import { type TickProp } from '../index';
 import Computation, { type ComputeFunc } from './Computation';
@@ -15,6 +16,7 @@ export type BarStyle = {
 
 export type LineStyle = {
 	color: string,
+	width?: number,
 }
 
 export type ShapeStyle = {
@@ -44,7 +46,6 @@ export class SettingGroup<K> {
 }
 
 export type Settings<O extends object,K = NestedKeyOf<O>> = (Setting<K> | SettingGroup<K>)[];
-// export type Settings<O extends object> = Map<NestedKeyOf<O>, Setting>;
 
 const defaultShapeFillColor = '#ffffff';
 
@@ -94,7 +95,7 @@ export default abstract class Base<
 		const baseOptions: BaseOptions = {
 			// debug: true,
 		};
-		this.options = Object.assign( baseOptions, options );
+		this.options = merge( baseOptions, options );
 
 		this.lib = new Computation<TCK>( this.tickStep, this.computed.bind( this ) );
 		this.compute = this.computeSetup();
@@ -110,15 +111,15 @@ export default abstract class Base<
 		return this.constructor.getLabel();
 	}
 
-	setOption<K extends keyof (Options & BaseOptions) = keyof (Options & BaseOptions),V extends Options[K]=Options[K]>( key: K, value: V, reset = true ){
-		this.options[key] = value;
+	setOption<K extends NestedKeyOf<Options & BaseOptions> = NestedKeyOf<Options & BaseOptions>,V extends Options[K]=Options[K]>( key: K, value: V, reset = true ){
+		set( this.options, key, value );
 		if( reset ){
 			this.reset();
 		}
 	}
 	
 	setOptions( options: Partial<Options & BaseOptions>, reset = true ){
-		Object.assign( this.options, options );
+		this.options = merge( this.options, options );
 		if ( reset ){
 			this.reset();
 		}

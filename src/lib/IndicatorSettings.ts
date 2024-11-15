@@ -1,6 +1,6 @@
 
 import { Dialog, inputs, InputBase, type InputOptions } from './UI/index.ts';
-import type { Setting, Base } from '@/lib/Indicator';
+import { Base, SettingGroup } from '@/lib/Indicator';
 import { createElement } from './index.ts';
 
 export type Options = {
@@ -56,19 +56,20 @@ export default class IndicatorSettings<Indicator extends Base = Base> {
 						gap: '8px',
 					},
 				} );
-				Object.keys( indicator.userSettings ).forEach( key => {
-					const is = indicator.userSettings[ key as keyof typeof indicator.userSettings ] as Setting;
-					const cl = inputs[ is.type ];
-					if ( cl ){
+				indicator.userSettings.forEach( ( is/*, index*/ ) => {
+					if( is instanceof SettingGroup ){
+						
+					}else{
+						const cl = inputs[ is.type ];
 						const opts = {
 							...is.options,
-							value: indicator.getOption( key ),
+							value: indicator.getOption( is.key ),
 							relativeElement: this.elContent,
 							onChange: ( value: any ) => {
-								this.inputsChanges[ key ] = value;
+								this.inputsChanges[ is.key ] = value;
 							},
 						} as Extract<InputOptions, { type: typeof is.type }>;
-						const input = new cl( key, opts );
+						const input = new cl( is.key, opts );
 						this.inputs.push( input );
 					}
 				} );

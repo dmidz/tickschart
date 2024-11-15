@@ -20,13 +20,11 @@ export default class Computation<ComputeKey extends string> {
 		}
 		
 		const alpha = 2 / ( length + 1 );
-		// const inv = 1 - alpha;
 		const sma = this.sma( prop, length, debug );
 
 		const ema = ( index: number, prevValue: number | undefined ) => {
 			let prevEma = prevValue as unknown as number;
 			if( typeof prevEma === 'undefined' ){
-				// prevEma = sma( index - this.tickStep );
 				let k = index - this.tickStep * length * 2;
 				prevEma = sma( k );
 				while( k < index ){
@@ -35,7 +33,6 @@ export default class Computation<ComputeKey extends string> {
 				}
 			}
 			return (this.computed( index, prop ) - prevEma) * alpha + prevEma;
-			// return this.computed( index, prop ) * alpha + prevEma * inv;
 		};
 		return ema;
 	}

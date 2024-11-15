@@ -31,14 +31,14 @@ type Computed = {
 export default class VolumeImpulse extends Base<Options, Computed> {
 
 	static label = 'Volume Impulse';
-
-	userSettings: Settings<Options> = {
-		maLength: new Setting( 'number', {
+	
+	userSettings: Settings<Options> = [
+		new Setting( 'maLength', 'number', {
 			label: 'MA length',
 			min: 0,
 			max: 200,
 		} ),
-	};
+	];
 
 	constructor ( options: Partial<Options & BaseOptions> = {} ){
 

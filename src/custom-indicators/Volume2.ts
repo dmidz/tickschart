@@ -22,30 +22,21 @@ export default class Volume2 extends indicator.Base<Options, Computed> {
 
 	displayMode: indicator.DisplayMode = 'row';
 
-	userSettings: indicator.Settings<Options> = {
-		maType: new indicator.Setting('select', {
+	userSettings: indicator.Settings<Options> = [
+		new indicator.Setting('maType', 'select', {
 			label: 'MA type',
 			choices: [
-				{
-					label: 'None',
-					value: false,
-				},
-				{
-					label: 'SMA',
-					value: 'sma',
-				},
-				{
-					label: 'EMA',
-					value: 'ema',
-				},
+				{ label: 'None', value: false },
+				{ label: 'SMA', value: 'sma' },
+				{ label: 'EMA', value: 'ema' },
 			],
 		}),
-		maLength: new indicator.Setting('number', {
+		new indicator.Setting('maLength', 'number', {
 			label: 'MA length',
 			min: 0,
-			max: 200,
+			max: 100,
 		}),
-	} as const;
+	] as const;
 	
 	constructor ( options: Partial<Options & indicator.BaseOptions> = {} ){
 

@@ -17,30 +17,21 @@ type Computed = {
 
 export default class Volume extends Base<Options, Computed> {
 
-	userSettings: Settings<Options> = {
-		maType: new Setting('select', {
+	userSettings: Settings<Options> = [
+		new Setting('maType', 'select', {
 			label: 'MA type',
 			choices: [
-				{
-					label: 'None',
-					value: false,
-				},
-				{
-					label: 'SMA',
-					value: 'sma',
-				},
-				{
-					label: 'EMA',
-					value: 'ema',
-				},
+				{ label: 'None', value: false },
+				{ label: 'SMA', value: 'sma' },
+				{ label: 'EMA', value: 'ema' },
 			],
 		}),
-		maLength: new Setting('number', {
+		new Setting('maLength', 'number', {
 			label: 'MA length',
 			min: 0,
 			max: 200,
 		}),
-	} as const;
+	] as const;
 	
 	constructor ( options: Partial<Options & BaseOptions> = {} ){
 

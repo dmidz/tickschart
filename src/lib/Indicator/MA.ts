@@ -1,6 +1,6 @@
 
+
 import merge from '../utils/merge.ts';
-import { defaultTick } from '../index.ts';
 import Base, { type BaseOptions, type LineStyle, DisplayMode, Settings, Setting } from './Base.ts';
 
 //______
@@ -9,6 +9,13 @@ export type Options = {
 	type: 'sma' | 'ema',
 	length: number,
 	style: LineStyle,
+	// ma2: {
+	// 	property: Parameters<Base<BaseOptions, Computed>['computed']>[1],
+	// 	type: 'sma' | 'ema',
+	// 	length: number,
+	// 	lineColor: string,
+	// 	lineThickness: number,
+	// },
 }
 
 //__ define the computed propertied used in computeSetup & draw
@@ -16,27 +23,33 @@ type Computed = {
 	ma: number
 };
 
+const properties = [ 'close', 'open', 'high', 'low' ];
+
 export default class MA extends Base<Options, Computed> {
 
-	static label = 'SMA / EMA';
-	
-	displayMode: DisplayMode = 'layer';
+	static readonly label = 'SMA / EMA';
 
-	userSettings: Settings<Options> = {
-		property: new Setting( 'select', {
+	readonly displayMode: DisplayMode = 'layer';
+
+	readonly userSettings: Settings<Options> = [
+		new Setting( 'property', 'select', {
 			label: 'Property',
-			choices: Object.keys( defaultTick ).map( ( key ) => ({ label: key, value: key })),
+			choices: properties.map( ( key ) => ( { label: key, value: key } ) ),
 		} ),
-		type: new Setting( 'select', {
+		new Setting( 'type', 'select', {
 			label: 'Type',
-			choices: ['sma','ema'].map( ( key ) => ({ label: key, value: key })),
+			choices: [ 'sma', 'ema' ].map( ( key ) => ( { label: key, value: key } ) ),
 		} ),
-		length: new Setting( 'number', {
+		new Setting( 'length', 'number', {
 			label: 'length',
 			min: 0,
 			max: 200,
 		} ),
-	} as const;
+		// ['ma2.property', new Setting( 'select', {
+		// 	label: 'Property',
+		// 	choices: properties.map( ( key ) => ( { label: key, value: key } ) ),
+		// } )],
+	];
 
 	constructor ( options: Partial<Options & BaseOptions> = {} ){
 		
@@ -47,6 +60,13 @@ export default class MA extends Base<Options, Computed> {
 			style: {
 				color: '#ffff00'
 			},
+			// ma2: {
+			// 	property: 'close',
+			// 	type: 'sma',
+			// 	length: 50,
+			// 	lineColor: '#4dffc3',
+			// 	lineThickness: 1,
+			// }
 		};
 		
 		super( merge( _options, options ) );

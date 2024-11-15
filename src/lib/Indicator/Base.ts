@@ -1,4 +1,4 @@
-
+import { get } from 'lodash';
 import { ScalingLinear, type Point } from '../utils/math';
 import { type TickProp } from '../index';
 import Computation, { type ComputeFunc } from './Computation';
@@ -35,12 +35,16 @@ export type DrawOptions = {
 	yDelta?: number,
 }
 
-export class Setting<T extends InputTypes = InputTypes> {
-	constructor ( public readonly type: T, public readonly options: InputOptions[T] ){
-	}
+export class Setting<K,T extends InputTypes = InputTypes> {
+	constructor ( public readonly key: K, public readonly type: NoInfer<T>, public readonly options: InputOptions[T] ){}
 }
 
-export type Settings<Options,K extends keyof Options = keyof Options> = { [key in K]?: Setting }
+export class SettingGroup<K> {
+	constructor ( public readonly label: string, public readonly settings: Setting<K>[] ){}
+}
+
+export type Settings<O extends object,K = NestedKeyOf<O>> = (Setting<K> | SettingGroup<K>)[];
+// export type Settings<O extends object> = Map<NestedKeyOf<O>, Setting>;
 
 const defaultShapeFillColor = '#ffffff';
 
@@ -120,8 +124,8 @@ export default abstract class Base<
 		}
 	}
 	
-	getOption<K extends keyof Options = keyof Options>( key: K){
-		return this.options[key];
+	getOption<K extends keyof Options = keyof Options>( key: K ){
+		return get( this.options, key );
 	}
 	
 	setContext( tickValue: ( index: number, prop: TickProp ) => any, canvasContext: CanvasRenderingContext2D,
@@ -437,7 +441,7 @@ export default abstract class Base<
 	}
 	
 	hasAnySetting(){
-		return Object.keys( this.userSettings ).length;
+		return !!this.userSettings.length;
 	}
 
 	protected cacheGet( prop: CK, index: number = 0 ): number | undefined {

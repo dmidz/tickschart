@@ -25,3 +25,9 @@ declare type SelectItem = {
 }
 
 declare type Literal = string | number | boolean;
+
+declare type NestedKeyOf<O extends object,NoObjKeys extends boolean = true> = {
+		[K in keyof O & ( string | number )]: O[K] extends Literal
+			? `${ K }`
+			: ( NoObjKeys extends true ? never : `${ K }` ) | `${ K }.${ NestedKeyOf<O[K],NoObjKeys> }`
+	}[keyof O & ( string | number )];

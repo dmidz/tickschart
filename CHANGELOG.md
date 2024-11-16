@@ -1,3 +1,12 @@
+## [1.2.1](https://github.com/dmidz/tickschart/compare/v1.2.0...v1.2.1) (2024-11-16)
+
+
+### Bug Fixes
+
+* **core:** indicators' label & demo css ([0f29d1b](https://github.com/dmidz/tickschart/commit/0f29d1bdd4249b6ca5ad79cc3418c8419c2951fd))
+
+
+
 # [1.2.0](https://github.com/dmidz/tickschart/compare/v1.1.0...v1.2.0) (2024-11-16)
 
 

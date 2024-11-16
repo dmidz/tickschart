@@ -212,6 +212,14 @@ body {
   background-image: url("icons/clarity-trash.svg");
 }
 
+.icon.ic-eye {
+  background-image: url("icons/clarity-eye.svg");
+}
+
+.icon.ic-eye-crossed {
+  background-image: url("icons/clarity-eye-crossed.svg");
+}
+
 /*__ buttons */
 .chart button {
   display: flex;
@@ -328,6 +336,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
+  font-size: 0.9rem;
 }
 
 .chart .row-ind .idctr-header {

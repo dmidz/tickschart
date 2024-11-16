@@ -8,6 +8,7 @@ import { InputOptions, type InputTypes } from '../UI/index.ts';
 //______
 export type BaseOptions = {
 	debug?: boolean,
+	onActivate?: ( isActive: boolean ) => void;
 }
 
 export type BarStyle = {
@@ -69,7 +70,7 @@ export default abstract class Base<
 	
 	//__ instance
 	private compute: ComputeSetup<CK>;
-	public options: Options;
+	public options: BaseOptions & Options;
 	tickValue!: ( index: number, prop: TickProp, delta?: number ) => any;
 	private ctx!: CanvasRenderingContext2D;
 	protected scalingY!: ScalingLinear;
@@ -89,6 +90,7 @@ export default abstract class Base<
 		index: 0,
 	}
 	displayMode: DisplayMode = 'row';
+	isActive = true;
 
 	constructor ( options: Options & Partial<BaseOptions> ){
 
@@ -128,6 +130,11 @@ export default abstract class Base<
 	
 	getOption<K extends keyof Options = keyof Options>( key: K ){
 		return get( this.options, key );
+	}
+	
+	setActive( isActive: boolean | 'toggle' ){
+		this.isActive = isActive === 'toggle' ? !this.isActive : isActive;
+		this.options.onActivate?.( this.isActive);
 	}
 	
 	setContext( tickValue: ( index: number, prop: TickProp ) => any, canvasContext: CanvasRenderingContext2D,
@@ -205,6 +212,7 @@ export default abstract class Base<
 
 	//__ drawing
 	drawTick( x: number, width: number, index: number ){
+		if( !this.isActive ){  return;}
 		this.drawing.x = x;
 		this.drawing.width = width;
 		this.drawing.index = index;

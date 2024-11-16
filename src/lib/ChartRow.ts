@@ -10,6 +10,7 @@ type Chart<I extends Base = Base> = {
 	parentElement: HTMLElement,
 	displayIndicatorSettings: ( indicator: I ) => void,
 	removeIndicator: ( indicator: I ) => void,
+	activateIndicator: ( indicator: I, isActive: boolean ) => void,
 };
 
 //______
@@ -231,8 +232,9 @@ export default class ChartRow<Indicator extends Base = Base> {
 		
 		//___ indicator header
 		new IndicatorHeader( row, this.chart.parentElement, this.indicator, {
-			onClickSettings: this.chart.displayIndicatorSettings,
-			onClickRemove: this.chart.removeIndicator,
+			onOpenSettings: this.chart.displayIndicatorSettings,
+			onRemove: this.chart.removeIndicator,
+			onActivate: this.onActivate,
 		} );
 
 		//__ events
@@ -243,6 +245,15 @@ export default class ChartRow<Indicator extends Base = Base> {
 
 		//__
 		return { canvas, ctx, mouseArea };
+	}
+	
+	private onActivate = ( indicator: Base, isActive: boolean ) => {
+		const root = this.elements.get( 'row' );
+		if( root ){
+			root.style.height = `${ isActive ? this.options.height : 24 }px`;
+		}
+		
+		this.chart.activateIndicator( indicator, isActive );
 	}
 	
 	private onMouseEnter = ( event: MouseEvent ) => {

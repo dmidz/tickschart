@@ -6,15 +6,17 @@ import { Popover } from './UI/index';
 
 //______
 export type Options<I extends Base = Base> = {
-	onClickSettings: ( indicator: I ) => void,
-	onClickRemove: ( indicator: I ) => void,
+	onOpenSettings: ( indicator: I ) => void,
+	onRemove: ( indicator: I ) => void,
+	onActivate: ( indicator: I, isActive: boolean ) => void,
 }
 
 export default class IndicatorHeader<Indicator extends Base = Base> {
 	
 	options: Options<Indicator> = {
-		onClickSettings(){},
-		onClickRemove(){},
+		onOpenSettings(){},
+		onRemove(){},
+		onActivate(){},
 	};
 	
 	private elRoot!: HTMLElement;
@@ -23,7 +25,8 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 	private btMenu!: HTMLElement;
 	private btRemove!: HTMLElement;
 	private userSettingsValue = new Map<string,HTMLElement>();
-	
+	private btActivate!: HTMLElement;
+
 	constructor ( private parentElement: HTMLElement, private chartElement: HTMLElement, 
 				readonly indicator: Indicator, options: Partial<Options<Indicator>> ){
 
@@ -52,7 +55,7 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 	}
 
 	private onClickSettings = ( event: MouseEvent ) => {
-		this.options.onClickSettings( this.indicator );
+		this.options.onOpenSettings( this.indicator );
 	}
 
 	private onClickOpenMenu = ( event: MouseEvent ) => {
@@ -60,6 +63,24 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 		this.popMenu.display( 'toggle', {
 			relativeElement: this.btMenu,
 		} );
+	}
+
+	private onClickRemove = ( event: MouseEvent ) => {
+		this.options.onRemove( this.indicator );
+		this.popMenu.display( false );
+	}
+
+	private onClickActivate = ( event: MouseEvent ) => {
+		this.indicator.setActive('toggle');
+		const icon = this.btActivate.querySelector('.icon');
+		if( icon ){
+			if( this.indicator.isActive ){
+				icon.classList.remove( 'ic-eye-crossed' );
+			}else{
+				icon.classList.add( 'ic-eye-crossed' );
+			}
+		}
+		this.options.onActivate( this.indicator, this.indicator.isActive );
 	}
 
 	private createElements(){
@@ -71,22 +92,41 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 			// 	position: 'absolute', left: '4px', top: '0', zIndex: '150',
 			// }
 		} );
-		
+
 		if( this.indicator.hasAnySetting() ){
 			this.indicator.userSettingsInHeader.forEach( optionKey => {
 				// console.log('zzz', optionKey )
-				this.userSettingsValue.set( optionKey, createElement('div', {
+				this.userSettingsValue.set( optionKey, createElement( 'div', {
 					relativeElement: this.elRoot,
 					innerText: this.indicator.getOption( optionKey ),
 					style: {
 						color: '#999999',
 					}
-				}) );
-			});
-			
+				} ) );
+			} );
+		}
+
+		this.btActivate = createElement( 'button', {
+			relativeElement: this.elRoot,
+			className: 'btn small no-bdr',
+			attr: {
+				title: 'Toggle active'
+			},
+			icon: {
+				className: 'eye'
+			},
+			events: {
+				click: this.onClickActivate as EventListenerOrEventListenerObject
+			},
+		} );
+
+		if ( this.indicator.hasAnySetting() ){
 			this.btSettings = createElement( 'button', {
 				relativeElement: this.elRoot,
 				className: 'btn small no-bdr',
+				attr: {
+					title: 'Indicator settings...'
+				},
 				icon: {
 					className: 'settings'
 				},
@@ -137,11 +177,6 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 		
 		//__
 		return this;
-	}
-
-	private onClickRemove = ( event: MouseEvent ) => {
-		this.options.onClickRemove( this.indicator );
-		this.popMenu.display( false );
 	}
 
 	//___ static

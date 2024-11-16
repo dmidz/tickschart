@@ -275,8 +275,9 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 				const index = this.layers.length;
 				this.layers[index] = indicator;
 				this.layersHeader[index] = new IndicatorHeader<Base>( this.elements.idcsInfos, this.parentElement, indicator, {
-					onClickSettings: this.displayIndicatorSettings,
-					onClickRemove: this.removeIndicator,
+					onOpenSettings: this.displayIndicatorSettings,
+					onRemove: this.removeIndicator,
+					onActivate: this.activateIndicator,
 				} );
 				this.elements.rowIdcCount.innerText = `${ index+1 }`;
 				break;
@@ -288,6 +289,12 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.resizeCanvas();
 
 		return this;
+	}
+	
+	activateIndicator = <I extends Base> ( indicator: I, isActive: boolean ) => {
+		indicator.setActive( isActive );
+		this.onResize();
+		this.refresh();
 	}
 	
 	removeIndicator = <I extends Base> ( indicator: I ) => {

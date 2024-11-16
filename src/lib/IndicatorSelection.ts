@@ -1,21 +1,21 @@
 
 import { Dialog/*, inputs, InputBase, type InputOptions*/ } from './UI';
-import { list as indicators } from '@/lib/Indicator';
+import { list as indicators, Base } from '@/lib/Indicator';
 
 import { createElement } from './index.ts';
 
-export type Options<I extends Indicator = Indicator> = {
+export type Options = {
 	parentElement: HTMLElement,
-	indicators: { [ key: string ]: I },
-	onUpdate?: ( indicator: I ) => void,
+	indicators: { [ key: string ]: Indicator },
+	onUpdate?: ( indicator: Indicator ) => void,
 }
 
-type Indicator = { getLabel: () => string, new(): any }
+type Indicator = { getLabel: () => string, new(): Base }
 
 //______
-export default class IndicatorSelection<I extends Indicator = Indicator> {
+export default class IndicatorSelection {
 
-	private options: Required<Options<I>> = {
+	private options: Required<Options> = {
 		parentElement: document.body,
 		// @ts-ignore
 		indicators,
@@ -31,7 +31,7 @@ export default class IndicatorSelection<I extends Indicator = Indicator> {
 	// private inputsChanges: { [ key: string ]: any } = {};
 	// private inputs: InputBase[] = [];s
 	
-	constructor( options: Partial<Options<I>> = {} ){
+	constructor( options: Partial<Options> = {} ){
 
 		Object.assign( this.options, options );
 

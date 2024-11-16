@@ -5,11 +5,11 @@ import { createElement } from './index.ts';
 
 export type Options = {
 	parentElement?: HTMLElement,
-	onUpdate?: () => void,
+	onUpdate?: ( indicator: Base ) => void,
 }
 
 //______
-export default class IndicatorSettings<Indicator extends Base = Base> {
+export default class IndicatorSettings {
 
 	private options: Required<Options> = {
 		parentElement: document.body,
@@ -17,7 +17,7 @@ export default class IndicatorSettings<Indicator extends Base = Base> {
 	}
 
 	private dialog: Dialog;
-	private indicator: Indicator | null = null;
+	private indicator: Base | null = null;
 	private elContent: HTMLElement | null = null;
 	private inputsChanges: { [ key: string ]: any } = {};
 	private inputs: InputBase[] = [];
@@ -31,14 +31,14 @@ export default class IndicatorSettings<Indicator extends Base = Base> {
 				ok: () => {
 					if ( this.indicator ){
 						this.indicator.setOptions( this.inputsChanges );
-						this.options.onUpdate();
+						this.options.onUpdate( this.indicator );
 					}
 				},
 			},
 		} );
 	}
 
-	display ( indicator: Indicator, display = true ){
+	display ( indicator: Base, display = true ){
 		if ( indicator !== this.indicator ){
 			this.indicator = indicator;
 			this.inputs.forEach( input => {
@@ -58,7 +58,7 @@ export default class IndicatorSettings<Indicator extends Base = Base> {
 				} );
 				indicator.userSettings.forEach( ( is/*, index*/ ) => {
 					if( is instanceof SettingGroup ){
-						
+						console.log('group');
 					}else{
 						const cl = inputs[ is.type ];
 						const opts = {

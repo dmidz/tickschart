@@ -138,12 +138,8 @@ onMounted( async () => {
 	// chart.addIndicator( new indicators.Volume2( { maLength: 14, maType: 'sma' }) );
 	// chart.addIndicator( new indicators.VolumeImpulse( { maLength: 14, maType: 'sma' } ) );
 	// chart.addIndicator( new indicators.OBV() );
-	// chart.addIndicator( 'OBV', 'row' );
 
 	chart.addIndicator( new indicators.MA({ length: 200, type: 'sma', style: { color: '#ff0000'} } ) );
-	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
-	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
-	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 21, type: 'sma' } );
 	
 	//__ in API mode, add a select input for timeframe to test change
 	if(!SAMPLE_MODE){

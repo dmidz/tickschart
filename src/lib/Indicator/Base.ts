@@ -105,6 +105,7 @@ export default abstract class Base<
 	abstract draw( index: number ): void;
 	
 	abstract userSettings: Settings<Options>;
+	userSettingsInHeader: NestedKeyOf<Options & BaseOptions>[] = [];
 
 	getLabel (){
 		// @ts-ignore

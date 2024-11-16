@@ -14,7 +14,7 @@ import IndicatorHeader from '@/lib/IndicatorHeader.ts';
 type Indicator = { getLabel: () => string, new (): any }
 
 //______
-export type Options<Tick extends AbstractTick,I extends Indicator = Indicator> = {
+export type Options<Tick extends AbstractTick> = {
 	tickWidth: number,
 	canvas: {
 		imageSmoothingEnabled: boolean,
@@ -47,14 +47,14 @@ export type Options<Tick extends AbstractTick,I extends Indicator = Indicator> =
 	},
 	chartRow: ChartRowOptions,
 	mapTickProps: { [key in TickProp]: keyof Tick},
-	indicators?: Readonly<{[key: string]: I }>,
+	indicators: Readonly<{[key: string]: Indicator }>,
 }
 
-export default class Chart<Tick extends AbstractTick = CandleTick, I extends Indicator = Indicator> {
+export default class Chart<Tick extends AbstractTick = CandleTick> {
 
 	readonly parentElement: HTMLElement;
 	private _getTick: GetTick<Tick>;
-	private options: Options<Tick,I> = {
+	private options: Options<Tick> = {
 		tickWidth: 4,
 		canvas: {
 			imageSmoothingEnabled: false,
@@ -90,6 +90,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 		},
 		chartRow: {},
 		mapTickProps: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
+		indicators: {},
 	};
 
 	private elements: Record<string,HTMLElement> = {};
@@ -122,13 +123,13 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 	private layers: Base[] = [];
 	private layersHeader: IndicatorHeader[] = [];
 	private indicatorSettings: IndicatorSettings;
-	private indicatorSelection: IndicatorSelection<I>;
+	private indicatorSelection: IndicatorSelection;
 	private tickIndexMax: number = Infinity;
 	
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
 								getTick: GetTick<Tick>,
-								options: Partial<Options<Tick,I>> = {} ){
+								options: Partial<Options<Tick>> = {} ){
 		
 		if( !parentElement ){
 			throw new Error('parentElement must be a valid HTMLElement');
@@ -224,7 +225,13 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 		
 		this.indicatorSettings = new IndicatorSettings({
 			parentElement: this.parentElement,
-			onUpdate: () => {
+			onUpdate: ( indicator ) => {
+				const index = this.layers.indexOf( indicator );
+				if( index !== -1 ){
+					const header = this.layersHeader[index];
+					header.update();
+				}
+				
 				this.render();
 			},
 		});
@@ -293,10 +300,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick, I extends Ind
 				break;
 			}
 			case 'layer':{
-				const index = this.layers.findIndex( item => item === indicator );
-				if ( index === -1 ){
-					return;
-				}
+				const index = this.layers.indexOf( indicator );
+				if ( index === -1 ){	return;}
 				this.layers.splice( index, 1 );
 				this.layersHeader[index].remove();
 				this.layersHeader.splice( index, 1 );

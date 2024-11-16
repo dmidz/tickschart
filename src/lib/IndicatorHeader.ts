@@ -22,6 +22,7 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 	private btSettings!: HTMLElement;
 	private btMenu!: HTMLElement;
 	private btRemove!: HTMLElement;
+	private userSettingsValue = new Map<string,HTMLElement>();
 	
 	constructor ( private parentElement: HTMLElement, private chartElement: HTMLElement, 
 				readonly indicator: Indicator, options: Partial<Options<Indicator>> ){
@@ -31,6 +32,36 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 		this.createElements();
 	}
 	
+	update(){
+		this.userSettingsValue.forEach( ( uvs, key ) => {
+			uvs.innerText = this.indicator.getOption( key );
+		});
+	}
+
+	remove (){
+		this.beforeDestroy();
+		this.elRoot.remove();
+	}
+
+	beforeDestroy (){
+		if ( this.btSettings ){
+			this.btSettings.removeEventListener( 'click', this.onClickSettings );
+		}
+		this.btMenu.removeEventListener( 'click', this.onClickOpenMenu );
+		this.btRemove.removeEventListener( 'click', this.onClickRemove );
+	}
+
+	private onClickSettings = ( event: MouseEvent ) => {
+		this.options.onClickSettings( this.indicator );
+	}
+
+	private onClickOpenMenu = ( event: MouseEvent ) => {
+		event.stopImmediatePropagation();
+		this.popMenu.display( 'toggle', {
+			relativeElement: this.btMenu,
+		} );
+	}
+
 	private createElements(){
 		this.elRoot = createElement( 'div', {
 			relativeElement: this.parentElement,
@@ -42,6 +73,17 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 		} );
 		
 		if( this.indicator.hasAnySetting() ){
+			this.indicator.userSettingsInHeader.forEach( optionKey => {
+				// console.log('zzz', optionKey )
+				this.userSettingsValue.set( optionKey, createElement('div', {
+					relativeElement: this.elRoot,
+					innerText: this.indicator.getOption( optionKey ),
+					style: {
+						color: '#999999',
+					}
+				}) );
+			});
+			
 			this.btSettings = createElement( 'button', {
 				relativeElement: this.elRoot,
 				className: 'btn small no-bdr',
@@ -97,33 +139,9 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 		return this;
 	}
 
-	private onClickSettings = ( event: MouseEvent ) => {
-		this.options.onClickSettings( this.indicator );
-	}
-
-	private onClickOpenMenu = ( event: MouseEvent ) => {
-		event.stopImmediatePropagation();
-		this.popMenu.display( 'toggle', {
-			relativeElement: this.btMenu,
-		} );
-	}
-
 	private onClickRemove = ( event: MouseEvent ) => {
 		this.options.onClickRemove( this.indicator );
 		this.popMenu.display( false );
-	}
-	
-	remove(){
-		this.beforeDestroy();
-		this.elRoot.remove();
-	}
-
-	beforeDestroy (){
-		if( this.btSettings ){
-			this.btSettings.removeEventListener( 'click', this.onClickSettings );
-		}
-		this.btMenu.removeEventListener( 'click', this.onClickOpenMenu );
-		this.btRemove.removeEventListener( 'click', this.onClickRemove );
 	}
 
 	//___ static

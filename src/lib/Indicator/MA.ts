@@ -50,6 +50,8 @@ export default class MA extends Base<Options, Computed> {
 		} ),
 	];
 
+	userSettingsInHeader: NestedKeyOf<Options & BaseOptions>[] = ['length'];
+
 	constructor ( options: Partial<Options & BaseOptions> = {} ){
 		
 		const _options: Required<Options> & Partial<BaseOptions> = {// force set default options

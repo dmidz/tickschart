@@ -1,5 +1,5 @@
 
-import { Chart, Fetcher, intervalsMs, Player } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart@0.0/+esm';
+import { Chart, Fetcher, intervalsMs, Player, indicator } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart@0.0/+esm';
 
 const { m1, h1, d1 } = intervalsMs;
 
@@ -95,10 +95,8 @@ const chart = new Chart( document.getElementById('chart'), timeScaleMs, ( index 
 	autoScaleY: true,
 } );
 
-chart.addIndicator( 'Volume', 'row', { maLength: 14, maType: 'sma' } );
-chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000' } } );
-chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00' } } );
-chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
+chart.addIndicator( new indicator.list.Volume( { maLength: 14, maType: 'ema' } ) );
+chart.addIndicator( new indicator.list.MA( { length: 200, type: 'sma', style: { color: '#ff0000' } } ) );
 
 chart.setX( currentTime.getTime(), { xOriginRatio } );
 

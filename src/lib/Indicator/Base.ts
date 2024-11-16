@@ -91,6 +91,7 @@ export default abstract class Base<
 	}
 	displayMode: DisplayMode = 'row';
 	isActive = true;
+	id?: string;
 
 	constructor ( options: Options & Partial<BaseOptions> ){
 

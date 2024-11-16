@@ -5,7 +5,7 @@ import { createElement } from './index.ts';
 
 export type Options = {
 	parentElement?: HTMLElement,
-	onUpdate?: ( indicator: Base ) => void,
+	onUpdate?: ( indicator: Base, changes: {[key:string]: any} ) => void,
 }
 
 //______
@@ -30,8 +30,7 @@ export default class IndicatorSettings {
 			buttons: {
 				ok: () => {
 					if ( this.indicator ){
-						this.indicator.setOptions( this.inputsChanges );
-						this.options.onUpdate( this.indicator );
+						this.options.onUpdate( this.indicator, this.inputsChanges );
 					}
 				},
 			},

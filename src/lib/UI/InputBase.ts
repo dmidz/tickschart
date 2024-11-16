@@ -14,11 +14,12 @@ export type BaseOptions = {
 export default abstract class InputBase<Options extends BaseOptions = {}> {
 
 	protected options: Required<BaseOptions> & Options;
+	protected elRoot: HTMLElement;
 	protected elements: {[key:string]: HTMLElement} = {};
 	protected elInput: HTMLInputElement | HTMLSelectElement;
 
 	protected abstract buildInput(): typeof this.elInput;
-	
+
 	constructor( public key: string, options: Options ){
 		this.options = Object.assign( {
 			relativeElement: null,
@@ -29,76 +30,62 @@ export default abstract class InputBase<Options extends BaseOptions = {}> {
 			inputAttr: {},
 		}, options );
 		
-		this.elements.wrapper = createElement( 'div', {
+		this.elRoot = createElement( 'div', {
 			relativeElement: this.options.relativeElement,
 			relativePosition: this.options.relativePosition,
 			className: 'input-field',
-			style: {
-				display: 'flex',
-				flexDirection: 'row',
-				alignItems: 'center',
-				gap: '8px',
-			}
 		} );
 		
 		if( this.options.label ){
 			this.elements.label = createElement( 'label', {
-				relativeElement: this.elements.wrapper,
+				relativeElement: this.elRoot,
 				innerText: this.options.label,
-				style: {
-					flex: '1',
-					textAlign: 'right',
+				attr: {
+					for: this.key,
 				},
 			} );
 		}
 		
 		this.elInput = this.buildInput();
 		this.elInput.setAttribute('name', this.key );
+		this.elInput.setAttribute('id', this.key );
 		this.elInput.setAttribute('tabIndex', '1' );
 		for ( const key in this.options.inputAttr ){
 			this.elInput.setAttribute( key, this.options.inputAttr[ key ] );
 		}
 
 		if( this.options.value ){
-			this.value = this.options.value;
-			this.elInput.value = this.options.value;
+			this.setValue( this.options.value );
 		}
-		Object.assign( this.elInput.style, {
-			flex: '2 1 100px',
-		} );
-		this.elements.wrapper.append( this.elInput );
 		
 		InputBase.add( this );
 	}
 
 	protected value: any;
-	getValue(){
-		return this.value;
-	}
 	
-	setValue( value: any ){
-		this.value = value;
-	}
-	
-	protected handleChange = ( event: Event ) => {
-		const value = this.inputValue();
-		if( value === this.value ){ return;}
-		this.value = value;
-		// console.log('handleChange', input.value );
-		this.options.onChange( value, this.key, this );
-	}
-
-	protected inputValue(): Literal | null {
+	getValue(): any {
 		return this.elInput.value;
 	}
 	
+	setValue( value: any ){
+		this.value = this.options.value;
+		this.elInput.value = this.options.value;
+	}
+	
+	protected handleChange = ( event: Event ) => {
+		const value = this.getValue();
+		if( value === this.value ){ return;}
+		this.value = value;
+		this.options.onChange( this.value, this.key, this );
+	}
+
 	getMainElement(){
-		return this.elements.wrapper;
+		return this.elRoot
 	}
 
 	remove(){
 		this.beforeDestroy();
-		this.elements.wrapper.remove();
+		this.elRoot.remove();
 	}
 
 	abstract beforeDestroy(): void

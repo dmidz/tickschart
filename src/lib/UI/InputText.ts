@@ -14,6 +14,7 @@ export default class InputText extends InputBase<Options> {
 	
 	protected buildInput(){
 		return createElement( 'input', {
+			relativeElement: this.elRoot,
 			attr: {
 				type: 'text',
 			},

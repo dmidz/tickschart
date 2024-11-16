@@ -113,6 +113,34 @@ body {
 }
 
 /*__ inputs */
+.chart .fields {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  
+}
+.chart .input-field {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.chart .input-field label {
+  flex: none;
+  width: 120px;
+  text-align: right;
+  padding-top: 4px;
+}
+
+.chart .input-field input, .chart .input-field select {
+  flex: 3 1;
+  width: unset;
+  min-width: 0;
+  margin: 0;
+}
+
 .chart input {
   padding: 7px 12px;
   border: 1px solid #333333;
@@ -120,6 +148,14 @@ body {
   background: var(--input-bg-color);
   color: var(--color-text);
 }
+
+.chart input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+}
+
 .chart input:focus {
   border: 1px solid var(--color-primary);
 }
@@ -142,6 +178,10 @@ body {
 .chart option {
   background: #161616;
   border: 1px solid #333333;
+}
+
+.chart .fields select {
+  padding: 6px;
 }
 
 /*__ icons */

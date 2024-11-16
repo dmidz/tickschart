@@ -1,7 +1,7 @@
 
 
 import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type LineStyle, DisplayMode, Settings, Setting } from './Base.ts';
+import Base, { type BaseOptions, type LineStyle, DisplayMode, Settings, Setting, SettingGroup } from './Base.ts';
 
 //______
 export type Options = {
@@ -9,18 +9,19 @@ export type Options = {
 	type: 'sma' | 'ema',
 	length: number,
 	style: LineStyle,
-	// ma2: {
-	// 	property: Parameters<Base<BaseOptions, Computed>['computed']>[1],
-	// 	type: 'sma' | 'ema',
-	// 	length: number,
-	// 	lineColor: string,
-	// 	lineThickness: number,
-	// },
+	ma2: {
+		active: boolean,
+		property: Parameters<Base<BaseOptions, Computed>['computed']>[1],
+		type: 'sma' | 'ema',
+		length: number,
+		style: LineStyle,
+	},
 }
 
 //__ define the computed propertied used in computeSetup & draw
 type Computed = {
 	ma: number
+	ma2: number
 };
 
 const properties = [ 'close', 'open', 'high', 'low' ];
@@ -48,6 +49,27 @@ export default class MA extends Base<Options, Computed> {
 		new Setting( 'style.color', 'color', {
 			label: 'Color',
 		} ),
+		new SettingGroup('MA 2', [
+			new Setting( 'ma2.active', 'checkbox', {
+				label: 'Active',
+			} ),
+			new Setting( 'ma2.property', 'select', {
+				label: 'Property',
+				choices: properties.map( ( key ) => ( { label: key, value: key } ) ),
+			} ),
+			new Setting( 'ma2.type', 'select', {
+				label: 'Type',
+				choices: [ 'sma', 'ema' ].map( ( key ) => ( { label: key, value: key } ) ),
+			} ),
+			new Setting( 'ma2.length', 'number', {
+				label: 'Length',
+				min: 0,
+				max: 200,
+			} ),
+			new Setting( 'ma2.style.color', 'color', {
+				label: 'Color',
+			} ),
+		]),
 	];
 
 	userSettingsInHeader: NestedKeyOf<Options & BaseOptions>[] = ['length'];
@@ -61,13 +83,15 @@ export default class MA extends Base<Options, Computed> {
 			style: {
 				color: '#ffff00'
 			},
-			// ma2: {
-			// 	property: 'close',
-			// 	type: 'sma',
-			// 	length: 50,
-			// 	lineColor: '#4dffc3',
-			// 	lineThickness: 1,
-			// }
+			ma2: {
+				active: true,
+				property: 'close',
+				type: 'sma',
+				length: 50,
+				style: {
+					color: '#40e9ff'
+				},
+			}
 		};
 		
 		super( merge( _options, options ) );
@@ -78,12 +102,16 @@ export default class MA extends Base<Options, Computed> {
 	computeSetup (){
 		return {
 			ma: this.lib[ this.options.type ]( this.options.property, this.options.length ),
+			ma2: this.lib[ this.options.ma2.type ]( this.options.ma2.property, this.options.ma2.length ),
 		}
 	}
 
 	draw(){
 		//__ sma / ema
 		this.plot( 'ma', this.options.style );
+		if( this.options.ma2.active ){
+			this.plot( 'ma2', this.options.ma2.style );
+		}
 	}
 	
 	getMinY( index: number ): number {

@@ -14,6 +14,7 @@ export default class InputSelect extends InputBase<Options> {
 
 	protected buildInput (){
 		const input = createElement( 'select', {
+			relativeElement: this.elRoot,
 			events: {
 				change: this.handleChange,
 			},

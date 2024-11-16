@@ -14,11 +14,12 @@ export default class InputColor extends InputBase<Options> {
 	
 	protected buildInput(){
 		return createElement( 'input', {
+			relativeElement: this.elRoot,
 			attr: {
 				type: 'color',
 			},
 			events: {
-				input: this.handleChange,
+				change: this.handleChange,
 			}
 		} ) as HTMLInputElement;
 	}

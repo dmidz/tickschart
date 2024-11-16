@@ -7,7 +7,8 @@ export type Options = {
 	buttons?: null | {
 		ok?: () => void,
 		cancel?: () => void,
-	}
+	},
+	content?: HTMLElement | null,
 }
 
 //______
@@ -19,6 +20,7 @@ export default class Dialog {
 			cancel: () => {},
 			ok: () => {},
 		},
+		content: null,
 	}
 	
 	private elements: {[key:string]: HTMLElement} = {};
@@ -27,13 +29,15 @@ export default class Dialog {
 		Object.assign( this.options, { ...options,
 			buttons: { ...this.options.buttons, ...options.buttons },
 		} );
-		this.buildElements();
+		this.createElements();
+		
+		this.setContent( options.content );
 
 		//___
-		Dialog.dialogs.push( this );
+		Dialog.add( this );
 	}
 	
-	buildElements(){
+	createElements(){
 		
 		this.elements.wrapper = createElement('div', {
 			relativeElement: this.options.parentElement,
@@ -60,7 +64,6 @@ export default class Dialog {
 				minHeight: '100px',
 				maxHeight: '90%',
 				maxWidth: '90%',
-				borderRadius: '4px',
 				display: 'flex',
 				flexDirection: 'column',
 			}
@@ -101,12 +104,11 @@ export default class Dialog {
 				marginTop: '-12px',
 				zIndex: '150',
 				padding: '0',
-				// width: '24px',
-				// height: '24px',
-				// overflow: 'hidden',
-			}
+			},
+			events: {
+				click: this.handleClose,
+			},
 		} );
-		// this.elements.btClose.innerText = '-';
 		this.elements.btClose.addEventListener( 'click', this.handleClose );
 
 		createElement( 'span', {
@@ -139,39 +141,47 @@ export default class Dialog {
 		} );
 		
 		if( this.options.buttons?.cancel ){
-			this.elements.cancel = createElement( 'button', {
+			this.elements.btCancel = createElement( 'button', {
 				relativeElement: this.elements.foot,
-				// className: 'btOk',
+				innerText: 'Cancel',
+				events: {
+					click: this.handleClose,
+				},
 			} );
-			this.elements.cancel.innerText = 'Cancel';
-			this.elements.cancel.addEventListener( 'click', this.handleClose );
 		}
 
 		if( this.options.buttons?.ok ){
 			this.elements.btOk = createElement( 'button', {
 				relativeElement: this.elements.foot,
-				// className: 'btOk',
+				innerText: 'OK',
+				events: {
+					click: this.handleOk,
+				},
 			} );
-			this.elements.btOk.innerText = 'OK';
-			this.elements.btOk.addEventListener( 'click', this.handleOk );
 		}
-
 	}
 	
 	private elContent: HTMLElement | null = null;
-	display( show = true, opts: { title?: string | null, content?: HTMLElement | null } = {} ){
-		if( show ){
-			if ( opts.title ){
-				this.elements.title.innerText = opts.title;
+	
+	setContent( content?: HTMLElement | null ){
+		if ( content !== this.elContent ){
+			if ( this.elContent ){
+				this.elContent.remove();
 			}
-			if( opts.content !== this.elContent ){
-				if ( this.elContent ){
-					this.elContent.remove();
-				}
-				if( opts.content ){
-					this.elContent = opts.content;
-					this.elements.content.append( this.elContent );
-				}
+			if ( content ){
+				this.elContent = content;
+				this.elements.content.append( this.elContent );
+			}
+		}
+	}
+	
+	display( show = true, options: { title?: string | null, content?: HTMLElement | null } = {} ){
+		if( show ){
+			if ( options.title ){
+				this.elements.title.innerText = options.title;
+			}
+			if( options.content ){
+				this.setContent( options.content );
 			}
 			setTimeout( () =>{
 				this.elements.dialog.focus();
@@ -180,11 +190,11 @@ export default class Dialog {
 		this.elements.wrapper.style.display = show ? 'flex' : 'none';
 	}
 
-	remove(){
+	beforeDestroy(){
 		this.elements.wrapper.removeEventListener( 'mousedown', this.handleClose );
 		this.elements.dialog.removeEventListener( 'mousedown', this.handleClickDialog );
 		this.elements.btClose.removeEventListener( 'click', this.handleClose );
-		this.elements.cancel.removeEventListener( 'click', this.handleClose );
+		this.elements.btCancel.removeEventListener( 'click', this.handleClose );
 		this.elements.btOk.removeEventListener( 'click', this.handleOk );
 		this.elements.wrapper.remove();
 	}
@@ -214,12 +224,17 @@ export default class Dialog {
 	}
 
 	//___ static
-	static dialogs: Dialog[] = [];
+	static instances: Dialog[] = [];
+
+	static add ( instance: Dialog ){
+		this.instances.push( instance );
+	}
 
 	static beforeDestroy (){
-		this.dialogs.forEach( dialog => {
-			dialog.remove();
+		this.instances.forEach( dialog => {
+			dialog.beforeDestroy();
 		});
+		this.instances = [];
 	}
 
 }

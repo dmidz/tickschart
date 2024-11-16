@@ -1,8 +1,7 @@
 
 import merge from './utils/merge';
 import type Chart from './Chart';
-import { type AbstractTick, type CandleTick, createElement } from './index.ts';
-import InputSelect from './UI/InputSelect.ts';
+import { type AbstractTick, type CandleTick, createElement, ui } from './index.ts';
 
 //______
 export type PlayerOptions = {
@@ -39,11 +38,11 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 	private mouseTime = 0;
 	private playingSpeeds = [1,2,3] as const;
 	private playingSpeed: typeof this.playingSpeeds[number] = 1;
-	private inputSpeed?: InputSelect;
+	private inputSpeed?: ui.InputSelect;
 
 	constructor ( private chart: Chart<Tick>, options: PlayerOptions = {} ){
 		this.options = merge( this.options, options );
-		
+
 		this.createElements();
 
 		//___ events
@@ -225,9 +224,13 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 		if( this.options.buttonReplay ){
 			this.elements.btReplay = this.options.buttonReplay;
 		}else{
-			this.elements.btReplay = createButtonIcon( parent, 'replay', 'Replay', this.onClickReplay, {
-				position: 'absolute', zIndex: '200', right: '1px', top: '1px',
-			});
+			this.elements.btReplay = createElement( 'button', {
+				relativeElement: this.chart.getElement( 'toolbarTop' ),
+				className: 'btn small',
+				attr: { title: 'Replay' },
+				icon: { className: 'replay' },
+				events: { click: this.onClickReplay }
+			} );
 		}
 
 		if( this.options.actionsElement ){
@@ -235,14 +238,13 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 		}else{
 			this.elements.actions = createElement( 'div', {
 				relativeElement: parent,
-				className: 'player-actions',
+				className: 'toolbar player-actions',
 				style: {
-					flex: 'none', alignSelf: 'center', display: 'flex', flexDirection: 'row', gap: '4px',
-					position: 'absolute', zIndex: '200', visibility: 'hidden', alignItems: 'center',
+					position: 'absolute', zIndex: '200', visibility: 'hidden',
 				}
 			} );
 
-			this.inputSpeed = new InputSelect('speed', {
+			this.inputSpeed = new ui.InputSelect('speed', {
 				choices: this.playingSpeeds.map( s => ({ label: `x${s}`, value: s })),
 				onChange: ( v ) => {
 					this.setPlayingSpeed( v );
@@ -250,14 +252,39 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 			});
 			this.elements.actions.append( this.inputSpeed.getMainElement() );
 			
-			this.elements.btPickTime = createButtonIcon( this.elements.actions, 'capacitor', 'Select time', this.onClickTime );
+			this.elements.btPickTime = createElement( 'button', {
+				relativeElement: this.elements.actions,
+				className: 'btn small',
+				attr: { title: 'Select time' },
+				icon: { className: 'capacitor' },
+				events: { click: this.onClickTime }
+			} );
 
-			this.elements.btPlay = createButtonIcon( this.elements.actions, 'play', 'Play / Pause', this.onClickPlayStop);
+			this.elements.btPlay = createElement( 'button', {
+				relativeElement: this.elements.actions,
+				className: 'btn small',
+				attr: { title: 'Play / Pause' },
+				icon: { className: 'play' },
+				events: { click: this.onClickPlayStop }
+			} );
+
 			this.elements.iconPlay = this.elements.btPlay.querySelector('.icon') as HTMLElement;
 
-			this.elements.btSkip = createButtonIcon( this.elements.actions, 'step', 'Next tick', this.onClickSkip );
+			this.elements.btSkip = createElement( 'button', {
+				relativeElement: this.elements.actions,
+				className: 'btn small',
+				attr: { title: 'Next tick' },
+				icon: { className: 'step' },
+				events: { click: this.onClickSkip }
+			} );
 
-			this.elements.btClose = createButtonIcon( this.elements.actions, 'close', 'Close replay', this.onClickClose );
+			this.elements.btClose = createElement( 'button', {
+				relativeElement: this.elements.actions,
+				className: 'btn small',
+				attr: { title: 'Close replay' },
+				icon: { className: 'close' },
+				events: { click: this.onClickClose }
+			} );
 		}
 
 		Object.assign( this.elements.actions.style, {
@@ -306,20 +333,4 @@ export default class Player<Tick extends AbstractTick = CandleTick> {
 		// this.chart.getElement( 'candles' ).append( this.elements.markCenterX );
 
 	}
-}
-
-function createButtonIcon( parent: HTMLElement, iconClass: string, title: string, clickHandler: ( ev: MouseEvent ) => void, style?: Partial<CSSStyleDeclaration> ){
-	const button = document.createElement( 'button' );
-	button.style.padding = '4px';
-	button.setAttribute( 'title', title );
-	const icon = document.createElement( 'span' );
-	icon.className = `icon ic-${ iconClass}`;
-	button.append( icon );
-	if( style ){
-		Object.assign( button.style, style );
-	}
-	parent.append( button );
-	button.addEventListener( 'click', clickHandler );
-	return button;
-
 }

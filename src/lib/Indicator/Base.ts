@@ -1,12 +1,14 @@
-
+import { get, set } from 'lodash';
+import merge from '../utils/merge.ts';
 import { ScalingLinear, type Point } from '../utils/math';
 import { type TickProp } from '../index';
 import Computation, { type ComputeFunc } from './Computation';
-import { InputOptionsList, type InputTypes } from '../UI/index.ts';
+import { InputOptions, type InputTypes } from '../UI/index.ts';
 
 //______
 export type BaseOptions = {
-	debug: boolean,
+	debug?: boolean,
+	onActivate?: ( isActive: boolean ) => void;
 }
 
 export type BarStyle = {
@@ -15,6 +17,7 @@ export type BarStyle = {
 
 export type LineStyle = {
 	color: string,
+	width?: number,
 }
 
 export type ShapeStyle = {
@@ -35,15 +38,40 @@ export type DrawOptions = {
 	yDelta?: number,
 }
 
+export class Setting<K,T extends InputTypes = InputTypes> {
+	constructor ( public readonly key: K, public readonly type: NoInfer<T>, public readonly options: InputOptions[T] ){}
+}
+
+export class SettingGroup<K> {
+	constructor ( public readonly label: string, public readonly settings: Setting<K>[] ){}
+}
+
+export type Settings<O extends object,K = NestedKeyOf<O>> = (Setting<K> | SettingGroup<K>)[];
+
 const defaultShapeFillColor = '#ffffff';
 
-export default abstract class Base<Options extends ObjKeyStr,
-			Computed extends ObjKeyStr,
-			CK extends KeyOfString<Computed> = KeyOfString<Computed>,
-			TCK extends TickProp | CK = TickProp | CK> {
-	private compute: { [key in CK]: ComputeFunc };
-	public options: /*BaseOptions &*/ Options;
-	protected tickValue!: ( index: number, prop: TickProp, delta?: number ) => any;
+export type DisplayMode = 'row' | 'layer';
+
+type ComputeSetup<K extends string> = { [ key in K ]: ComputeFunc };
+
+export default abstract class Base<
+	Options extends ObjKeyStr = ObjKeyStr,
+	Computed extends ObjKeyStr = ObjKeyStr,
+	CK extends KeyOfString<Computed> = KeyOfString<Computed>,
+	TCK extends TickProp | CK = TickProp | CK,
+> {
+	
+	//__ static
+	static label: string;
+
+	static getLabel (){
+		return this.label || this.name;
+	}
+	
+	//__ instance
+	private compute: ComputeSetup<CK>;
+	public options: BaseOptions & Options;
+	tickValue!: ( index: number, prop: TickProp, delta?: number ) => any;
 	private ctx!: CanvasRenderingContext2D;
 	protected scalingY!: ScalingLinear;
 	protected scalingX!: ScalingLinear;
@@ -55,50 +83,59 @@ export default abstract class Base<Options extends ObjKeyStr,
 	private cacheComputed: Map<CK,Map<number,number>> = new Map();
 	private cacheMin = +Infinity;
 	private cacheMax = -Infinity;
-	private readonly computeKeys: Map<CK,true> = new Map();
 	protected lib: Computation<TCK>;
 	private drawing = {
 		x: 0,
 		width: 0,
 		index: 0,
 	}
+	displayMode: DisplayMode = 'row';
+	isActive = true;
+	id?: string;
 
-	constructor ( private readonly defaultComputed: Computed, options: Options ){
+	constructor ( options: Options & Partial<BaseOptions> ){
 
 		const baseOptions: BaseOptions = {
-			debug: true,
+			// debug: true,
 		};
-		this.options = Object.assign( baseOptions, options );
+		this.options = merge( baseOptions, options );
 
-		//___
-		(Object.keys( this.defaultComputed ) as CK[]).forEach( (key: CK) => {
-			this.computeKeys.set( key, true );
-		} );
 		this.lib = new Computation<TCK>( this.tickStep, this.computed.bind( this ) );
 		this.compute = this.computeSetup();
 	}
-	
+
+	abstract computeSetup(): ComputeSetup<CK>;
 	abstract draw( index: number ): void;
-	abstract computeSetup(): ({ [key in CK]: ComputeFunc });
-	public abstract label: string;
-	settings: {[key in keyof Options]?: Settings} = {};
 	
-	setOption<K extends keyof Options= keyof Options,V extends Options[K]=Options[K]>( key: K, value: V, reset = true ){
-		this.options[key] = value;
+	abstract userSettings: Settings<Options>;
+	userSettingsInHeader: NestedKeyOf<Options & BaseOptions>[] = [];
+
+	getLabel (){
+		// @ts-ignore
+		return this.constructor.getLabel();
+	}
+
+	setOption<K extends NestedKeyOf<Options & BaseOptions> = NestedKeyOf<Options & BaseOptions>,V extends Options[K]=Options[K]>( key: K, value: V, reset = true ){
+		set( this.options, key, value );
 		if( reset ){
 			this.reset();
 		}
 	}
 	
-	setOptions( options: Partial<Options>, reset = true ){
-		Object.assign( this.options, options );
+	setOptions( options: Partial<Options & BaseOptions>, reset = true ){
+		this.options = merge( this.options, options );
 		if ( reset ){
 			this.reset();
 		}
 	}
 	
-	getOption<K extends keyof Options= keyof Options>( key: K){
-		return this.options[key];
+	getOption<K extends keyof Options = keyof Options>( key: K ){
+		return get( this.options, key );
+	}
+	
+	setActive( isActive: boolean | 'toggle' ){
+		this.isActive = isActive === 'toggle' ? !this.isActive : isActive;
+		this.options.onActivate?.( this.isActive);
 	}
 	
 	setContext( tickValue: ( index: number, prop: TickProp ) => any, canvasContext: CanvasRenderingContext2D,
@@ -176,6 +213,7 @@ export default abstract class Base<Options extends ObjKeyStr,
 
 	//__ drawing
 	drawTick( x: number, width: number, index: number ){
+		if( !this.isActive ){  return;}
 		this.drawing.x = x;
 		this.drawing.width = width;
 		this.drawing.index = index;
@@ -243,16 +281,17 @@ export default abstract class Base<Options extends ObjKeyStr,
 	computed( index: number, prop: TCK, delta = 0 ): number {
 		const _index = index - delta * this.tickStep;
 		const pc = prop as CK;
-		const isComputeKey = this.computeKeys.get( pc );
 		let value = this.cacheGet( pc, _index );
 		if ( typeof value !== 'undefined' ){
 			return value;
 		}
-		if ( isComputeKey ){
+
+		if ( this.compute[pc] ){
 			value = Computation.asNumber( this.compute[ pc ]( _index, this.cacheGet( pc, _index-this.tickStep ) ) );
 		} else {
-			value = Computation.asNumber( this.tickValue( index, prop as TickProp, delta ) )
+			value = Computation.asNumber( this.tickValue( _index, prop as TickProp ) );
 		}
+		
 		this.cacheSet( pc, _index, value );
 		return value;
 	}
@@ -411,6 +450,10 @@ export default abstract class Base<Options extends ObjKeyStr,
 	beforeDestroy(){
 		return this;
 	}
+	
+	hasAnySetting(){
+		return !!this.userSettings.length;
+	}
 
 	protected cacheGet( prop: CK, index: number = 0 ): number | undefined {
 		return this.cacheComputed.get( prop )?.get( index );
@@ -434,9 +477,4 @@ export default abstract class Base<Options extends ObjKeyStr,
 		}
 	}
 
-}
-
-export class Settings {
-	constructor ( public type: InputTypes, public options: InputOptionsList[InputTypes] ){
-	}
 }

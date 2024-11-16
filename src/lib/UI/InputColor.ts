@@ -3,12 +3,10 @@ import { createElement } from '@/lib';
 
 //_____
 export type Options = BaseOptions & {
-	min?: number,
-	max?: number
 }
 
 //______
-export default class InputNumber extends InputBase<Options> {
+export default class InputColor extends InputBase<Options> {
 	constructor( key: string, options: Options = {} ){
 
 		super( key, options );
@@ -18,10 +16,10 @@ export default class InputNumber extends InputBase<Options> {
 		return createElement( 'input', {
 			relativeElement: this.elRoot,
 			attr: {
-				type: 'text',
+				type: 'color',
 			},
 			events: {
-				input: this.handleChange,
+				change: this.handleChange,
 			}
 		} ) as HTMLInputElement;
 	}

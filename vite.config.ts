@@ -3,6 +3,7 @@ import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import dts from 'vite-plugin-dts';
 import { resolve } from 'node:path';
+import { optimizeLodashImports } from "@optimize-lodash/rollup-plugin";
 
 const res = ( path: string ) => resolve( __dirname, path );
 
@@ -19,7 +20,7 @@ export default defineConfig( ( { command, mode } ) => {
     resolve: {
       alias: {
         '@': res( 'src' ),
-        '@dmidz/tickschart': res( 'dist' ),// trick to compile demo/vanilla-ts using real world package path
+        '@dmidz/tickschart': res( 'dist' ),
         '@public': res( 'public/tickschart' ),
       },
       // preserveSymlinks: true,
@@ -31,6 +32,7 @@ export default defineConfig( ( { command, mode } ) => {
         rollupTypes: true,
         include: [ 'src/lib/**/*.ts', 'src/types.d.ts' ],
       } ),
+      optimizeLodashImports(),
     ],
     build: {
       copyPublicDir: false,
@@ -56,7 +58,7 @@ export default defineConfig( ( { command, mode } ) => {
     },
     server: {
       host: apiURL.hostname,
-      proxy: {
+      proxy: {// check https://vite.dev/config/server-options.html#server-proxy
         '/api': {
           target: base,
           changeOrigin: true,

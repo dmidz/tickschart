@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { Chart, Fetcher, Player, intervalsMs, InputSelect } from '@/lib';
+import { Chart, Fetcher, Player, intervalsMs, indicator, ui } from '@/lib';
+
+import Volume2 from './custom-indicators/Volume2';// "custom" indicator sample
+
+const indicators = { ...indicator.list, Volume2 } as const;
 
 const { m1, h1, d1 } = intervalsMs;
 
@@ -18,6 +22,8 @@ const sampleTimeStart = 1684800000000;
 const ticksPerLoad = SAMPLE_MODE ? 1000 : 500;// must match the ticks count per fetch
 const ticksURL = SAMPLE_MODE
 	? `${ window.location.origin }/tickschart/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`
+	//__ WARN: do no use API_BASE here, instead use current location with '/api' prefix to avoid all CORS problems for dev
+	//__ '/api' url requests will be proxied by vite server which will use API_BASE, check vite.config.js server entry
 	: `${ window.location.origin }/api/exch/market-ticks`;
 const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
 // const currentTime = new Date();// initial time position
@@ -121,37 +127,33 @@ onMounted( async () => {
 			precisionIn: .001,//__ might be set from current symbol properties
 		},
 		autoScaleY: true,
+		indicators,
 		// tickWidth: 50,
 		// chartRow: {
 		// 	height: 200,
 		// }
 	} );
 	
-	chart.addIndicator( 'Volume', 'row', { maLength: 14, maType: 'sma' } );
-	// chart.addIndicator( 'VolumeImpulse', 'row', { maLength: 14, maType: 'sma' } );
-	// chart.addIndicator( 'OBV', 'row' );
-	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'ema', style: { color: '#ffff00'} } );
-	chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000'} } );
-	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 100, type: 'sma', style: { color: '#ffff00'} } );
-	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 50, type: 'sma' } );
-	// chart.addIndicator( 'MA', 'layer', { property: 'close', length: 21, type: 'sma' } );
+	chart.addIndicator( new indicators.Volume( { maLength: 14, maType: 'ema' } ) );
+	// chart.addIndicator( new indicators.Volume2( { maLength: 14, maType: 'sma' }) );
+	// chart.addIndicator( new indicators.VolumeImpulse( { maLength: 14, maType: 'sma' } ) );
+	// chart.addIndicator( new indicators.OBV() );
+
+	chart.addIndicator( new indicators.MA({ length: 200, type: 'sma', style: { color: '#ff0000'} } ) );
 	
-	//__ in API mode, add a select input for timeframe to test 
+	//__ in API mode, add a select input for timeframe to test change
 	if(!SAMPLE_MODE){
-		const infos = chart.getElement( 'infos' );
-		if ( infos ){
-			new InputSelect( 'timeframe', {
-				relativeElement: infos,
-				relativePosition: 'prepend',
-				value: interval.value,
-				choices: Object.keys( INTERVALS ).map( ( value ) => ( { value, label: value } ) ),
-				onChange: ( value ) => {
-					interval.value = value;
-				},
-			} );
-		}
+		new ui.InputSelect( 'timeframe', {
+			relativeElement: chart.getElement( 'infos' ),
+			relativePosition: 'prepend',
+			value: interval.value,
+			choices: Object.keys( INTERVALS ).map( ( value ) => ( { value, label: value } ) ),
+			onChange: ( value ) => {
+				interval.value = value;
+			},
+		} );
 	}
-	
+
 	//__ can now apply the initial time & render
 	init = true;
 	chart.setX( currentTime.getTime(), { xOriginRatio } );

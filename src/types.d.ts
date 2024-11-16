@@ -18,3 +18,16 @@ declare type PickRequired<T extends object> = { [K in keyof T as ( undefined ext
 declare type ReverseRequired<T extends object> = Required<PickOptional<T>> & Partial<PickRequired<T>>;
 
 declare type ObjKeyStr = { [ key: string ]: any };
+
+declare type SelectItem = {
+	label: string;
+	value: Literal;
+}
+
+declare type Literal = string | number | boolean;
+
+declare type NestedKeyOf<O extends object,NoObjKeys extends boolean = true> = {
+		[K in keyof O & ( string | number )]: O[K] extends Literal
+			? `${ K }`
+			: ( NoObjKeys extends true ? never : `${ K }` ) | `${ K }.${ NestedKeyOf<O[K],NoObjKeys> }`
+	}[keyof O & ( string | number )];

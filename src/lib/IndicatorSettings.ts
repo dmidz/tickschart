@@ -1,10 +1,11 @@
-
+import { set } from 'lodash';
 import { Dialog, inputs, InputBase, type InputOptions } from './UI/index.ts';
-import type { Indicator, Settings } from '@/lib/Indicator';
+import { Base, SettingGroup } from '@/lib/Indicator';
+import { createElement } from './index.ts';
 
 export type Options = {
 	parentElement?: HTMLElement,
-	onUpdate?: () => void,
+	onUpdate?: ( indicator: Base, changes: {[key:string]: any} ) => void,
 }
 
 //______
@@ -16,7 +17,7 @@ export default class IndicatorSettings {
 	}
 
 	private dialog: Dialog;
-	private indicator: Indicator | null = null;
+	private indicator: Base | null = null;
 	private elContent: HTMLElement | null = null;
 	private inputsChanges: { [ key: string ]: any } = {};
 	private inputs: InputBase[] = [];
@@ -29,15 +30,14 @@ export default class IndicatorSettings {
 			buttons: {
 				ok: () => {
 					if ( this.indicator ){
-						this.indicator.setOptions( this.inputsChanges );
-						this.options.onUpdate();
+						this.options.onUpdate( this.indicator, this.inputsChanges );
 					}
 				},
 			},
 		} );
 	}
 
-	diplay ( indicator: Indicator, display = true ){
+	display ( indicator: Base, display = true ){
 		if ( indicator !== this.indicator ){
 			this.indicator = indicator;
 			this.inputs.forEach( input => {
@@ -46,30 +46,12 @@ export default class IndicatorSettings {
 			this.inputs = [];
 			this.inputsChanges = {};
 			//__ build settings inputs
-			if ( indicator.settings ){
-				this.elContent = document.createElement( 'div' );
-				this.elContent.className = 'fields';
-				Object.assign( this.elContent.style, {
-					display: 'flex',
-					flexDirection: 'column',
-					gap: '8px',
-				} )
-				Object.keys( indicator.settings ).forEach( key => {
-					const is = indicator.settings[ key as keyof typeof indicator.settings ] as Settings;
-					const cl = inputs[ is.type ];
-					if ( cl ){
-						const opts = {
-							...is.options,
-							// @ts-ignore
-							value: indicator.getOption( key ),
-							relativeElement: this.elContent,
-							onChange: ( value: any/*, key, inputinput*/ ) => {
-								this.inputsChanges[ key ] = value;
-							},
-						} as Extract<InputOptions, { type: typeof is.type }>;
-						const input = new cl( key, opts );
-						this.inputs.push( input );
-					}
+			if ( indicator.hasAnySetting() ){
+				this.elContent = createElement( 'div', {
+					className: 'fields',
+				} );
+				indicator.userSettings.forEach( ( is/*, index*/ ) => {
+					this.createSettingField( indicator, is, this.elContent as HTMLElement );
 				} );
 			} else {
 				this.elContent = null;
@@ -77,13 +59,42 @@ export default class IndicatorSettings {
 		}
 
 		this.dialog.display( display, {
-			title: `${ indicator.label }`,
+			title: `${ indicator.getLabel() }`,
 			content: this.elContent,
 		} );
 	}
 	
-	remove(){
-		this.dialog.remove();
+	private createSettingField( indicator: Base, setting: typeof indicator.userSettings[number], parentElement: HTMLElement ){
+		if( setting instanceof SettingGroup ){
+			const fieldset = createElement( 'fieldset', {
+				relativeElement: parentElement,
+				className: 'col',
+				style: {
+					gap: '8px',
+					border: '1px solid #333333',
+				}
+			} );
+			fieldset.appendChild( createElement( 'legend', {
+				innerText: setting.label,
+			} ) );
+
+			setting.settings.forEach( ( is ) => {
+				this.createSettingField( indicator, is, fieldset );
+			} );
+		} else {
+			const cl = inputs[ setting.type ];
+			const opts = {
+				...setting.options,
+				value: indicator.getOption( setting.key ),
+				relativeElement: parentElement,
+				onChange: ( value: any ) => {
+					set( this.inputsChanges, setting.key, value );
+				},
+			} as Extract<InputOptions, { type: typeof setting.type }>;
+			const input = new cl( setting.key, opts );
+			this.inputs.push( input );
+		}
+
 	}
 }
 

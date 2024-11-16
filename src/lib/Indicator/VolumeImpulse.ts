@@ -1,69 +1,48 @@
 
 import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type BarStyle, type LineStyle, type ShapeStyle, Settings } from './Base.ts';
+import Base, { type BaseOptions, type BarStyle, type LineStyle, type ShapeStyle, Setting, Settings } from './Base.ts';
 
 //__ contract of constructor arg options
 export type Options = {
-	styleBars?: BarStyle,
-	maType?: 'sma' | 'ema' | false,
-	maLength?: number,
-	maStyle?: LineStyle,
-	flipMaLength?: 7,
-	flippedStyle?: {
+	styleBars: BarStyle,
+	maType: 'sma' | 'ema' | false,
+	maLength: number,
+	maStyle: LineStyle,
+	flipMaLength: 7,
+	flippedStyle: {
 		up: ShapeStyle,
 		down: ShapeStyle,
 	},
 }
 
-//__ would never be used, its purpose is to define properties set in computeSetup
-//__ and make sure to operate on valid object and so avoid a lot of checks
-const defaultComputed = {
-	buyVol: 0,
-	buyVolEma: 0,
-	sellVol: 0,
-	sellVolEma: 0,
-	volDelta: 0,
-	volDeltaMa: 0,
-	cvdDelta: 0,
-	closeEma: 0,
-	flipped: 0,
+//__ define the computed propertied used in computeSetup & draw
+type Computed = {
+	buyVol: number,
+	buyVolEma: number,
+	sellVol: number,
+	sellVolEma: number,
+	volDelta: number,
+	volDeltaMa: number,
+	cvdDelta: number,
+	closeEma: number,
+	flipped: number,
 };
 
-type Computed = typeof defaultComputed;
+export default class VolumeImpulse extends Base<Options, Computed> {
 
-export default class VolumeImpulse extends Base<Required<Options>, Computed> {
-
-	label = 'Volume Impulse';
-
-	settings = {
-		maType: new Settings( 'select', {
-			label: 'MA type',
-			choices: [
-				{
-					label: 'None',
-					value: false,
-				},
-				{
-					label: 'SMA',
-					value: 'sma',
-				},
-				{
-					label: 'EMA',
-					value: 'ema',
-				},
-			],
-		} ),
-		maLength: new Settings( 'number', {
+	static label = 'Volume Impulse';
+	
+	userSettings: Settings<Options> = [
+		new Setting( 'maLength', 'number', {
 			label: 'MA length',
 			min: 0,
 			max: 200,
 		} ),
-	};
+	];
 
-	constructor ( options: Options & Partial<BaseOptions> ){
+	constructor ( options: Partial<Options & BaseOptions> = {} ){
 
-		/*__ force optional constructor options to be set here */
-		const _options: ReverseRequired<Options> = {
+		const _options: Required<Options> & Partial<BaseOptions> = {// force constructor optional options to be set here
 			maType: 'ema',
 			maLength: 14,
 			styleBars: {
@@ -79,7 +58,7 @@ export default class VolumeImpulse extends Base<Required<Options>, Computed> {
 			},
 		};
 		
-		super( defaultComputed, merge( _options, options ) );
+		super( merge( _options, options ) );
 
 		this.options.maLength = Math.max( 1, Math.round( this.options.maLength ) );
 	}

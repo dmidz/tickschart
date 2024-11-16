@@ -1,24 +1,29 @@
 
-import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type BarStyle, type LineStyle, Setting, Settings } from './Base.ts';
+import { merge, indicator } from '@/lib';
+
+//__ custom ( out of lib ) indicator sample ( copy of VOlume )
 
 //__ contract of constructor arg options
 export type Options = {
 	maType: 'sma' | 'ema' | false,
 	maLength: number,
-	styleBars: BarStyle,
-	styleMa: LineStyle,
+	styleBars: indicator.BarStyle,
+	styleMa: indicator.LineStyle,
 }
 
 //__ define the computed propertied used in computeSetup & draw
-type Computed = { 
+type Computed = {
 	ma: number,
 };
 
-export default class Volume extends Base<Options, Computed> {
+export default class Volume2 extends indicator.Base<Options, Computed> {
 
-	userSettings: Settings<Options> = [
-		new Setting('maType', 'select', {
+	static label = 'Custom Indicator Sample ( Volume copy )';
+
+	displayMode: indicator.DisplayMode = 'row';
+
+	userSettings: indicator.Settings<Options> = [
+		new indicator.Setting('maType', 'select', {
 			label: 'MA type',
 			choices: [
 				{ label: 'None', value: false },
@@ -26,16 +31,16 @@ export default class Volume extends Base<Options, Computed> {
 				{ label: 'EMA', value: 'ema' },
 			],
 		}),
-		new Setting('maLength', 'number', {
+		new indicator.Setting('maLength', 'number', {
 			label: 'MA length',
 			min: 0,
-			max: 200,
+			max: 100,
 		}),
 	] as const;
 	
-	constructor ( options: Partial<Options & BaseOptions> = {} ){
+	constructor ( options: Partial<Options & indicator.BaseOptions> = {} ){
 
-		const _options: Required<Options> & Partial<BaseOptions> = {// force set default options
+		const _options: Required<Options> & Partial<indicator.BaseOptions> = {// force set default options
 			maType: 'sma',
 			maLength: 14,
 			styleBars: {

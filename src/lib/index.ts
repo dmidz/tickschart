@@ -1,9 +1,16 @@
 import '@public/assets/main.css';
 
-export { Dialog, inputs, InputBase, InputNumber, InputSelect } from './UI/index.ts';
+import * as math from './utils/math.ts';
+export { math };
+export { default as merge } from './utils/merge.ts';
+
+export * as ui from './UI/index.ts';
 export { default as Chart } from './Chart.ts';
 export { default as Fetcher } from './Fetcher.ts';
 export { default as Player } from './Player.ts';
+
+import * as indicator from './Indicator';
+export { indicator };
 
 export type TickProp = 'open' | 'high' | 'low' | 'close' | 'volume';
 
@@ -54,13 +61,19 @@ export function resizeCanvas ( canvas: HTMLCanvasElement | undefined ){
 	return resized;
 }
 
-export function createElement ( tagName: string = 'div', options: {
+type ElementOptions = {
 	style?: Partial<CSSStyleDeclaration>,
 	className?: string,
 	innerText?: string,
 	relativeElement?: HTMLElement | null,
 	relativePosition?: 'append' | 'prepend' | 'after' | 'before',
-} = {} ): HTMLElement {
+	attr?: { [ key: string ]: string },
+	events?: {//type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions
+		[key: string]: EventListenerOrEventListenerObject | undefined,
+	}
+}
+
+export function createElement ( tagName: string = 'div', options: ElementOptions & { icon?: ElementOptions } = {} ): HTMLElement {
 	const el = document.createElement( tagName );
 	if ( options.className ){
 		el.className = options.className;
@@ -70,6 +83,25 @@ export function createElement ( tagName: string = 'div', options: {
 	}
 	if ( options.innerText ){
 		el.innerText = options.innerText;
+	}
+	if( options.attr ){
+		for( const key in options.attr ){
+			el.setAttribute( key, options.attr[key]);
+		}
+	}
+	if( options.icon ){
+		createElement( 'span', {
+			...options.icon,
+			relativeElement: el,
+			className: `icon ic-${ options.icon.className }`,
+		});
+	}
+	if( options.events ){
+		for(const key in options.events){
+			if( options.events[ key ] ){
+				el.addEventListener( key, options.events[ key ] as EventListenerOrEventListenerObject );
+			}
+		}
 	}
 	if ( options.relativeElement ){
 		switch( options.relativePosition ){
@@ -88,7 +120,7 @@ export class ListenerEventFactory<Callback extends (( ...args: any[] ) => void)>
 	}
 	
 	add( callback: Callback ): this {
-		this.remove( callback );
+		// this.remove( callback );
 		this.listeners.push( callback );
 		return this;
 	}
@@ -115,6 +147,10 @@ export class ListenerEventFactory<Callback extends (( ...args: any[] ) => void)>
 	}
 }
 
+// function clickOut( elementOut: HTMLElement, handler: () => {}){
+//	
+// 	document.body.addEventListener('click', handler );
+// }
 
 //__ intervals
 const s1 = 1000;

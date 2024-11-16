@@ -1,20 +1,21 @@
-import type Base from './Base.ts';
-import { type Settings } from './Base.ts';
+export * from './Base.ts';
+import Base from './Base.ts';
+export { Base };
+
 import MA from './MA.ts';
 import Volume from './Volume.ts';
 import VolumeImpulse from './VolumeImpulse.ts';
 import OBV from './OBV.ts';
 
-const indicators = {
+const list = {
 	MA,
 	Volume,
 	VolumeImpulse,
 	OBV,
 } as const;
 
-export default indicators;
-export type List = typeof indicators;
+export { list };
+export type List = typeof list;
 
-export type Indicator = InstanceType<List[keyof List]>;
-
-export type { Base, Settings };
+// type Indicator = { new( ...args: any[] ): Base }
+// export type Indicator = Function & { prototype: Base };

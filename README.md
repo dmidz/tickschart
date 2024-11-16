@@ -48,10 +48,9 @@ const fetcher = new Fetcher( defaultTick, fetchAPI, options );
 
 const chart = new Chart( parentElement, tickStep, getTick, options );
 
-// add a Volume indicator in 'row' mode ( stacked under main chart )
-chart.addIndicator( 'Volume', 'row', { maProperty: 'vol', maLength: 14, maType: 'sma' } );
-// add an MA indicators in 'layer' mode ( on chart )
-chart.addIndicator( 'MA', 'layer', { property: 'close', length: 200, type: 'sma', style: { color: '#ff0000' } } );
+//__ add some indicators
+chart.addIndicator( new indicator.list.Volume( { maLength: 14, maType: 'ema' } ) );
+chart.addIndicator( new indicator.list.MA( { length: 200, type: 'sma', style: { color: '#ff0000' } } ) );
 
 // finally init display at the time you wish, originRatio is the displacement of time wanted along the screen width
 // ex: time now + .75 will scroll to place now time at 3/4 screen width from left

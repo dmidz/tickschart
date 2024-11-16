@@ -1,51 +1,117 @@
 
+
 import merge from '../utils/merge.ts';
-import Base, { type BaseOptions, type LineStyle } from './Base.ts';
+import Base, { type BaseOptions, type LineStyle, DisplayMode, Settings, Setting, SettingGroup } from './Base.ts';
 
 //______
 export type Options = {
 	property: Parameters<Base<BaseOptions, Computed>['computed']>[1],
-	type?: 'sma' | 'ema',
-	length?: number,
-	style?: LineStyle,
+	type: 'sma' | 'ema',
+	length: number,
+	style: LineStyle,
+	ma2: {
+		active: boolean,
+		property: Parameters<Base<BaseOptions, Computed>['computed']>[1],
+		type: 'sma' | 'ema',
+		length: number,
+		style: LineStyle,
+	},
 }
 
-//__ would not be used, its purpose is to define properties used by drawing & set in computeSetup
-//__ and make sure to operate on valid object and so avoid lots of checks
-const defaultComputed = {
-	ma: 0,
+//__ define the computed propertied used in computeSetup & draw
+type Computed = {
+	ma: number
+	ma2: number
 };
 
-type Computed = typeof defaultComputed;
+const properties = [ 'close', 'open', 'high', 'low' ];
 
-export default class MA extends Base<Required<Options>, Computed> {
+export default class MA extends Base<Options, Computed> {
 
-	label = 'SMA / EMA';
+	static readonly label = 'SMA / EMA';
 
-	constructor ( options: Options & Partial<BaseOptions> ){
+	readonly displayMode: DisplayMode = 'layer';
+
+	readonly userSettings: Settings<Options> = [
+		new Setting( 'property', 'select', {
+			label: 'Property',
+			choices: properties.map( ( key ) => ( { label: key, value: key } ) ),
+		} ),
+		new Setting( 'type', 'select', {
+			label: 'Type',
+			choices: [ 'sma', 'ema' ].map( ( key ) => ( { label: key, value: key } ) ),
+		} ),
+		new Setting( 'length', 'number', {
+			label: 'Length',
+			min: 0,
+			max: 200,
+		} ),
+		new Setting( 'style.color', 'color', {
+			label: 'Color',
+		} ),
+		new SettingGroup('MA 2', [
+			new Setting( 'ma2.active', 'checkbox', {
+				label: 'Active',
+			} ),
+			new Setting( 'ma2.property', 'select', {
+				label: 'Property',
+				choices: properties.map( ( key ) => ( { label: key, value: key } ) ),
+			} ),
+			new Setting( 'ma2.type', 'select', {
+				label: 'Type',
+				choices: [ 'sma', 'ema' ].map( ( key ) => ( { label: key, value: key } ) ),
+			} ),
+			new Setting( 'ma2.length', 'number', {
+				label: 'Length',
+				min: 0,
+				max: 200,
+			} ),
+			new Setting( 'ma2.style.color', 'color', {
+				label: 'Color',
+			} ),
+		]),
+	];
+
+	userSettingsInHeader: NestedKeyOf<Options & BaseOptions>[] = ['length'];
+
+	constructor ( options: Partial<Options & BaseOptions> = {} ){
 		
-		const _options: ReverseRequired<Options> = {
+		const _options: Required<Options> & Partial<BaseOptions> = {// force set default options
+			property: 'close',
 			type: 'sma',
-			length: 10,
+			length: 50,
 			style: {
-				color: '#40e9ff'
+				color: '#ffff00'
 			},
+			ma2: {
+				active: true,
+				property: 'close',
+				type: 'sma',
+				length: 50,
+				style: {
+					color: '#40e9ff'
+				},
+			}
 		};
 		
-		super( defaultComputed, merge( _options, options ) );
+		super( merge( _options, options ) );
 
 		this.options.length = Math.max( 1, Math.round( this.options.length ) );
 	}
-	
+
+	computeSetup (){
+		return {
+			ma: this.lib[ this.options.type ]( this.options.property, this.options.length ),
+			ma2: this.lib[ this.options.ma2.type ]( this.options.ma2.property, this.options.ma2.length ),
+		}
+	}
+
 	draw(){
 		//__ sma / ema
 		this.plot( 'ma', this.options.style );
-	}
-	
-	computeSetup(){
-		return {
-			ma: this.lib[this.options.type]( this.options.property, this.options.length ),
-		};
+		if( this.options.ma2.active ){
+			this.plot( 'ma2', this.options.ma2.style );
+		}
 	}
 	
 	getMinY( index: number ): number {

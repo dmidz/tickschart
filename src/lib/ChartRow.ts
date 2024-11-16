@@ -2,8 +2,16 @@
 import merge from './utils/merge.ts';
 import { ScalingLinear, type Scale } from './utils/math.ts';
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
-import type { Indicator } from './Indicator/index.ts';
+import type { Base } from './Indicator/index.ts';
 import { createElement, resizeCanvas, type ElementRect } from './index';
+import IndicatorHeader from './IndicatorHeader.ts';
+
+type Chart<I extends Base = Base> = {
+	parentElement: HTMLElement,
+	displayIndicatorSettings: ( indicator: I ) => void,
+	removeIndicator: ( indicator: I ) => void,
+	activateIndicator: ( indicator: I, isActive: boolean ) => void,
+};
 
 //______
 export type Options = {
@@ -21,10 +29,9 @@ export type Options = {
 	onMouseLeave?: ( event: MouseEvent ) => void,
 	onMouseDown?: ( event: MouseEvent, emitter: ChartRow ) => void,
 	onMouseWheel?: ( event: WheelEvent ) => void,
-	onClickSettings?: ( event: MouseEvent, emitter: ChartRow ) => void,
 }
 
-export default class ChartRow {
+export default class ChartRow<Indicator extends Base = Base> {
 	options: Required<Options> = {
 		height: 120,
 		border: '1px solid #333333',
@@ -40,11 +47,12 @@ export default class ChartRow {
 		onMouseLeave: () => {},
 		onMouseDown: () => {},
 		onMouseWheel: () => {},
-		onClickSettings: () => {},
 	};
+	
 	private readonly canvas: HTMLCanvasElement;
 	private readonly ctx: CanvasRenderingContext2D;
 	private elements: Map<string,HTMLElement> = new Map();
+	
 	// private validXMinMax = false;
 	scalingY: ScalingLinear;
 
@@ -52,7 +60,7 @@ export default class ChartRow {
 	cy = 1;
 	mouseArea: ElementRect;
 
-	constructor ( private key: string|number, private indicator: Indicator, tickValue: Indicator['tickValue'], 
+	constructor ( private chart: Chart, private key: string|number, private indicator: Indicator, tickValue: Indicator['tickValue'], 
 								parentElement: HTMLElement, scalingX: ScalingLinear,
 								chartCanvasContext: CanvasRenderingContext2D, charScalingY: ScalingLinear,
 								private onScaleY: ( scaling: ScalingLinear, emitter: ChartRow ) => void,
@@ -85,11 +93,6 @@ export default class ChartRow {
 			// labelPrecision: .01,
 		} );
 
-		this.setIndicator( indicator, tickValue, scalingX, chartCanvasContext, charScalingY );
-	}
-
-	setIndicator( indicator: ChartRow['indicator'], tickValue: Indicator['tickValue'], scalingX: ScalingLinear,
-				chartCanvasContext: CanvasRenderingContext2D, charScalingY: ScalingLinear ){
 		this.indicator = indicator;
 		this.indicator.setContext( tickValue, this.ctx, this.scalingY, scalingX, chartCanvasContext, charScalingY );
 	}
@@ -150,6 +153,11 @@ export default class ChartRow {
 		this.ctx.clearRect( x, 0, w, this.canvas.height );
 	}
 
+	remove(){
+		this.beforeDestroy();
+		this.getElement( 'row' )?.remove();
+	}
+	
 	beforeDestroy(){
 		const mouseArea = this.elements.get( 'mouseArea' );
 
@@ -159,7 +167,10 @@ export default class ChartRow {
 			mouseArea.removeEventListener( 'mousedown', this.onMouseDown );
 			mouseArea.removeEventListener( 'wheel', this.options.onMouseWheel );
 		}
-		this.elements.get('name')?.removeEventListener('click', this.onClickSettings );
+	}
+	
+	getElement( key: string ){
+		return this.elements.get( key );
 	}
 
 	private createElements( parentElement: HTMLElement ): { canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, mouseArea: HTMLElement }{
@@ -218,48 +229,33 @@ export default class ChartRow {
 			}
 		} );
 		this.elements.set('mouseArea', mouseArea );
+		
+		//___ indicator header
+		new IndicatorHeader( row, this.chart.parentElement, this.indicator, {
+			onOpenSettings: this.chart.displayIndicatorSettings,
+			onRemove: this.chart.removeIndicator,
+			onActivate: this.onActivate,
+		} );
 
 		//__ events
 		mouseArea.addEventListener( 'mouseenter', this.onMouseEnter );
 		mouseArea.addEventListener( 'mouseleave', this.options.onMouseLeave );
 		mouseArea.addEventListener( 'wheel', this.options.onMouseWheel );
 		mouseArea.addEventListener( 'mousedown', this.onMouseDown );
-		
-		//__ bt settings
-		const name = createElement( 'div', {
-			relativeElement: row,
-			innerText: this.indicator.label,
-			className: 'bt-link bt-ind-settings',
-			style: {
-				position: 'absolute',
-				left: '4px',
-				top: '0',
-				zIndex: '150',
-			}
-		} );
-		this.elements.set( 'name', name );
-		if( Object.keys( this.indicator.settings||{} ).length ){
-			createElement( 'div', {
-				relativeElement: name,
-				className: 'icon ic-settings',
-				style: {
-					marginLeft: '4px',
-					backgroundRepeat: 'no-repeat',
-				}
-			} );
-			name.addEventListener('click', this.onClickSettings );
-		}else{
-			name.style.pointerEvents = 'none';
-		}
 
 		//__
 		return { canvas, ctx, mouseArea };
 	}
 	
-	private onClickSettings = ( event: MouseEvent ) => {
-		this.options.onClickSettings( event, this );
+	private onActivate = ( indicator: Base, isActive: boolean ) => {
+		const root = this.elements.get( 'row' );
+		if( root ){
+			root.style.height = `${ isActive ? this.options.height : 24 }px`;
+		}
+		
+		this.chart.activateIndicator( indicator, isActive );
 	}
-
+	
 	private onMouseEnter = ( event: MouseEvent ) => {
 		this.options.onMouseEnter( event, this );
 	}

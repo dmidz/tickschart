@@ -4,10 +4,14 @@ import { ScalingLinear, type Scale, type ScalingLinearOptions } from './utils/ma
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
 import { ListenerEventFactory, createElement, resizeCanvas, sharpCanvasValue,
 	type CandleTick, type GetTick, type ElementRect, type TickProp, type AbstractTick } from './index.ts';
-import indicators, { type List, type Indicator } from './Indicator/index.ts';
+import { Base } from './Indicator/index.ts';
 import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
-import { Dialog, InputBase } from './UI/index.ts';
+import { Dialog, Popover, InputBase } from './UI/index.ts';
 import IndicatorSettings from './IndicatorSettings.ts';
+import IndicatorSelection from './IndicatorSelection.ts';
+import IndicatorHeader from '@/lib/IndicatorHeader.ts';
+
+type Indicator = { getLabel: () => string, new (): any }
 
 //______
 export type Options<Tick extends AbstractTick> = {
@@ -43,11 +47,12 @@ export type Options<Tick extends AbstractTick> = {
 	},
 	chartRow: ChartRowOptions,
 	mapTickProps: { [key in TickProp]: keyof Tick},
+	indicators: Readonly<{[key: string]: Indicator }>,
 }
 
 export default class Chart<Tick extends AbstractTick = CandleTick> {
 
-	private parentElement: HTMLElement;
+	readonly parentElement: HTMLElement;
 	private _getTick: GetTick<Tick>;
 	private options: Options<Tick> = {
 		tickWidth: 4,
@@ -85,6 +90,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		},
 		chartRow: {},
 		mapTickProps: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
+		indicators: {},
 	};
 
 	private elements: Record<string,HTMLElement> = {};
@@ -114,9 +120,12 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	private mouseElement: ElementRect;
 	private mouseIndicator: ChartRow | null = null;
 	private mouseDragIndicator: ChartRow | null = null;
-	private layers: Indicator[] = [];
+	private layers: Base[] = [];
+	private layersHeader: IndicatorHeader[] = [];
 	private indicatorSettings: IndicatorSettings;
+	private indicatorSelection: IndicatorSelection;
 	private tickIndexMax: number = Infinity;
+	private indicatorsOptions: {[key: string]: { [ key: string ]: any } } = {};
 	
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
@@ -132,7 +141,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.options = merge( this.options, options );
 		
 		//__ build dom elements
-		this.createDomElements();
+		this.createElements();
 
 		//__ canvas ticks
 		this.canvas = document.createElement( 'canvas' );
@@ -206,25 +215,65 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.resizeCanvas();
 
 		//__
+		this.indicatorSelection = new IndicatorSelection({
+			parentElement: this.parentElement,
+			indicators: this.options.indicators,
+			onUpdate: ( indicator ) => {
+				this.addIndicator( new indicator() );
+				this.refresh();
+			},
+		});
+		
 		this.indicatorSettings = new IndicatorSettings({
 			parentElement: this.parentElement,
-			onUpdate: () => {
+			onUpdate: ( indicator, changes ) => {
+				indicator.setOptions( changes );
+				if( indicator.id ){
+					if( !this.indicatorsOptions[ indicator.id ] ){
+						this.indicatorsOptions[ indicator.id ] = {};
+					}
+					Object.assign( this.indicatorsOptions[ indicator.id ], changes );
+					localStorage.setItem('chart.indicators', JSON.stringify( this.indicatorsOptions));
+					// console.log( 'changes', changes, this.indicatorsOptions[ indicator.id ] );
+				}
+				const index = this.layers.indexOf( indicator );
+				if( index !== -1 ){
+					const header = this.layersHeader[index];
+					header.update();
+				}
+				
 				this.render();
 			},
 		});
 		
+		const indicatorsOptions = localStorage.getItem('chart.indicators');
+		if( indicatorsOptions ){
+			try {
+				this.indicatorsOptions = JSON.parse( indicatorsOptions );
+			}catch(err ){
+				console.warn('Unable to parse localStorage "indicators"', err);
+			}
+		}
+		
 		//__
 		return this;
 	}
+	
+	indicatorsCount(){
+		return this.chartRows.length + this.layers.length;
+	}
 
-	addIndicator<K extends keyof List> ( type: K, mode: 'layer'|'row' = 'row', ...params: ConstructorParameters<List[K]> ){
-		// @ts-ignore
-		const indicator = new indicators[ type ]( ...params );
+	addIndicator<I extends Base> ( indicator: I ){
 		indicator.setTickStep( this.tickStep );
-		
-		switch( mode ){
-			case 'row': {
-				const row = new ChartRow( this.chartRows.length, indicator, this.tickIndexValue, this.elements.main,
+		indicator.id = `${indicator.constructor.name}-${this.indicatorsCount()}`;
+		const opts = this.indicatorsOptions[indicator.id];
+		if( opts ){
+			indicator.setOptions( opts );
+		}
+
+		switch ( indicator.displayMode ){
+			case 'row':{
+				const row = new ChartRow( this, this.chartRows.length, indicator, this.tickIndexValue, this.elements.main,
 					this.scalingX, this.ctxTicks, this.scalingY,
 					( scaling, row ) => {
 						this.render();
@@ -244,25 +293,62 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 							this.onMouseDown( event );
 						},
 						onMouseWheel: this.onMouseWheel,
-						onClickSettings: ( event, emitter ) => {
-							this.indicatorSettings.diplay( emitter.getIndicator(), true );
-						},
 					} );
-				
+
 				this.chartRows.push( row );
 				break;
 			}
-			case 'layer': {
+			case 'layer':{
 				indicator.setContext( this.tickIndexValue, this.ctxTicks, this.scalingY, this.scalingX, this.ctxTicks, this.scalingY );
-				this.layers.push( indicator );
+				const index = this.layers.length;
+				this.layers[index] = indicator;
+				this.layersHeader[index] = new IndicatorHeader<Base>( this.elements.idcsInfos, this.parentElement, indicator, {
+					onOpenSettings: this.displayIndicatorSettings,
+					onRemove: this.removeIndicator,
+					onActivate: this.activateIndicator,
+				} );
+				this.elements.rowIdcCount.innerText = `${ index+1 }`;
 				break;
 			}
-			default: break;
+			default:
+				break;
 		}
 
 		this.resizeCanvas();
 
 		return this;
+	}
+	
+	activateIndicator = <I extends Base> ( indicator: I, isActive: boolean ) => {
+		indicator.setActive( isActive );
+		this.onResize();
+		this.refresh();
+	}
+	
+	removeIndicator = <I extends Base> ( indicator: I ) => {
+		switch ( indicator.displayMode ){
+			case 'row':{
+				const row = this.chartRows.find( item => item.getIndicator() === indicator );
+				if( !row ){return;}
+				row.remove();
+				this.onResize();
+				break;
+			}
+			case 'layer':{
+				const index = this.layers.indexOf( indicator );
+				if ( index === -1 ){	return;}
+				this.layers.splice( index, 1 );
+				this.layersHeader[index].remove();
+				this.layersHeader.splice( index, 1 );
+				this.elements.rowIdcCount.innerText = `${ this.layers.length }`;
+				break;
+			}
+		}
+		this.refresh();
+	}
+	
+	displayIndicatorSettings = <I extends Base>( indicator: I ) => {
+		this.indicatorSettings.display( indicator, true );
 	}
 
 	beforeDestroy (){
@@ -287,6 +373,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		
 		Dialog.beforeDestroy();
 		InputBase.beforeDestroy();
+		Popover.beforeDestroy();
+		IndicatorHeader.beforeDestroy();
 	}
 
 	refresh (){
@@ -299,7 +387,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.updateX( true, true );
 	}
 	
-	getElement( key: keyof Chart['elements'] ){
+	getElement( key: keyof Chart<Tick>['elements'] ){
 		return this.elements[key];
 	}
 	
@@ -681,12 +769,11 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		}
 	}
 	
-	private onResize = ( event: UIEvent ) => {
-		// console.log('onResize', event );
+	private onResize = () => {
 		this.resizing = true;
 		requestAnimationFrame( this.update );
 	}
-
+	
 	private update = () => {
 		let render = false;
 
@@ -815,7 +902,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return resized;
 	}
 
-	private createDomElements (){
+	private createElements (){
 		Object.assign( this.parentElement.style, {
 			display: 'flex',
 			'flex-direction': 'column',
@@ -947,60 +1034,99 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		} );
 		this.elements.labelY = createElement( 'div', {
 			relativeElement: this.elements.main,
+			innerText: '0',
 			className: 'cross-label-y',
 			style: {
 				...crossLabelStyle,
 				right: '0', width: this.elements.scaleY.style.width,
 			}
 		} );
-		this.elements.labelY.innerText = '0';
 		this.elements.labelY.style.marginTop = `${ -Math.round( this.elements.labelY.clientHeight / 2 ) }px`;
 		//____ infos
 		this.elements.infos = createElement( 'div', {
-			relativeElement: this.elements.main,
-			className: 'infos',
-			style: {
-				background: '#161616cc', padding: '0 8px',
-				position: 'absolute', left: '1px', top: '1px', zIndex: '96',
-				display: 'flex', flexDirection: 'row', gap: '8px', justifyContent: 'flex-start',
-			}
+			relativeElement: this.elements.candles,
+			className: 'tick-infos',
 		} );
 		Object.entries( this.infosLabels ).forEach( ( [ key, label ] ) => {
 			const k = `info-${ key }`;
 			this.elements[ k ] = createElement( 'div', {
 				relativeElement: this.elements.infos,
-				className: k,
-				style: {
-					display: 'flex', flexDirection: 'row', gap: '4px', justifyContent: 'flex-start',
-				}
+				className: `tick-info ${k}`,
 			} );
 			this.elements[ k ].innerText = `${ label }:`;
 
 			const kv = `${ k }-value`;
 			this.elements[ kv ] = createElement( 'div', {
 				relativeElement: this.elements[ k ],
-				className: kv,
-				style: {}
+				className: `tick-info-value ${kv}`,
 			} );
+		} );
+		//____ indicator settings
+		this.elements.idcsBar = createElement('div', {
+			relativeElement: this.elements.candles,
+			className: 'idcs-bar',
+		});
+		this.elements.btToggleIdcsSettings = createElement('button', {
+			relativeElement: this.elements.idcsBar,
+			className: 'bt-toggle-display',
+			icon: { className: 'chevron-down' },
+			events: {
+				'click': () => {
+					const display = this.elements.idcsInfos.style.display === 'none';
+					this.elements.idcsInfos.style.display = display ? 'flex' : 'none';
+					if( this.elements.btToggleIdcsSettingsIcon ){
+						this.elements.btToggleIdcsSettingsIcon.style.transform = `rotate(${ display ? 0 : 180}deg)`;
+					}
+				}
+			}
+		});
+		this.elements.btToggleIdcsSettingsIcon = this.elements.btToggleIdcsSettings.querySelector( '.icon' ) as HTMLElement;
+		this.elements.rowIdcCount = createElement('div', {
+			relativeElement: this.elements.btToggleIdcsSettings,
+			relativePosition: 'prepend',
+			innerText: '0',
+		});
+		this.elements.idcsInfos = createElement('div', {
+			relativeElement: this.elements.idcsBar,
+			className: 'col idcs-infos',
+			style: {
+				display: 'none',
+			}
+		});
+
+		//___ toolbar top
+		this.elements.toolbarTop = createElement( 'div', {
+			relativeElement: this.elements.candles,
+			className: 'toolbar toolbar-top',
+		} );
+
+		createElement( 'button', {
+			relativeElement: this.elements.toolbarTop,
+			className: 'btn small',
+			attr: { title: 'Add sindicator...' },
+			icon: { className: 'chart-line' },
+			events: {
+				click: () => {
+					this.indicatorSelection.diplay();
+				}
+			}
 		} );
 
 		//__ options elements
 		if ( this.options.uiElements.buttonGoMaxX ){
 			if ( this.options.uiElements.buttonGoMaxX === true ){
 				this.elements.buttonGoMaxX = createElement( 'button', {
+					attr: {
+						title: 'Scroll X to max',
+					},
 					relativeElement: this.elements.candles,
 					style: {
 						position: 'absolute', bottom: '1px', right: '1px', zIndex: '150', padding: '4px',
+					},
+					icon: {
+						className: 'icon ic-chevron-double-right',
 					}
 				} );
-				createElement( 'span', {
-					relativeElement: this.elements.buttonGoMaxX,
-					className: 'icon ic-chevron-double',
-					style: {
-						transform: 'rotate(90deg)',
-					}
-				} );
-				this.elements.buttonGoMaxX.title = 'Scroll X to max';
 			} else {
 				this.elements.buttonGoMaxX = this.elements.candles.appendChild( this.options.uiElements.buttonGoMaxX );
 			}

@@ -20,6 +20,7 @@ module.exports = {
     'vue/attributes-order': 'off',
     'vue/first-attribute-linebreak': 'off',
     'vue/require-toggle-inside-transition': 'off',
+    '@typescript-eslint/no-unused-vars': [ 'warn' ]
   },
   // overrides: [
   //   {

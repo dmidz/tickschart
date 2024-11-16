@@ -1,14 +1,12 @@
 import InputBase, { type BaseOptions } from './InputBase.ts';
-import { createElement } from '@/lib';
+import { createElement } from '../index';
 
 //_____
 export type Options = BaseOptions & {
-	min?: number,
-	max?: number
 }
 
 //______
-export default class InputNumber extends InputBase<Options> {
+export default class InputText extends InputBase<Options> {
 	constructor( key: string, options: Options = {} ){
 
 		super( key, options );

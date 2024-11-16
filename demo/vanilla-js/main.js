@@ -1,5 +1,5 @@
 
-import { Chart, Fetcher, intervalsMs, Player, indicator } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart@0.0/+esm';
+import { Chart, Fetcher, intervalsMs, Player, indicator } from 'https://cdn.jsdelivr.net/npm/@dmidz/tickschart@1/+esm';
 
 const { m1, h1, d1 } = intervalsMs;
 

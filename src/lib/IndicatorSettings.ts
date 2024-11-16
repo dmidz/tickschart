@@ -59,7 +59,7 @@ export default class IndicatorSettings {
 		}
 
 		this.dialog.display( display, {
-			title: `${ indicator.getLabel() }`,
+			title: `${ indicator.label }`,
 			content: this.elContent,
 		} );
 	}

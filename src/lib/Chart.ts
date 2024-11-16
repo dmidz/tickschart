@@ -4,14 +4,14 @@ import { ScalingLinear, type Scale, type ScalingLinearOptions } from './utils/ma
 import UiScale, { type Options as UiScaleOptions } from './UiScale.ts';
 import { ListenerEventFactory, createElement, resizeCanvas, sharpCanvasValue,
 	type CandleTick, type GetTick, type ElementRect, type TickProp, type AbstractTick } from './index.ts';
-import { Base } from './Indicator/index.ts';
+import { Base, list as indicators } from './Indicator/index.ts';
 import ChartRow, { Options as ChartRowOptions } from './ChartRow.ts';
 import { Dialog, Popover, InputBase } from './UI/index.ts';
 import IndicatorSettings from './IndicatorSettings.ts';
 import IndicatorSelection from './IndicatorSelection.ts';
 import IndicatorHeader from '@/lib/IndicatorHeader.ts';
 
-type Indicator = { getLabel: () => string, new (): any }
+type Indicator = { new (): any }
 
 //______
 export type Options<Tick extends AbstractTick> = {
@@ -90,7 +90,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		},
 		chartRow: {},
 		mapTickProps: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
-		indicators: {},
+		indicators,
 	};
 
 	private elements: Record<string,HTMLElement> = {};

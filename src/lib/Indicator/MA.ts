@@ -28,7 +28,7 @@ const properties = [ 'close', 'open', 'high', 'low' ];
 
 export default class MA extends Base<Options, Computed> {
 
-	static readonly label = 'SMA / EMA';
+	label = 'SMA / EMA';
 
 	readonly displayMode: DisplayMode = 'layer';
 

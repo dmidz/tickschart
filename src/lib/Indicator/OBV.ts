@@ -30,6 +30,8 @@ type Computed = {
 
 export default class OBV extends Base<Options, Computed> {
 
+	label = 'OBV';
+
 	userSettings: Settings<Options> = [];
 
 	constructor ( options: Partial<Options & BaseOptions> = {} ){

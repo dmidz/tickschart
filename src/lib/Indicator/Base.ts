@@ -61,13 +61,6 @@ export default abstract class Base<
 	TCK extends TickProp | CK = TickProp | CK,
 > {
 	
-	//__ static
-	static label: string;
-
-	static getLabel (){
-		return this.label || this.name;
-	}
-	
 	//__ instance
 	private compute: ComputeSetup<CK>;
 	public options: BaseOptions & Options;
@@ -103,18 +96,15 @@ export default abstract class Base<
 		this.lib = new Computation<TCK>( this.tickStep, this.computed.bind( this ) );
 		this.compute = this.computeSetup();
 	}
+	
+	abstract label: string;
 
 	abstract computeSetup(): ComputeSetup<CK>;
 	abstract draw( index: number ): void;
 	
 	abstract userSettings: Settings<Options>;
 	userSettingsInHeader: NestedKeyOf<Options & BaseOptions>[] = [];
-
-	getLabel (){
-		// @ts-ignore
-		return this.constructor.getLabel();
-	}
-
+	
 	setOption<K extends NestedKeyOf<Options & BaseOptions> = NestedKeyOf<Options & BaseOptions>,V extends Options[K]=Options[K]>( key: K, value: V, reset = true ){
 		set( this.options, key, value );
 		if( reset ){

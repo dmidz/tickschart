@@ -10,7 +10,7 @@ export type Options = {
 	onUpdate?: ( indicator: Indicator ) => void,
 }
 
-type Indicator = { getLabel: () => string, new(): Base }
+type Indicator = { new(): Base }
 
 //______
 export default class IndicatorSelection {
@@ -60,11 +60,16 @@ export default class IndicatorSelection {
 			}
 		});
 		
-		const orderedKeys = Object.keys( this.options.indicators ).sort( ( a, b ) => {
-			const aLabel = this.options.indicators[a].getLabel();
-			const bLabel = this.options.indicators[b].getLabel();
-			if( aLabel > bLabel ){  return 1;}
-			else if( aLabel < bLabel ){  return -1;}
+		const keys = Object.keys( this.options.indicators );
+		
+		const labels: {[key:string]: string} = {};
+		keys.forEach( key => {
+			labels[key] = new this.options.indicators[key]().label;
+		});
+		
+		const orderedKeys = keys.sort( ( a, b ) => {
+			if( labels[a] > labels[b] ){  return 1;}
+			else if( labels[ a ] < labels[ b ] ){  return -1;}
 			return 0;
 		});
 		
@@ -72,7 +77,7 @@ export default class IndicatorSelection {
 			const el = createElement( 'div', {
 				relativeElement: list,
 				className: `item indicator-${ key }`,
-				innerText: this.options.indicators[ key ].getLabel(),
+				innerText: labels[key],
 				events: {
 					click: () => {
 						this.setSelection( key );

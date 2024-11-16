@@ -30,7 +30,7 @@ type Computed = {
 
 export default class VolumeImpulse extends Base<Options, Computed> {
 
-	static label = 'Volume Impulse';
+	label = 'Volume Impulse';
 	
 	userSettings: Settings<Options> = [
 		new Setting( 'maLength', 'number', {

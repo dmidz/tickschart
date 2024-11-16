@@ -1,3 +1,12 @@
+# [1.2.0](https://github.com/dmidz/tickschart/compare/v1.1.0...v1.2.0) (2024-11-16)
+
+
+### Features
+
+* **core:** indicators add / remove ([#19](https://github.com/dmidz/tickschart/issues/19)) ([861503c](https://github.com/dmidz/tickschart/commit/861503c6ca54f794c594265d958a6e70bb10ebee))
+
+
+
 # [1.1.0](https://github.com/dmidz/tickschart/compare/v1.0.1...v1.1.0) (2024-10-30)
 
 

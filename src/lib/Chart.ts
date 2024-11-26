@@ -48,6 +48,7 @@ export type Options<Tick extends AbstractTick> = {
 	chartRow: ChartRowOptions,
 	mapTickProps: { [key in TickProp]: keyof Tick},
 	indicators: Readonly<{[key: string]: Indicator }>,
+	tickStepDelta?: number,
 }
 
 export default class Chart<Tick extends AbstractTick = CandleTick> {
@@ -91,6 +92,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		chartRow: {},
 		mapTickProps: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
 		indicators,
+		tickStepDelta: 0,
 	};
 
 	private elements: Record<string,HTMLElement> = {};
@@ -126,6 +128,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	private indicatorSelection: IndicatorSelection;
 	private tickIndexMax: number = Infinity;
 	private indicatorsOptions: {[key: string]: { [ key: string ]: any } } = {};
+	private tickStepDelta = 0;
 	
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
@@ -139,6 +142,10 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.parentElement = parentElement;
 		this._getTick = getTick;
 		this.options = merge( this.options, options );
+		
+		if( typeof this.options.tickStepDelta === 'number'){
+			this.tickStepDelta = this.options.tickStepDelta;
+		} 
 		
 		//__ build dom elements
 		this.createElements();
@@ -410,8 +417,15 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return this.options.tickIndexMax?.() || Infinity;
 	}
 
-	setTickStep( tickStep: number, { render = true, xOriginRatio = 0 } = {} ){
+	setTickStep( tickStep: number, { render = true, xOriginRatio = 0, tickStepDelta }
+				: { render?: boolean, xOriginRatio?: number, tickStepDelta?: number } = {} ){
 		this.tickStep = tickStep;
+
+		// console.log('setTickStep', { tickStep, tickStepDelta });
+		if ( tickStepDelta ){
+			this.tickStepDelta = tickStepDelta;
+		}
+
 		this.scalingX.setOption( 'precisionIn', this.tickStep );
 		const dw = this.width * this.tickStep;
 		this.scalingX.setDistInMax( dw );// force min tick width 1px
@@ -436,7 +450,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	private updateTickIndexMax(){
 		this.tickIndexMax = Infinity;
 		if ( this.options.tickIndexMax ){
-			this.tickIndexMax = this.options.tickIndexMax();
+			this.tickIndexMax = this.options.tickIndexMax() + this.tickStepDelta;
 		}
 		if ( this.maxDisplayX ){
 			this.tickIndexMax = Math.min( this.tickIndexMax, this.maxDisplayX );
@@ -488,8 +502,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.cx = this.scalingX.distIn / this.scalingX.distOut;
 
 		let changed = false;
-		const xStart = Math.floor( this.scalingX.scaleIn.min / this.tickStep ) * this.tickStep;
-		const xEnd = Math.ceil( this.scalingX.scaleIn.max / this.tickStep ) * this.tickStep;
+		const xStart = this.tickStepDelta + Math.floor( this.scalingX.scaleIn.min / this.tickStep ) * this.tickStep;
+		const xEnd = this.tickStepDelta + Math.ceil( this.scalingX.scaleIn.max / this.tickStep ) * this.tickStep;
 		if ( force || xStart !== this.xStart || xEnd !== this.xEnd ){
 			this.xStart = xStart;
 			this.xEnd = xEnd;
@@ -607,12 +621,12 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			row.clearRect( xPx, wPx );
 		} );
 
-		// console.log( 'render', { xStart, _xStart, xEnd, _xEnd, xPx, wPx,
-		// 	scaleXMin: this.scalingX.scaleIn.min, scaleXMax: this.scalingX.scaleIn.max, distIn: this.scalingX.distIn } );
+		// console.log( 'render', { /*xStart,*/ _xStart, /*xEnd,*/ _xEnd, xPx, wPx,
+		// 	scalingX: this.scalingX } );
 
 		_xEnd = Math.min( _xEnd, this.maxRenderX );
 
-		// console.log( '//_________ render', { _xStart: new Date( _xStart ).toUTCString(), xStart: new Date( xStart ).toUTCString(), thisxStart: new Date( this.xStart ).toUTCString() } );
+		// console.log( '//_________ render', { _xStart: new Date( _xStart ).toUTCString()} );
 		let xPos: number;
 		let x = _xStart;
 		while ( x <= _xEnd ){
@@ -788,7 +802,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 
 			if ( this.mouseOverChart ){
 				//__ crosshair
-				const x = this.scalingX.scaleToInv( event.offsetX - this.tickWidthHalf );
+				const x = this.tickStepDelta + this.scalingX.scaleToInv( event.offsetX - this.tickWidthHalf );
 				const tick = this.getTick( x );
 				if ( x <= this.tickIndexMax ){
 					Object.keys( this.infosLabels ).forEach( key => {

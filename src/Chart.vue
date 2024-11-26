@@ -6,7 +6,7 @@ import Volume2 from './custom-indicators/Volume2';// "custom" indicator sample
 
 const indicators = { ...indicator.list, Volume2 } as const;
 
-const { m1, h1, d1 } = intervalsMs;
+const { m1, h1, d1, w1 } = intervalsMs;
 
 type Tick = typeof defaultTick;
 type DataTick = Record<string, Tick>;//__ structure of one ticks load
@@ -46,6 +46,9 @@ let chart: Chart<Tick>;
 const INTERVALS = {
 	'1h': h1,
 	'4h': h1*4,
+	'1d': d1,
+	'3d': d1*3,
+	'1w': w1,
 }
 type Intervals = keyof typeof INTERVALS;
 
@@ -53,7 +56,6 @@ const interval = ref<Intervals>('4h');
 
 watch([() => interval.value], () => {
 	fetcher.setTimeScale( INTERVALS[ interval.value ] );
-	chart.setTickStep( INTERVALS[interval.value] );
 });
 
 const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
@@ -84,9 +86,13 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 	ticksPerLoad,
 	prefetchMargin: 1,
 	cacheSize: 2,
-	onLoad: ( loadedRange, mightRefresh ) => {
+	onLoad: ( loadedRange, mightRefresh, deltaTime ) => {
 		//__ refresh when new loaded so long indicators ( ex: ma 200 ) have their data progressively without waiting whole loaded
 		if ( mightRefresh ){
+			// console.log( 'onLoad', loadedRange, mightRefresh, deltaTime );
+			if ( deltaTime ){
+				chart.setTickStep( INTERVALS[ interval.value ], { tickStepDelta: deltaTime, render: false } );
+			}
 			chart.refresh();
 		}
 	},

@@ -9,7 +9,7 @@ export type Options = {
 			necessary for long indicators ( ex MA 200 periods ) needing data far left of current view */
 	fetchOnDemand?: boolean,
 	/*__ onLoad gives opportunity to refresh display ( called only on true new load finish ) */
-	onLoad?: ( loadedRange: LoadedTimeRange, mightRefresh?: boolean, isPrefetch?: boolean ) => void,
+	onLoad?: ( loadedRange: LoadedTimeRange, mightRefresh?: boolean, deltaTime?: number, isPrefetch?: boolean ) => void,
 	debug?: boolean,
 }
 
@@ -80,6 +80,17 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 								if ( !r ){
 									return Promise.reject( 'response is null' );
 								}
+
+								let deltaTime = 0;
+								const keys = Object.keys( r );
+								if( keys.length ){
+									const firstKey = Object.keys( r )[ 0 ];
+									if ( firstKey ){
+										deltaTime = +firstKey % this.options.timeScaleMs;
+									}
+								}
+								
+								// console.log('deltaTime', { time, firstKey, deltaTime });
 								this.mapTicks.set( time, r );
 								const res: LoadedTimeRange = { min: time, max: time + this.timePerLoad };
 								debug && console.log( 'loaded', {
@@ -87,7 +98,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 									timeEnd: `${ res.max } (${ new Date( res.max ).toUTCString() })`,
 									count: Object.keys( r ).length,
 								} );
-								this.options.onLoad( res, this.mapRefresh.get( time ), !opts.prefetch );
+								this.options.onLoad( res, this.mapRefresh.get( time ), deltaTime , !opts.prefetch );
 								this.mapRefresh.delete( time );
 								return res;
 							} )

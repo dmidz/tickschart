@@ -626,19 +626,11 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		_xEnd = Math.min( _xEnd, this.maxRenderX );
 
 		// console.log( '//_________ render', { _xStart: new Date( _xStart ).toUTCString()} );
-		let xPos: number;
 		let x = _xStart;
 		while ( x <= _xEnd ){
 			const tick = this.getTick( x );
 			if( !this.options.isDefaultTick( tick )){
-				xPos = this.scalingX.scaleTo( x );
-				this.layers.forEach( indicator => {
-					indicator.drawTick( xPos, this.tickWidth, x );
-				} );
-				this.drawTick( xPos, this.tickWidth, x );
-				this.chartRows.forEach( row => {
-					row.getIndicator().drawTick( xPos, this.tickWidth, x );
-				} );
+				this.drawTick( x, tick );
 			}
 			x += this.tickStep;
 		}
@@ -648,10 +640,21 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.ctxTicks.clearRect( x, 0, w, this.canvas.height );
 	}
 
-	drawTick( x: number, width: number, index: number ){
-		
-		const tick = this.getTick( index );
+	drawTickClear ( index: number, tick: Tick ){
+		const xPos = this.scalingX.scaleTo( index );
+		this.clearRect( xPos, this.tickWidth );
+		this.drawTick( index, tick );
+	}
+	
+	drawTick( index: number, tick: Tick ){
 
+		const xPos = this.scalingX.scaleTo( index );
+		
+		this.layers.forEach( indicator => {
+			indicator.drawTick( xPos, this.tickWidth, index );
+		} );
+
+		//___
 		const ctx = this.ctxTicks;
 		const isDown = +this.tickValue( tick,'close' ) < +this.tickValue( tick, 'open' );
 		const col = isDown ? this.options.candle.color.down : this.options.candle.color.up;
@@ -659,7 +662,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		//__ wick
 		ctx.strokeStyle = col;
 		ctx.beginPath();
-		const xWick = sharpCanvasValue( x + this.tickWidthHalf, .5 );//__ canvas 1px line need .5 pos
+		const xWick = sharpCanvasValue( xPos + this.tickWidthHalf, .5 );//__ canvas 1px line need .5 pos
 
 		ctx.moveTo( xWick, this.scalingY.scaleTo( this.tickValue( tick, 'high' ) ) );
 		ctx.lineTo( xWick, this.scalingY.scaleTo( this.tickValue( tick, 'low' ) ) );
@@ -669,8 +672,13 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		ctx.fillStyle = col;
 		const yOpen = this.scalingY.scaleTo( this.tickValue(tick, 'open') );
 		const yClose = this.scalingY.scaleTo( this.tickValue( tick, 'close' ) );
-		const xBody = sharpCanvasValue( x );
-		ctx.fillRect( xBody, isDown ? yOpen : yClose, width, Math.max( 1, Math.abs( yClose - yOpen ) ) );
+		const xBody = sharpCanvasValue( xPos );
+		ctx.fillRect( xBody, isDown ? yOpen : yClose, this.tickWidth, Math.max( 1, Math.abs( yClose - yOpen ) ) );
+
+		//___
+		this.chartRows.forEach( row => {
+			row.getIndicator().drawTick( xPos, this.tickWidth, index );
+		} );
 
 		//console.log( 'drawTick', { isDown, xWick, xBody }, tick );
 	}

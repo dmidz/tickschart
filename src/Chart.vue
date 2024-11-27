@@ -26,8 +26,8 @@ const ticksURL = SAMPLE_MODE
 	//__ '/api' url requests will be proxied by vite server which will use API_BASE, check vite.config.js server entry
 	: `${ window.location.origin }/api/exch/market-ticks`;
 const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
-// const currentTime = new Date();// initial time position
-const currentTime = new Date( Date.UTC( 2023, 10, 9 ) );
+const currentTime = new Date();// initial time position
+// const currentTime = new Date( Date.UTC( 2023, 10, 9 ) );
 const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 
 const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, { 
 	timeZone: 'UTC',
@@ -58,6 +58,9 @@ watch([() => interval.value], () => {
 	chart.setTickStep( INTERVALS[ interval.value ] );
 	fetcher.setTimeScale( INTERVALS[ interval.value ] );
 });
+
+let intRealTime;
+let realTimeTick: Tick;
 
 const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 	if( SAMPLE_MODE && sampleTicks ){ return sampleTicks;}
@@ -93,6 +96,23 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 		//__ refresh when new loaded so long indicators ( ex: ma 200 ) have their data progressively without waiting whole loaded
 		if ( loadedRange.refresh ){
 			chart.refresh();
+		}
+
+		//__ fake "real time" last tick
+		if( !intRealTime ){
+			const now = Date.now();
+			if( now >= loadedRange.min && now <= loadedRange.max ){
+				const pr = .5/100;
+				intRealTime = setInterval( () => {
+					const t = Math.floor( Date.now() / chart.tickStep ) * chart.tickStep;
+					if( !realTimeTick || +realTimeTick.time !== t ){
+						realTimeTick = { ...chart.getTick( t ) };
+					}
+					const p = 1 -pr/2 + Math.random() * pr;
+					realTimeTick.close *= p;
+					chart.drawTickClear( t, realTimeTick );
+				}, 1000 );
+			}
 		}
 	},
 	// debug: true,
@@ -163,6 +183,7 @@ onMounted( async () => {
 
 onBeforeUnmount( () => {
 	chart?.beforeDestroy();
+	clearInterval( intRealTime );
 });
 
 </script>

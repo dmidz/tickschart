@@ -1,3 +1,18 @@
+# [1.3.0](https://github.com/dmidz/tickschart/compare/v1.2.1...v1.3.0) (2024-11-27)
+
+
+### Bug Fixes
+
+* **core:** Chart add tickStepDelta ([7f21afc](https://github.com/dmidz/tickschart/commit/7f21afc16e7924f6362f22cbb41be02ae7917b2f))
+* **core:** no draw when tick = defaultTick ([363b598](https://github.com/dmidz/tickschart/commit/363b598d2a82c336f547688cb801dbd216c85a16))
+
+
+### Features
+
+* **core:** add chart.drawTickClear to repaint a specific tick ( such last real time one ) ([767163a](https://github.com/dmidz/tickschart/commit/767163a21da5166663d4508c9a011083b6000c21))
+
+
+
 ## [1.2.1](https://github.com/dmidz/tickschart/compare/v1.2.0...v1.2.1) (2024-11-16)
 
 

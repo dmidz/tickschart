@@ -9,11 +9,16 @@ export type Options = {
 			necessary for long indicators ( ex MA 200 periods ) needing data far left of current view */
 	fetchOnDemand?: boolean,
 	/*__ onLoad gives opportunity to refresh display ( called only on true new load finish ) */
-	onLoad?: ( loadedRange: LoadedTimeRange, mightRefresh?: boolean, deltaTime?: number, isPrefetch?: boolean ) => void,
+	onLoad?: ( loadedRange: LoadedTimeRange ) => void,
 	debug?: boolean,
 }
 
-export type LoadedTimeRange = MinMax;
+export type LoadedTimeRange = MinMax & { 
+	full: boolean,
+	indexMin?: number,
+	deltaTime: number,
+	refresh: boolean
+};
 
 export type FetchTicks<FetchResult> = ( startTime: number, limit: number ) => Promise<FetchResult|null>;
 
@@ -23,7 +28,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 		timeScaleMs: 1000 * 60 * 60,
 		ticksPerLoad: 200,
 		prefetchMargin: 1,//__ prefer minimum 1 so fast drag through entire screen width won't show loading
-		cacheSize: 2,
+		cacheSize: 5,
 		fetchOnDemand: true,
 		onLoad: () => {},
 		debug: false,
@@ -49,7 +54,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 		return timeScaleMs;
 	}
 
-	fetchTicks( timeStart: number, timeEnd: number, opts: { prefetch?: boolean } = { prefetch: true } ): Promise<LoadedTimeRange|null>[]{
+	fetchTicks( timeStart: number, timeEnd: number, { prefetch = true }: { prefetch?: boolean } = {} ): Promise<LoadedTimeRange|null>[]{
 		const debug = this.options.debug;
 
 		const res: Promise<LoadedTimeRange|null>[] = [];
@@ -83,23 +88,31 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 
 								let deltaTime = 0;
 								const keys = Object.keys( r );
-								if( keys.length ){
-									const firstKey = Object.keys( r )[ 0 ];
-									if ( firstKey ){
-										deltaTime = +firstKey % this.options.timeScaleMs;
-									}
+								const firstKey = keys[ 0 ];
+								if ( firstKey ){
+									deltaTime = +firstKey % this.options.timeScaleMs;
 								}
+
+								// console.log('loaded', { len: keys.length, time, firstKey, deltaTime });
 								
-								// console.log('deltaTime', { time, firstKey, deltaTime });
 								this.mapTicks.set( time, r );
-								const res: LoadedTimeRange = { min: time, max: time + this.timePerLoad };
+								const full = keys.length === this.options.ticksPerLoad;
+								const res: LoadedTimeRange = {
+									refresh: !!this.mapRefresh.get( time ),
+									min: time,
+									max: time + this.timePerLoad,
+									deltaTime,
+									indexMin: ( !full && firstKey ) ? +firstKey : undefined,
+									full,
+								};
+								
+								this.mapRefresh.delete( time );
 								debug && console.log( 'loaded', {
 									timeStart: `${ res.min } (${ new Date( res.min ).toUTCString() })`,
 									timeEnd: `${ res.max } (${ new Date( res.max ).toUTCString() })`,
 									count: Object.keys( r ).length,
 								} );
-								this.options.onLoad( res, this.mapRefresh.get( time ), deltaTime , !opts.prefetch );
-								this.mapRefresh.delete( time );
+								this.options.onLoad( res );
 								return res;
 							} )
 							.catch( err => {
@@ -125,7 +138,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 		// } );
 
 		//__
-		if ( opts.prefetch && res.length ){
+		if ( prefetch && res.length ){
 			const d = this.timePerLoad * this.options.prefetchMargin;
 			loadedStart = Math.floor( ( loadedStart - d ) / this.timePerLoad ) * this.timePerLoad;
 			loadedEnd = Math.floor( ( loadedEnd + d ) / this.timePerLoad ) * this.timePerLoad;
@@ -162,7 +175,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 		if( !res && this.options.fetchOnDemand ){
 			this.mapRefresh.set( t, true );
 			if( !this.mapFetches.get( t ) ){
-				this.fetchTicks( t, t + this.timePerLoad, { prefetch: false } );
+				this.fetchTicks( t, t + this.timePerLoad/*, { prefetch: false }*/ );
 			}
 		}
 		return res;

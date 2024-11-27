@@ -1,7 +1,7 @@
 
 import { merge, indicator } from '@/lib';
 
-//__ custom ( out of lib ) indicator sample ( copy of VOlume )
+//__ custom ( out of lib ) indicator sample ( copy of Volume )
 
 //__ contract of constructor arg options
 export type Options = {

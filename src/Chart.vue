@@ -55,6 +55,7 @@ type Intervals = keyof typeof INTERVALS;
 const interval = ref<Intervals>('4h');
 
 watch([() => interval.value], () => {
+	chart.setTickStep( INTERVALS[ interval.value ] );
 	fetcher.setTimeScale( INTERVALS[ interval.value ] );
 });
 
@@ -84,15 +85,13 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 }, {
 	timeScaleMs,
 	ticksPerLoad,
-	prefetchMargin: 1,
-	cacheSize: 2,
-	onLoad: ( loadedRange, mightRefresh, deltaTime ) => {
+	onLoad: ( loadedRange ) => {
+		// console.log( 'onLoad', loadedRange );
+		if ( loadedRange.deltaTime ){
+			chart.setTickStepDelta( { tickStepDelta: loadedRange.deltaTime, render: !loadedRange.refresh } );
+		}
 		//__ refresh when new loaded so long indicators ( ex: ma 200 ) have their data progressively without waiting whole loaded
-		if ( mightRefresh ){
-			// console.log( 'onLoad', loadedRange, mightRefresh, deltaTime );
-			if ( deltaTime ){
-				chart.setTickStep( INTERVALS[ interval.value ], { tickStepDelta: deltaTime, render: false } );
-			}
+		if ( loadedRange.refresh ){
 			chart.refresh();
 		}
 	},
@@ -102,19 +101,13 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 const rangeLoadMs = ticksPerLoad * timeScaleMs;
 onMounted( async () => {
 	if( !refChartWrapper.value ){ return;}
-	let init = false;//__ using to prevent fetching until chart fully initialized ( timeScale, symbol, etc )
 	
-	chart = new Chart<Tick>( refChartWrapper.value, timeScaleMs, SAMPLE_MODE ? ( index: number ) => {
+	chart = new Chart<Tick>( refChartWrapper.value, timeScaleMs,SAMPLE_MODE ? ( index: number ) => {
 		/*__ normally pass fetcher.getTick directly, but when SAMPLE_MODE
 					we can bypass it to always return a tick from the file time range */
 		return fetcher.getMapTicks( index )?.[ sampleTimeStart + index % rangeLoadMs ] || defaultTick;
 	} : fetcher.getTick, {
 		mapTickProps,
-		onScalingXChange: async ( scalingX ) => {
-			if( !init ){  return;}//__ avoid any fetch during initialization
-			const fetches = fetcher.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max );
-			return Promise.all( fetches );
-		},
 		crossHairLabelX: ( value ) => {
 			const d = new Date( value );
 			return `${dateFormatCrossHair.format( d )} (UTC)`;
@@ -134,6 +127,7 @@ onMounted( async () => {
 		},
 		autoScaleY: true,
 		indicators,
+		isDefaultTick: ( tick ) => tick === defaultTick,
 		// tickWidth: 50,
 		// chartRow: {
 		// 	height: 200,
@@ -161,7 +155,6 @@ onMounted( async () => {
 	}
 
 	//__ can now apply the initial time & render
-	init = true;
 	chart.setX( currentTime.getTime(), { xOriginRatio } );
 
 	//__ player

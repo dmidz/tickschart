@@ -41,6 +41,7 @@ export type Options<Tick extends AbstractTick> = {
 	autoScaleYMargin: number,
 	yScaleWidth: number,
 	wheelScroll: boolean,
+	readonly tickIndexMin: ( () => any ) | null,
 	readonly tickIndexMax: ( () => number ) | null,
 	uiElements: {
 		buttonGoMaxX?: boolean | HTMLElement,
@@ -48,7 +49,7 @@ export type Options<Tick extends AbstractTick> = {
 	chartRow: ChartRowOptions,
 	mapTickProps: { [key in TickProp]: keyof Tick},
 	indicators: Readonly<{[key: string]: Indicator }>,
-	tickStepDelta?: number,
+	isDefaultTick: ( tick: Tick ) => boolean,
 }
 
 export default class Chart<Tick extends AbstractTick = CandleTick> {
@@ -85,6 +86,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		autoScaleYMargin: 30,// px
 		yScaleWidth: 100,
 		wheelScroll: true,
+		tickIndexMin: null,
 		tickIndexMax: () => Math.floor( Date.now() / this.tickStep ) * this.tickStep,
 		uiElements: {
 			buttonGoMaxX: true,
@@ -92,7 +94,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		chartRow: {},
 		mapTickProps: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
 		indicators,
-		tickStepDelta: 0,
+		isDefaultTick: () => false,
 	};
 
 	private elements: Record<string,HTMLElement> = {};
@@ -143,10 +145,6 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this._getTick = getTick;
 		this.options = merge( this.options, options );
 		
-		if( typeof this.options.tickStepDelta === 'number'){
-			this.tickStepDelta = this.options.tickStepDelta;
-		} 
-		
 		//__ build dom elements
 		this.createElements();
 
@@ -173,6 +171,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.scalingX = new ScalingLinear( { min: 0, max: 100 }, { min: 0, max: this.width }, {
 			precisionIn: this.tickStep,
 			scaleInMax: () => this.updateTickIndexMax(),
+			// scaleInMin: () => this.getTickIndexMin(),
 		} );
 		this.scalingY = new ScalingLinear( { min: 0, max: 100 },
 			{ min: this.height-this.options.autoScaleYMargin, max: this.options.autoScaleYMargin },
@@ -417,6 +416,10 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return this.options.tickIndexMax?.() || Infinity;
 	}
 
+	getTickIndexMin(){
+		return this.options.tickIndexMin?.() || -Infinity;
+	}
+
 	setTickStep( tickStep: number, { render = true, xOriginRatio = 0, tickStepDelta }
 				: { render?: boolean, xOriginRatio?: number, tickStepDelta?: number } = {} ){
 		this.tickStep = tickStep;
@@ -437,6 +440,10 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			indicator.setTickStep( this.tickStep );
 		});
 		this.setX( this.scalingX.scaleIn.min, { render, force: render, xOriginRatio } );
+	}
+	
+	setTickStepDelta( opts: { render?: boolean, xOriginRatio?: number, tickStepDelta?: number } = {} ){
+		this.setTickStep( this.tickStep, opts);
 	}
 
 	//__ x
@@ -515,22 +522,13 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		
 		// console.log( 'updateX', this.xStart, this.options.crossHairLabelX( this.xStart ), scale, this.options.crossHairLabelX( scale.min ) );
 
-		const after = () => {
-			requestAnimationFrame( this._updateX.bind( this, changed, render ) );
-		}
-
-		const p = this.options.onScalingXChange( this.scalingX );
-
-		if ( ( p as Promise<void> )?.then ){
-			p.then( after );
-		} else {
-			after();
-		}
+		requestAnimationFrame( this._updateX.bind( this, changed, render ) );
 
 		return this;
 	}
 	
 	_updateX( update: boolean, render: boolean ){
+		// console.log('_updateX', { update, render });
 		if ( update ){
 			this.autoScaleY( false );
 			const opts = {};
@@ -624,20 +622,24 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		// console.log( 'render', { /*xStart,*/ _xStart, /*xEnd,*/ _xEnd, xPx, wPx,
 		// 	scalingX: this.scalingX } );
 
+		// _xStart = Math.max( _xStart, this.getTickIndexMin() );
 		_xEnd = Math.min( _xEnd, this.maxRenderX );
 
 		// console.log( '//_________ render', { _xStart: new Date( _xStart ).toUTCString()} );
 		let xPos: number;
 		let x = _xStart;
 		while ( x <= _xEnd ){
-			xPos = this.scalingX.scaleTo( x );
-			this.layers.forEach( indicator => {
-				indicator.drawTick( xPos, this.tickWidth, x );
-			});
-			this.drawTick( xPos, this.tickWidth, x );
-			this.chartRows.forEach( row => {
-				row.getIndicator().drawTick( xPos, this.tickWidth, x );
-			} );
+			const tick = this.getTick( x );
+			if( !this.options.isDefaultTick( tick )){
+				xPos = this.scalingX.scaleTo( x );
+				this.layers.forEach( indicator => {
+					indicator.drawTick( xPos, this.tickWidth, x );
+				} );
+				this.drawTick( xPos, this.tickWidth, x );
+				this.chartRows.forEach( row => {
+					row.getIndicator().drawTick( xPos, this.tickWidth, x );
+				} );
+			}
 			x += this.tickStep;
 		}
 	}
@@ -646,7 +648,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.ctxTicks.clearRect( x, 0, w, this.canvas.height );
 	}
 
-	drawTick( x: number, width: number, index: number, debug = false ){
+	drawTick( x: number, width: number, index: number ){
 		
 		const tick = this.getTick( index );
 
@@ -670,7 +672,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		const xBody = sharpCanvasValue( x );
 		ctx.fillRect( xBody, isDown ? yOpen : yClose, width, Math.max( 1, Math.abs( yClose - yOpen ) ) );
 
-		// debug && console.log( 'drawTick', { isDown, xWick, xBody }, tick );
+		//console.log( 'drawTick', { isDown, xWick, xBody }, tick );
 	}
 	
 	tickValue( tick: Tick, prop: TickProp ) {

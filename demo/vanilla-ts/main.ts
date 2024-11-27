@@ -55,11 +55,13 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 }, {
 	timeScaleMs,
 	ticksPerLoad,
-	prefetchMargin: 1,
-	cacheSize: 2,
-	onLoad: ( time, mightRefresh ) => {
+	onLoad: ( loadedRange ) => {
+		// console.log( 'onLoad', loadedRange );
+		if ( loadedRange.deltaTime ){
+			chart.setTickStepDelta( { tickStepDelta: loadedRange.deltaTime, render: !loadedRange.refresh } );
+		}
 		//__ refresh when new loaded so long indicators ( ex: ma 200 ) have their data progressively without waiting whole loaded
-		if ( mightRefresh ){
+		if ( loadedRange.refresh ){
 			chart.refresh();
 		}
 	},
@@ -74,11 +76,6 @@ const chart = new Chart( document.getElementById('chart'), timeScaleMs, ( index:
 	return fetcher.getMapTicks( index )?.[ sampleTimeStart + index % rangeLoadMs ] || defaultTick;
 }, {
 	mapTickProps,
-	onScalingXChange: async ( scalingX ) => {
-		// if ( !init ){ return;}//__ avoid any fetch during initialization
-		const fetches = fetcher.fetchTicks( scalingX.scaleIn.min, scalingX.scaleIn.max );
-		return Promise.all( fetches );
-	},
 	crossHairLabelX: ( value ) => {
 		const d = new Date( value );
 		return `${ dateFormatCrossHair.format( d ) } (UTC)`;
@@ -97,6 +94,7 @@ const chart = new Chart( document.getElementById('chart'), timeScaleMs, ( index:
 		precisionIn: .001,//__ might be set from current symbol properties
 	},
 	autoScaleY: true,
+	isDefaultTick: ( tick ) => tick === defaultTick,
 } );
 
 chart.addIndicator( new indicator.list.Volume( { maLength: 14, maType: 'ema' } ) );

@@ -6,6 +6,7 @@ import { createElement } from './index.ts';
 export type Options = {
 	parentElement?: HTMLElement,
 	onUpdate?: ( indicator: Base, changes: {[key:string]: any} ) => void,
+	localStorageKey?: string | null,
 }
 
 //______
@@ -14,6 +15,7 @@ export default class IndicatorSettings {
 	private options: Required<Options> = {
 		parentElement: document.body,
 		onUpdate: () => {},
+		localStorageKey: null,
 	}
 
 	private dialog: Dialog;
@@ -21,17 +23,32 @@ export default class IndicatorSettings {
 	private elContent: HTMLElement | null = null;
 	private inputsChanges: { [ key: string ]: any } = {};
 	private inputs: InputBase[] = [];
-	
+	private indicatorsOptions: { [ key: string ]: { [ key: string ]: any } } = {};
+
 	constructor( options: Options = {} ){
 		Object.assign( this.options, options );
+
+		if( this.options.localStorageKey ){
+			const indicatorsOptions = localStorage.getItem( this.options.localStorageKey );
+			if ( indicatorsOptions ){
+				try {
+					this.indicatorsOptions = JSON.parse( indicatorsOptions );
+				} catch ( err ){
+					console.warn( 'Unable to parse localStorage "indicators"', err );
+				}
+			}
+		}
+
 		this.dialog = new Dialog( {
 			title: 'Indicator Settings',
 			parentElement: this.options.parentElement,
 			buttons: {
 				ok: () => {
-					if ( this.indicator ){
-						this.options.onUpdate( this.indicator, this.inputsChanges );
+					if ( !this.indicator ){
+						return;
 					}
+					this.saveSettings( this.indicator, this.inputsChanges );
+					this.options.onUpdate( this.indicator, this.inputsChanges );
 				},
 			},
 		} );
@@ -62,6 +79,22 @@ export default class IndicatorSettings {
 			title: `${ indicator.label }`,
 			content: this.elContent,
 		} );
+	}
+	
+	private saveSettings( indicator: Base | null, settings: any ){
+		if( !this.options.localStorageKey || !indicator?.id || !settings ){
+			return;
+		}
+		if( !this.indicatorsOptions[ indicator.id ] ){
+			this.indicatorsOptions[ indicator.id ] = {};
+		}
+		Object.assign( this.indicatorsOptions[ indicator.id ], settings );
+		localStorage.setItem( this.options.localStorageKey, JSON.stringify( this.indicatorsOptions ) );
+	}
+	
+	getIndicatorSettings( indicator: Base | null ){
+		if( !indicator?.id ){ return null;}
+		return this.indicatorsOptions[indicator.id];
 	}
 	
 	private createSettingField( indicator: Base, setting: typeof indicator.userSettings[number], parentElement: HTMLElement ){

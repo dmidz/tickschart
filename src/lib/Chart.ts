@@ -129,7 +129,6 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	private indicatorSettings: IndicatorSettings;
 	private indicatorSelection: IndicatorSelection;
 	private tickIndexMax: number = Infinity;
-	private indicatorsOptions: {[key: string]: { [ key: string ]: any } } = {};
 	private tickStepDelta = 0;
 	
 	constructor ( parentElement: HTMLElement | null,
@@ -232,16 +231,9 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		
 		this.indicatorSettings = new IndicatorSettings({
 			parentElement: this.parentElement,
+			localStorageKey: 'chart.indicators',
 			onUpdate: ( indicator, changes ) => {
 				indicator.setOptions( changes );
-				if( indicator.id ){
-					if( !this.indicatorsOptions[ indicator.id ] ){
-						this.indicatorsOptions[ indicator.id ] = {};
-					}
-					Object.assign( this.indicatorsOptions[ indicator.id ], changes );
-					localStorage.setItem('chart.indicators', JSON.stringify( this.indicatorsOptions));
-					// console.log( 'changes', changes, this.indicatorsOptions[ indicator.id ] );
-				}
 				const index = this.layers.indexOf( indicator );
 				if( index !== -1 ){
 					const header = this.layersHeader[index];
@@ -251,15 +243,6 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 				this.render();
 			},
 		});
-		
-		const indicatorsOptions = localStorage.getItem('chart.indicators');
-		if( indicatorsOptions ){
-			try {
-				this.indicatorsOptions = JSON.parse( indicatorsOptions );
-			}catch(err ){
-				console.warn('Unable to parse localStorage "indicators"', err);
-			}
-		}
 		
 		//__
 		return this;
@@ -271,10 +254,10 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 
 	addIndicator<I extends Base> ( indicator: I ){
 		indicator.setTickStep( this.tickStep );
-		indicator.id = `${indicator.constructor.name}-${this.indicatorsCount()}`;
-		const opts = this.indicatorsOptions[indicator.id];
-		if( opts ){
-			indicator.setOptions( opts );
+		indicator.id = `${indicator.label}-${this.indicatorsCount()}`;
+		const settings = this.indicatorSettings.getIndicatorSettings( indicator );
+		if( settings ){
+			indicator.setOptions( settings );
 		}
 
 		switch ( indicator.displayMode ){

@@ -1,3 +1,18 @@
+## [1.3.1](https://github.com/dmidz/tickschart/compare/v1.3.0...v1.3.1) (2024-12-16)
+
+
+### Bug Fixes
+
+* **core:** fix fake realtime tick ([52d5b48](https://github.com/dmidz/tickschart/commit/52d5b48379635dd3868de1150cdea8f0c98f2815))
+* **core:** setTickStep settickStepDelta to 0 by default ([1f5482a](https://github.com/dmidz/tickschart/commit/1f5482aecbe65f928a50a65fa14286dbb6417c30))
+
+
+### Features
+
+* **core:** move settings save to IndicatorSettings ([8add48a](https://github.com/dmidz/tickschart/commit/8add48af76cc3f743f5769885abd746bfa711cb9))
+
+
+
 # [1.3.0](https://github.com/dmidz/tickschart/compare/v1.2.1...v1.3.0) (2024-11-27)
 
 

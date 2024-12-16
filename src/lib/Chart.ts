@@ -403,14 +403,12 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return this.options.tickIndexMin?.() || -Infinity;
 	}
 
-	setTickStep( tickStep: number, { render = true, xOriginRatio = 0, tickStepDelta }
+	setTickStep( tickStep: number, { render = true, xOriginRatio = 0, tickStepDelta = 0 }
 				: { render?: boolean, xOriginRatio?: number, tickStepDelta?: number } = {} ){
 		this.tickStep = tickStep;
 
 		// console.log('setTickStep', { tickStep, tickStepDelta });
-		if ( tickStepDelta ){
-			this.tickStepDelta = tickStepDelta;
-		}
+		this.tickStepDelta = tickStepDelta;
 
 		this.scalingX.setOption( 'precisionIn', this.tickStep );
 		const dw = this.width * this.tickStep;

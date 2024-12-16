@@ -129,7 +129,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	private indicatorSettings: IndicatorSettings;
 	private indicatorSelection: IndicatorSelection;
 	private tickIndexMax: number = Infinity;
-	private tickStepDelta = 0;
+	public tickStepDelta = 0;
 	
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
@@ -438,7 +438,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	private updateTickIndexMax(){
 		this.tickIndexMax = Infinity;
 		if ( this.options.tickIndexMax ){
-			this.tickIndexMax = this.options.tickIndexMax() + this.tickStepDelta;
+			this.tickIndexMax = this.options.tickIndexMax();
 		}
 		if ( this.maxDisplayX ){
 			this.tickIndexMax = Math.min( this.tickIndexMax, this.maxDisplayX );
@@ -491,7 +491,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 
 		let changed = false;
 		const xStart = this.tickStepDelta + Math.floor( this.scalingX.scaleIn.min / this.tickStep ) * this.tickStep;
-		const xEnd = this.tickStepDelta + Math.ceil( this.scalingX.scaleIn.max / this.tickStep ) * this.tickStep;
+		const xEnd = this.tickStepDelta + Math.floor( this.scalingX.scaleIn.max / this.tickStep ) * this.tickStep;
 		if ( force || xStart !== this.xStart || xEnd !== this.xEnd ){
 			this.xStart = xStart;
 			this.xEnd = xEnd;

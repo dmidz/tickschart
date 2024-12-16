@@ -102,9 +102,13 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 		if( !intRealTime ){
 			const now = Date.now();
 			if( now >= loadedRange.min && now <= loadedRange.max ){
-				const pr = .5/100;
+				const pr = 1/100;
+				clearInterval( intRealTime );
 				intRealTime = setInterval( () => {
-					const t = Math.floor( Date.now() / chart.tickStep ) * chart.tickStep;
+					let t = Math.floor( Date.now() / chart.tickStep ) * chart.tickStep;
+					if( chart.tickStepDelta){
+						t += -chart.tickStep + chart.tickStepDelta;
+					}
 					if( !realTimeTick || +realTimeTick.time !== t ){
 						realTimeTick = { ...chart.getTick( t ) };
 					}

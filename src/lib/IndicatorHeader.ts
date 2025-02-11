@@ -86,7 +86,8 @@ export default class IndicatorHeader<Indicator extends Base = Base> {
 	private createElements(){
 		this.elRoot = createElement( 'div', {
 			relativeElement: this.parentElement,
-			innerText: this.indicator.label,
+			// @ts-ignore
+			innerText: this.indicator.constructor.getLabel(),
 			className: 'idctr-header',
 			// style: {
 			// 	position: 'absolute', left: '4px', top: '0', zIndex: '150',

@@ -72,9 +72,10 @@ export default class IndicatorSettings {
 		} else {
 			this.elContent = null;
 		}
-
+		
 		this.dialog.display( display, {
-			title: `${ indicator.label }`,
+			// @ts-ignore
+			title: `${ indicator.constructor.getLabel() }`,
 			content: this.elContent,
 		} );
 	}

@@ -10,7 +10,7 @@ export type Options = {
 	onUpdate?: ( indicator: Indicator ) => void,
 }
 
-type Indicator = { new(): Base }
+type Indicator = { new(): Base, getLabel: typeof Base.getLabel }
 
 //______
 export default class IndicatorSelection {
@@ -64,7 +64,7 @@ export default class IndicatorSelection {
 		
 		const labels: {[key:string]: string} = {};
 		keys.forEach( key => {
-			labels[key] = new this.options.indicators[key]().label;
+			labels[key] = this.options.indicators[key].getLabel();
 		});
 		
 		const orderedKeys = keys.sort( ( a, b ) => {

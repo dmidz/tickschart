@@ -18,7 +18,7 @@ type Computed = {
 
 export default class Volume2 extends indicator.Base<Options, Computed> {
 
-	label = 'Custom Indicator Sample ( Volume copy )';
+	static label = 'Custom Indicator Sample ( Volume copy )';
 
 	displayMode: indicator.DisplayMode = 'row';
 

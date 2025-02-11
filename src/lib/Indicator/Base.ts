@@ -97,7 +97,10 @@ export default abstract class Base<
 		this.compute = this.computeSetup();
 	}
 	
-	abstract label: string;
+	static label: string;
+	static getLabel(){
+		return this.label || this.name;
+	}
 
 	abstract computeSetup(): ComputeSetup<CK>;
 	abstract draw( index: number ): void;

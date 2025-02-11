@@ -466,5 +466,4 @@ export default abstract class Base<
 			console.log( ...args );
 		}
 	}
-
 }

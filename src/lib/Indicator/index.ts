@@ -16,6 +16,3 @@ const list = {
 
 export { list };
 export type List = typeof list;
-
-// type Indicator = { new( ...args: any[] ): Base }
-// export type Indicator = Function & { prototype: Base };

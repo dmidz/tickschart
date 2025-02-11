@@ -15,19 +15,42 @@ export default class InputNumber extends InputBase<Options> {
 	}
 	
 	protected buildInput(){
-		return createElement( 'input', {
+		const res = createElement( 'input', {
 			relativeElement: this.elRoot,
 			attr: {
-				type: 'text',
+				type: 'number',
+				min: `${this.options.min||''}`,
+				max: `${ this.options.max || '' }`,
 			},
 			events: {
-				input: this.handleChange,
+				change: this.handleChange,
 			}
 		} ) as HTMLInputElement;
+		
+		return res;
+	}
+
+	protected inputValue (){
+		return +this.elInput.value;
+	}
+
+	protected checkValue ( value: any ){
+		let res = +value;
+		if ( isNaN( res ) ){
+			res = 0;
+		}
+
+		if ( this.options.min ){
+			res = Math.max( res, this.options.min );
+		}
+		if ( this.options.max ){
+			res = Math.min( res, this.options.max );
+		}
+		return res;
 	}
 
 	beforeDestroy (){
-		this.elInput.removeEventListener( 'input', this.handleChange );
+		this.elInput.removeEventListener( 'change', this.handleChange );
 	}
 }
 

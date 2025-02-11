@@ -43,7 +43,7 @@ export default class MA extends Base<Options, Computed> {
 		} ),
 		new Setting( 'length', 'number', {
 			label: 'Length',
-			min: 0,
+			min: 2,
 			max: 200,
 		} ),
 		new Setting( 'style.color', 'color', {
@@ -63,7 +63,7 @@ export default class MA extends Base<Options, Computed> {
 			} ),
 			new Setting( 'ma2.length', 'number', {
 				label: 'Length',
-				min: 0,
+				min: 2,
 				max: 200,
 			} ),
 			new Setting( 'ma2.style.color', 'color', {
@@ -74,22 +74,24 @@ export default class MA extends Base<Options, Computed> {
 
 	userSettingsInHeader: NestedKeyOf<Options & BaseOptions>[] = ['length'];
 
-	constructor ( options: Partial<Options & BaseOptions> = {} ){
+	constructor ( options: DeepPartial<Options & BaseOptions> = {} ){
 		
-		const _options: Required<Options> & Partial<BaseOptions> = {// force set default options
+		const _options: DeepRequired<Options> & Partial<BaseOptions> = {// force set default options
 			property: 'close',
 			type: 'sma',
 			length: 50,
 			style: {
-				color: '#ffff00'
+				color: '#40e9ff',
+				width: 1,
 			},
 			ma2: {
 				active: true,
 				property: 'close',
 				type: 'sma',
-				length: 50,
+				length: 100,
 				style: {
-					color: '#40e9ff'
+					color: '#ffff00',
+					width: 1,
 				},
 			}
 		};

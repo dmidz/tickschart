@@ -8,7 +8,6 @@ export type Options = BaseOptions & {
 //______
 export default class InputCheckbox extends InputBase<Options> {
 	constructor( key: string, options: Options = {} ){
-
 		super( key, options );
 	}
 	
@@ -33,19 +32,18 @@ export default class InputCheckbox extends InputBase<Options> {
 			}
 		} ) as HTMLInputElement;
 	}
-	
-	getValue( ){
+
+	protected inputValue () {
 		return ( this.elInput as HTMLInputElement ).checked;
 	}
 
 	setValue( value:any){
 		super.setValue( value );
-		this.elInput.value = value;
 		this.elInput.setAttribute('checked', value );
 	}
 
 	beforeDestroy (){
-		this.elInput.removeEventListener( 'input', this.handleChange );
+		this.elInput.removeEventListener( 'change', this.handleChange );
 	}
 }
 

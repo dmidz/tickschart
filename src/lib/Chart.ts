@@ -248,10 +248,6 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return this;
 	}
 	
-	indicatorsCount(){
-		return this.chartRows.length + this.layers.length;
-	}
-
 	addIndicator<I extends Base> ( indicator: I ){
 		indicator.setTickStep( this.tickStep );
 		indicator.id = `${indicator.label}-${this.indicatorsCount()}`;
@@ -296,7 +292,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 					onRemove: this.removeIndicator,
 					onActivate: this.activateIndicator,
 				} );
-				this.elements.rowIdcCount.innerText = `${ index+1 }`;
+				this.elements.rowIdcCount.innerText = `${ this.layers.length }`;
+				this.elements.idcsBar.style.visibility = this.layers.length > 0 ? 'visible' : 'hidden';
 				break;
 			}
 			default:
@@ -1070,6 +1067,9 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.elements.idcsBar = createElement('div', {
 			relativeElement: this.elements.candles,
 			className: 'idcs-bar',
+			style: {
+				visibility: this.layers.length > 0 ? 'visible' : 'hidden',
+			}
 		});
 		this.elements.btToggleIdcsSettings = createElement('button', {
 			relativeElement: this.elements.idcsBar,
@@ -1089,7 +1089,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.elements.rowIdcCount = createElement('div', {
 			relativeElement: this.elements.btToggleIdcsSettings,
 			relativePosition: 'prepend',
-			innerText: '0',
+			innerText: `${this.layers.length}`,
 		});
 		this.elements.idcsInfos = createElement('div', {
 			relativeElement: this.elements.idcsBar,

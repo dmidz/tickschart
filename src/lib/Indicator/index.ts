@@ -16,3 +16,5 @@ const list = {
 
 export { list };
 export type List = typeof list;
+
+export type Indicator = { new (): Base, getLabel: typeof Base.getLabel }

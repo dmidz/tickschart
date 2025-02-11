@@ -10,8 +10,7 @@ import { Dialog, Popover, InputBase } from './UI/index.ts';
 import IndicatorSettings from './IndicatorSettings.ts';
 import IndicatorSelection from './IndicatorSelection.ts';
 import IndicatorHeader from '@/lib/IndicatorHeader.ts';
-
-type Indicator = { new (): any }
+import { Indicator } from '@/lib/Indicator/index.ts';
 
 //______
 export type Options<Tick extends AbstractTick> = {
@@ -93,7 +92,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		},
 		chartRow: {},
 		mapTickProps: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
-		indicators,
+		indicators: indicators as Options<Tick>['indicators'],
 		isDefaultTick: () => false,
 	};
 

@@ -1,6 +1,6 @@
 
 import { Dialog/*, inputs, InputBase, type InputOptions*/ } from './UI';
-import { list as indicators, Base } from '@/lib/Indicator';
+import { list as indicators, Indicator } from '@/lib/Indicator';
 
 import { createElement } from './index.ts';
 
@@ -9,8 +9,6 @@ export type Options = {
 	indicators: { [ key: string ]: Indicator },
 	onUpdate?: ( indicator: Indicator ) => void,
 }
-
-type Indicator = { new(): Base, getLabel: typeof Base.getLabel }
 
 //______
 export default class IndicatorSelection {

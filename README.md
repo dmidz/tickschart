@@ -26,7 +26,7 @@ derived repo and run:
       npm install
       npm run dev
 
-You should be able to browse the provided local address such `http://localhost:5173/` and watch the Chart ( vuejs version ) in action.
+You should be able to browse the provided local address such `http://localhost:5174/` and watch the Chart ( vuejs version ) in action.
 
 The data comes from a unique file of real past 1000 BTC H4 ticks used in loop for the dev ( this is why you will see
 gap at joins ) but it is very easy to plug it to a real API.
@@ -62,7 +62,7 @@ Serve your public directory or run:
 
       npm run dev
 
-Navigate to `http://localhost:5173/demo/vanilla-js/index.html`
+Navigate to `http://localhost:5174/demo/vanilla-js/index.html`
 
 ### Vanilla TS
 
@@ -86,7 +86,7 @@ Compile ts file & serve the html page, you should see a chart with BTC H4 ticks.
 
       npm run dev
 
-and navigate to `http://localhost:5173/demo/vanilla-ts/index.html`
+and navigate to `http://localhost:5174/demo/vanilla-ts/index.html`
 
 ### API binding
 

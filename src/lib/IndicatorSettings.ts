@@ -55,24 +55,22 @@ export default class IndicatorSettings {
 	}
 
 	display ( indicator: Base, display = true ){
-		if ( indicator !== this.indicator ){
-			this.indicator = indicator;
-			this.inputs.forEach( input => {
-				input.remove();
-			});
-			this.inputs = [];
-			this.inputsChanges = {};
-			//__ build settings inputs
-			if ( indicator.hasAnySetting() ){
-				this.elContent = createElement( 'div', {
-					className: 'fields',
-				} );
-				indicator.userSettings.forEach( ( is/*, index*/ ) => {
-					this.createSettingField( indicator, is, this.elContent as HTMLElement );
-				} );
-			} else {
-				this.elContent = null;
-			}
+		this.indicator = indicator;
+		this.inputs.forEach( input => {
+			input.remove();
+		});
+		this.inputs = [];
+		this.inputsChanges = {};
+		//__ build settings inputs
+		if ( indicator.hasAnySetting() ){
+			this.elContent = createElement( 'div', {
+				className: 'fields',
+			} );
+			indicator.userSettings.forEach( ( is/*, index*/ ) => {
+				this.createSettingField( indicator, is, this.elContent as HTMLElement );
+			} );
+		} else {
+			this.elContent = null;
 		}
 
 		this.dialog.display( display, {

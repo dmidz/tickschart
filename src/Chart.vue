@@ -26,8 +26,8 @@ const ticksURL = SAMPLE_MODE
 	//__ '/api' url requests will be proxied by vite server which will use API_BASE, check vite.config.js server entry
 	: `${ window.location.origin }/api/exch/market-ticks`;
 const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
-const currentTime = new Date();// initial time position
-// const currentTime = new Date( Date.UTC( 2023, 10, 9 ) );
+// const currentTime = new Date();// initial time position
+const currentTime = new Date( Date.UTC( 2023, 10, 9 ) );
 const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 
 const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, { 
 	timeZone: 'UTC',
@@ -41,7 +41,7 @@ const refChartWrapper = ref<HTMLElement>();
 let sampleTicks: DataTick | null = null;
 
 let chart: Chart<Tick>;
-// let player: Player<Tick>;
+let player: Player<Tick>;
 
 const INTERVALS = {
 	'1h': h1,
@@ -182,12 +182,14 @@ onMounted( async () => {
 	chart.setX( currentTime.getTime(), { xOriginRatio } );
 
 	//__ player
-	/*player = */new Player( chart );
+	player = new Player( chart );
 });
 
 onBeforeUnmount( () => {
-	chart?.beforeDestroy();
 	clearInterval( intRealTime );
+	fetcher?.beforeDestroy();
+	chart?.beforeDestroy();
+	player?.beforeDestroy();
 });
 
 </script>

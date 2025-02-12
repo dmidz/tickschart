@@ -24,10 +24,6 @@ export default class IndicatorSelection {
 	private elSelect: HTMLElement | null | undefined;
 	private selIndicatorKey: keyof typeof this.options.indicators | null | undefined;
 	private items = new Map<keyof typeof this.options.indicators,HTMLElement>();
-	// private indicator: Indicator | null = null;
-	// private elContent: HTMLElement | null = null;
-	// private inputsChanges: { [ key: string ]: any } = {};
-	// private inputs: InputBase[] = [];s
 	
 	constructor( options: Partial<Options> = {} ){
 
@@ -41,13 +37,6 @@ export default class IndicatorSelection {
 				gap: '1rem',
 			},
 		} );
-		
-		// const inputSearch = new inputs.text('search', {
-		// 	relativeElement: content,
-		// 	inputAttr: {
-		// 		placeholder: 'Search'
-		// 	},
-		// });
 		
 		const list = createElement('div', {
 			relativeElement: content,

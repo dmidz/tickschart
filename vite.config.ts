@@ -34,6 +34,10 @@ export default defineConfig( ( { command, mode } ) => {
       } ),
       optimizeLodashImports(),
     ],
+    esbuild: {
+      // minifyIdentifiers: false,
+      keepNames: true,// keep class names ( used as LS key settings )
+    },
     build: {
       copyPublicDir: false,
       lib: {

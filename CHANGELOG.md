@@ -1,3 +1,13 @@
+## [1.3.2](https://github.com/dmidz/tickschart/compare/v1.3.1...v1.3.2) (2025-02-13)
+
+
+### Bug Fixes
+
+* **indicator:** restore modified/added indicators after reload ([#20](https://github.com/dmidz/tickschart/issues/20)) ([cc93442](https://github.com/dmidz/tickschart/commit/cc9344201d11f06193de37868abea85f4cb60c98))
+* **indicator:** set esbuild keepNames false as class names are used as LS keys ( 5.6% bundle size increase ) ([7452f60](https://github.com/dmidz/tickschart/commit/7452f60de16ae5ce151fb55ffbd5137f7300b2e8))
+
+
+
 ## [1.3.1](https://github.com/dmidz/tickschart/compare/v1.3.0...v1.3.1) (2024-12-16)
 
 

@@ -55,33 +55,32 @@ export default class IndicatorSettings {
 	}
 
 	display ( indicator: Base, display = true ){
-		if ( indicator !== this.indicator ){
-			this.indicator = indicator;
-			this.inputs.forEach( input => {
-				input.remove();
-			});
-			this.inputs = [];
-			this.inputsChanges = {};
-			//__ build settings inputs
-			if ( indicator.hasAnySetting() ){
-				this.elContent = createElement( 'div', {
-					className: 'fields',
-				} );
-				indicator.userSettings.forEach( ( is/*, index*/ ) => {
-					this.createSettingField( indicator, is, this.elContent as HTMLElement );
-				} );
-			} else {
-				this.elContent = null;
-			}
+		this.indicator = indicator;
+		this.inputs.forEach( input => {
+			input.remove();
+		});
+		this.inputs = [];
+		this.inputsChanges = {};
+		//__ build settings inputs
+		if ( indicator.hasAnySetting() ){
+			this.elContent = createElement( 'div', {
+				className: 'fields',
+			} );
+			indicator.userSettings.forEach( ( is/*, index*/ ) => {
+				this.createSettingField( indicator, is, this.elContent as HTMLElement );
+			} );
+		} else {
+			this.elContent = null;
 		}
-
+		
 		this.dialog.display( display, {
-			title: `${ indicator.label }`,
+			// @ts-ignore
+			title: `${ indicator.constructor.getLabel() }`,
 			content: this.elContent,
 		} );
 	}
 	
-	private saveSettings( indicator: Base | null, settings: any ){
+	saveSettings( indicator: Base | null, settings: any ){
 		if( !this.options.localStorageKey || !indicator?.id || !settings ){
 			return;
 		}
@@ -91,10 +90,22 @@ export default class IndicatorSettings {
 		Object.assign( this.indicatorsOptions[ indicator.id ], settings );
 		localStorage.setItem( this.options.localStorageKey, JSON.stringify( this.indicatorsOptions ) );
 	}
-	
+
+	removeSettings ( indicator: Base | null ){
+		if( !this.options.localStorageKey || !indicator?.id ){
+			return;
+		}
+		delete this.indicatorsOptions[ indicator.id ];
+		localStorage.setItem( this.options.localStorageKey, JSON.stringify( this.indicatorsOptions ) );
+	}
+
 	getIndicatorSettings( indicator: Base | null ){
 		if( !indicator?.id ){ return null;}
 		return this.indicatorsOptions[indicator.id];
+	}
+	
+	getIndicatorsSettings(){
+		return this.indicatorsOptions;
 	}
 	
 	private createSettingField( indicator: Base, setting: typeof indicator.userSettings[number], parentElement: HTMLElement ){

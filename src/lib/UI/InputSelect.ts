@@ -30,12 +30,6 @@ export default class InputSelect extends InputBase<Options> {
 		return input;
 	}
 
-	protected inputValue () {
-		const index = ( this.elInput as HTMLSelectElement ).selectedIndex;
-		if( index === -1 ){ return null;}
-		return this.options.choices[index].value;
-	}
-
 	beforeDestroy (){
 		this.elInput.removeEventListener( 'change', this.handleChange );
 	}

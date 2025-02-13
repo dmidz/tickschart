@@ -191,6 +191,10 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 		this.mapRefresh = new Map();
 	}
 
+	beforeDestroy (): void{
+		clearTimeout( this.timeoutRelease );
+	}
+
 	//__ clean cache
 	private releaseTicks( { loadedStart, loadedEnd }: { loadedStart: number, loadedEnd: number } ){
 		// console.log( 'releaseTicks', { size: this.mapTicks.size, loadedStart, loadedEnd, loadingMin: this.loadedMin, loadedMax: this.loadedMax } );

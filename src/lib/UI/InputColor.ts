@@ -25,7 +25,7 @@ export default class InputColor extends InputBase<Options> {
 	}
 
 	beforeDestroy (){
-		this.elInput.removeEventListener( 'input', this.handleChange );
+		this.elInput.removeEventListener( 'change', this.handleChange );
 	}
 }
 

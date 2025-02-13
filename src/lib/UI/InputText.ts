@@ -19,13 +19,13 @@ export default class InputText extends InputBase<Options> {
 				type: 'text',
 			},
 			events: {
-				input: this.handleChange,
+				change: this.handleChange,
 			}
 		} ) as HTMLInputElement;
 	}
 
 	beforeDestroy (){
-		this.elInput.removeEventListener( 'input', this.handleChange );
+		this.elInput.removeEventListener( 'change', this.handleChange );
 	}
 }
 

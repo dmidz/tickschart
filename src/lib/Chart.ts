@@ -10,8 +10,7 @@ import { Dialog, Popover, InputBase } from './UI/index.ts';
 import IndicatorSettings from './IndicatorSettings.ts';
 import IndicatorSelection from './IndicatorSelection.ts';
 import IndicatorHeader from '@/lib/IndicatorHeader.ts';
-
-type Indicator = { new (): any }
+import { Indicator } from '@/lib/Indicator/index.ts';
 
 //______
 export type Options<Tick extends AbstractTick> = {
@@ -93,7 +92,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		},
 		chartRow: {},
 		mapTickProps: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
-		indicators,
+		indicators: indicators as Options<Tick>['indicators'],
 		isDefaultTick: () => false,
 	};
 
@@ -130,7 +129,10 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	private indicatorSelection: IndicatorSelection;
 	private tickIndexMax: number = Infinity;
 	public tickStepDelta = 0;
-	
+	private classnamesCount: { [ key: string ]: number } = {};
+	private indicatorsById: { [ key: string ]: Base } = {};
+	private initRender = false;
+
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
 								getTick: GetTick<Tick>,
@@ -248,16 +250,30 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return this;
 	}
 	
-	indicatorsCount(){
-		return this.chartRows.length + this.layers.length;
+	addUserIndicators(){
+		const settings = this.indicatorSettings.getIndicatorsSettings();
+		/*__ trying to restore added indicators, pb: conflict with initial indicator added */
+		for ( const id in settings ){
+			if( this.indicatorsById[id] ){ continue;}
+			const k = id.split('-');
+			const className = k[0];
+			const Indicator = this.options.indicators[className];
+			if( !Indicator ){ continue;}
+			this.addIndicator( new Indicator() );
+		}
 	}
-
+	
 	addIndicator<I extends Base> ( indicator: I ){
 		indicator.setTickStep( this.tickStep );
-		indicator.id = `${indicator.label}-${this.indicatorsCount()}`;
+		const count = (this.classnamesCount[ indicator.constructor.name ] || 0)+1;
+		indicator.id = `${indicator.constructor.name}-${count}`;
+		this.indicatorsById[indicator.id] = indicator;
+		this.classnamesCount[ indicator.constructor.name ] = count;
 		const settings = this.indicatorSettings.getIndicatorSettings( indicator );
 		if( settings ){
 			indicator.setOptions( settings );
+		}else{
+			this.indicatorSettings.saveSettings( indicator, {});
 		}
 
 		switch ( indicator.displayMode ){
@@ -296,7 +312,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 					onRemove: this.removeIndicator,
 					onActivate: this.activateIndicator,
 				} );
-				this.elements.rowIdcCount.innerText = `${ index+1 }`;
+				this.elements.rowIdcCount.innerText = `${ this.layers.length }`;
+				this.elements.idcsBar.style.visibility = this.layers.length > 0 ? 'visible' : 'hidden';
 				break;
 			}
 			default:
@@ -333,6 +350,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 				break;
 			}
 		}
+		this.indicatorSettings.removeSettings( indicator );
 		this.refresh();
 	}
 	
@@ -453,6 +471,11 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	}
 
 	setX( x: number, { render = true, xOriginRatio = 0, force = false } = {} ){
+		if( !this.initRender ){
+			this.initRender = true;
+			this.addUserIndicators();
+		}
+		
 		const scale = { min: x, max: x+this.width/this.tickWidth*this.tickStep };
 		const d = xOriginRatio * ( scale.max - scale.min );
 		scale.min -= d;
@@ -1070,6 +1093,9 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.elements.idcsBar = createElement('div', {
 			relativeElement: this.elements.candles,
 			className: 'idcs-bar',
+			style: {
+				visibility: this.layers.length > 0 ? 'visible' : 'hidden',
+			}
 		});
 		this.elements.btToggleIdcsSettings = createElement('button', {
 			relativeElement: this.elements.idcsBar,
@@ -1089,7 +1115,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.elements.rowIdcCount = createElement('div', {
 			relativeElement: this.elements.btToggleIdcsSettings,
 			relativePosition: 'prepend',
-			innerText: '0',
+			innerText: `${this.layers.length}`,
 		});
 		this.elements.idcsInfos = createElement('div', {
 			relativeElement: this.elements.idcsBar,

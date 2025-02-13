@@ -58,6 +58,7 @@ export default defineConfig( ( { command, mode } ) => {
     },
     server: {
       host: apiURL.hostname,
+      port: 5174,
       proxy: {// check https://vite.dev/config/server-options.html#server-proxy
         '/api': {
           target: base,

@@ -16,8 +16,8 @@ type Computed = {
 };
 
 export default class Volume extends Base<Options, Computed> {
-	
-	label = 'Volume';
+
+	static label = 'Volume';
 
 	userSettings: Settings<Options> = [
 		new Setting('maType', 'select', {

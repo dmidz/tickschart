@@ -14,7 +14,7 @@ type DataTick = Record<string, Tick>;//__ structure of one ticks load
 //_____ SETTINGS
 const API_BASE = import.meta.env.VITE_API_BASE;
 const SAMPLE_MODE = !API_BASE;//__ either using unique sample data json file  (true) or normal API mode ( false )
-const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 } as const;//__ define the structure of your ticks
+const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 };//__ define the structure of your ticks
 // chart works with 5 minimal tick properties: open, high, low, close & volume, if your API returns different format,
 //   adapt the map below to match these needed properties to your tick properties ( notice tick prop 'vol' for 'volume'
 const mapTickProps = { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'vol' } as const;
@@ -26,8 +26,8 @@ const ticksURL = SAMPLE_MODE
 	//__ '/api' url requests will be proxied by vite server which will use API_BASE, check vite.config.js server entry
 	: `${ window.location.origin }/api/exch/market-ticks`;
 const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
-const currentTime = new Date();// initial time position
-// const currentTime = new Date( Date.UTC( 2023, 10, 9 ) );
+// const currentTime = new Date();// initial time position
+const currentTime = new Date( Date.UTC( 2023, 10, 9 ) );
 const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 
 const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, { 
 	timeZone: 'UTC',
@@ -41,7 +41,7 @@ const refChartWrapper = ref<HTMLElement>();
 let sampleTicks: DataTick | null = null;
 
 let chart: Chart<Tick>;
-// let player: Player<Tick>;
+let player: Player<Tick>;
 
 const INTERVALS = {
 	'1h': h1,
@@ -163,7 +163,7 @@ onMounted( async () => {
 	// chart.addIndicator( new indicators.VolumeImpulse( { maLength: 14, maType: 'sma' } ) );
 	// chart.addIndicator( new indicators.OBV() );
 
-	chart.addIndicator( new indicators.MA({ length: 200, type: 'sma', style: { color: '#ff0000'} } ) );
+	chart.addIndicator( new indicators.MA({ ma2: { length: 200, style: { color: '#ff0000'} } } ) );
 	
 	//__ in API mode, add a select input for timeframe to test change
 	if(!SAMPLE_MODE){
@@ -182,12 +182,14 @@ onMounted( async () => {
 	chart.setX( currentTime.getTime(), { xOriginRatio } );
 
 	//__ player
-	/*player = */new Player( chart );
+	player = new Player( chart );
 });
 
 onBeforeUnmount( () => {
-	chart?.beforeDestroy();
 	clearInterval( intRealTime );
+	fetcher?.beforeDestroy();
+	chart?.beforeDestroy();
+	player?.beforeDestroy();
 });
 
 </script>

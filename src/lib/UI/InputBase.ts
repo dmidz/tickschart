@@ -29,7 +29,8 @@ export default abstract class InputBase<Options extends BaseOptions = {}> {
 			value: null,
 			inputAttr: {},
 		}, options );
-		
+
+
 		this.elRoot = createElement( 'div', {
 			relativeElement: this.options.relativeElement,
 			relativePosition: this.options.relativePosition,
@@ -49,7 +50,7 @@ export default abstract class InputBase<Options extends BaseOptions = {}> {
 		this.elInput = this.buildInput();
 		this.elInput.setAttribute('name', this.key );
 		this.elInput.setAttribute('id', this.key );
-		this.elInput.setAttribute('tabIndex', '1' );
+		this.elInput.setAttribute('tabindex', '0' );
 		for ( const key in this.options.inputAttr ){
 			this.elInput.setAttribute( key, this.options.inputAttr[ key ] );
 		}
@@ -63,24 +64,35 @@ export default abstract class InputBase<Options extends BaseOptions = {}> {
 
 	protected value: any;
 	
-	getValue(): any {
+	protected inputValue(): any {
 		return this.elInput.value;
 	}
 	
-	setValue( value: any ){
-		this.value = this.options.value;
-		this.elInput.value = this.options.value;
+	getValue(): any {
+		return this.value;
 	}
 	
-	protected handleChange = ( event: Event ) => {
-		const value = this.getValue();
-		if( value === this.value ){ return;}
-		this.value = value;
-		this.options.onChange( this.value, this.key, this );
+	setValue( value: any ){
+		const _value = this.checkValue( value );
+		this.value = _value;
+		this.elInput.value = `${_value}`;
+	}
+	
+	protected checkValue( value: any ){
+		return value;
 	}
 
 	getMainElement(){
 		return this.elRoot
+	}
+
+	protected handleChange = ( event: Event ) => {
+		const curValue = this.value;
+		this.setValue( this.inputValue() );
+		if ( curValue === this.value ){
+			return;
+		}
+		this.options.onChange( this.value, this.key, this );
 	}
 
 	remove(){

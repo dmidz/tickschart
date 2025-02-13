@@ -1,6 +1,6 @@
 
 import { Dialog/*, inputs, InputBase, type InputOptions*/ } from './UI';
-import { list as indicators, Base } from '@/lib/Indicator';
+import { list as indicators, Indicator } from '@/lib/Indicator';
 
 import { createElement } from './index.ts';
 
@@ -9,8 +9,6 @@ export type Options = {
 	indicators: { [ key: string ]: Indicator },
 	onUpdate?: ( indicator: Indicator ) => void,
 }
-
-type Indicator = { new(): Base }
 
 //______
 export default class IndicatorSelection {
@@ -26,10 +24,6 @@ export default class IndicatorSelection {
 	private elSelect: HTMLElement | null | undefined;
 	private selIndicatorKey: keyof typeof this.options.indicators | null | undefined;
 	private items = new Map<keyof typeof this.options.indicators,HTMLElement>();
-	// private indicator: Indicator | null = null;
-	// private elContent: HTMLElement | null = null;
-	// private inputsChanges: { [ key: string ]: any } = {};
-	// private inputs: InputBase[] = [];s
 	
 	constructor( options: Partial<Options> = {} ){
 
@@ -44,13 +38,6 @@ export default class IndicatorSelection {
 			},
 		} );
 		
-		// const inputSearch = new inputs.text('search', {
-		// 	relativeElement: content,
-		// 	inputAttr: {
-		// 		placeholder: 'Search'
-		// 	},
-		// });
-		
 		const list = createElement('div', {
 			relativeElement: content,
 			className: 'list-indicators',
@@ -64,7 +51,7 @@ export default class IndicatorSelection {
 		
 		const labels: {[key:string]: string} = {};
 		keys.forEach( key => {
-			labels[key] = new this.options.indicators[key]().label;
+			labels[key] = this.options.indicators[key].getLabel();
 		});
 		
 		const orderedKeys = keys.sort( ( a, b ) => {

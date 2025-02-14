@@ -143,11 +143,11 @@ async function main ( options = {} ){
 			const { yes: pushOriginDev } = await prompt( {
 				type: 'confirm',
 				name: 'yes',
-				message: 'Push origin develop ?',
+				message: 'Push to origin develop ?',
 			} )
 
 			if( pushOriginDev ){
-				step( 'Pushing origin develop...' );
+				step( 'Pushing to origin develop...' );
 				await run( 'git', [ 'push' ] );
 				await run( 'git', [ 'push', 'origin', `refs/tags/v${ targetVersion }` ] );
 				// await run( 'git', [ 'push', `--tags` ] );
@@ -162,14 +162,16 @@ async function main ( options = {} ){
 			const { yes: pushOriginMaster } = await prompt( {
 				type: 'confirm',
 				name: 'yes',
-				message: 'Push origin master ?',
+				message: 'Push to origin master ?',
 			} );
 
 			if( pushOriginMaster ){
-				step( 'Push origin master...' );
+				step( 'Pushing to origin master...' );
 				await run( 'git', [ 'push' ] );
 			}
-			
+
+			await run( 'git', [ 'checkout', 'develop' ] );
+
 		} else {
 			console.log( `Dry run finished, running git diff to see package changes...` );
 			// const { stdout } = await run( 'git', [ 'diff' ], { stdio: 'pipe' } );

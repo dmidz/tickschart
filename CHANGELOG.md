@@ -1,3 +1,17 @@
+# [1.4.0](https://github.com/dmidz/tickschart/compare/v1.3.2...v1.4.0) (2025-02-14)
+
+
+### Bug Fixes
+
+* **core:** update deps ([335cbab](https://github.com/dmidz/tickschart/commit/335cbab832f878d6f5a8651091d02930b3ee9b77))
+
+
+### Features
+
+* **indicator:** update ma1 in group settings so it can be set not active ([8652985](https://github.com/dmidz/tickschart/commit/86529856e100de8f47ef00f705b6c8b799f58aef))
+
+
+
 ## [1.3.2](https://github.com/dmidz/tickschart/compare/v1.3.1...v1.3.2) (2025-02-13)
 
 

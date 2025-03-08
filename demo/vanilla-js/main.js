@@ -93,7 +93,7 @@ const chart = new Chart( document.getElementById('chart'), timeScaleMs, defaultT
 } );
 
 chart.addIndicator( new indicator.list.Volume( { maLength: 14, maType: 'ema' } ) );
-chart.addIndicator( new indicator.list.MA( { length: 200, type: 'sma', style: { color: '#ff0000' } } ) );
+chart.addIndicator( new indicator.list.MA( { ma2: { length: 200, style: { color: '#ff0000' } } } ) );
 
 chart.setX( currentTime.getTime(), { xOriginRatio } );
 

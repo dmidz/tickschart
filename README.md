@@ -50,7 +50,7 @@ const chart = new Chart( parentElement, tickStep, getTick, options );
 
 //__ add some indicators
 chart.addIndicator( new indicator.list.Volume( { maLength: 14, maType: 'ema' } ) );
-chart.addIndicator( new indicator.list.MA( { length: 200, type: 'sma', style: { color: '#ff0000' } } ) );
+chart.addIndicator( new indicator.list.MA( { ma2: { length: 200, style: { color: '#ff0000' } } } ) );
 
 // finally init display at the time you wish, originRatio is the displacement of time wanted along the screen width
 // ex: time now + .75 will scroll to place now time at 3/4 screen width from left

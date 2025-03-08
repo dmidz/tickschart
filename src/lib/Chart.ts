@@ -517,7 +517,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 
 		let changed = false;
 		const xStart = this.tickStepDelta + Math.floor( this.scalingX.scaleIn.min / this.tickStep ) * this.tickStep;
-		const xEnd = this.tickStepDelta + Math.floor( this.scalingX.scaleIn.max / this.tickStep ) * this.tickStep;
+		const xEnd = this.tickStepDelta + Math.ceil( this.scalingX.scaleIn.max / this.tickStep ) * this.tickStep;
 		if ( force || xStart !== this.xStart || xEnd !== this.xEnd ){
 			this.xStart = xStart;
 			this.xEnd = xEnd;

@@ -126,7 +126,7 @@ const rangeLoadMs = ticksPerLoad * timeScaleMs;
 onMounted( async () => {
 	if( !refChartWrapper.value ){ return;}
 	
-	chart = new Chart<Tick>( refChartWrapper.value, timeScaleMs,SAMPLE_MODE ? ( index: number ) => {
+	chart = new Chart<Tick>( refChartWrapper.value, timeScaleMs, defaultTick, SAMPLE_MODE ? ( index: number ) => {
 		/*__ normally pass fetcher.getTick directly, but when SAMPLE_MODE
 					we can bypass it to always return a tick from the file time range */
 		return fetcher.getMapTicks( index )?.[ sampleTimeStart + index % rangeLoadMs ] || defaultTick;
@@ -151,7 +151,6 @@ onMounted( async () => {
 		},
 		autoScaleY: true,
 		indicators,
-		isDefaultTick: ( tick ) => tick === defaultTick,
 		// tickWidth: 50,
 		// chartRow: {
 		// 	height: 200,

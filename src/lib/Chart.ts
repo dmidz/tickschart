@@ -14,48 +14,47 @@ import { Indicator } from '@/lib/Indicator/index.ts';
 
 //______
 export type Options<Tick extends AbstractTick> = {
-	tickWidth: number,
-	canvas: {
+	tickWidth?: number,
+	canvas?: {
 		imageSmoothingEnabled: boolean,
 		lineWidth: number,
 		// strokeStyle: string,
 	},
-	candle: {
+	candle?: {
 		color: {
 			up: string,
 			down: string,
 		}
 	},
-	onScalingXChange: ( scalingX: ScalingLinear ) => OrPromise<any>,
-	scaleY: ScalingLinearOptions,
-	scaleX: ScalingLinearOptions,
-	uiScaleY: UiScaleOptions,
-	uiScaleX: UiScaleOptions,
-	crossHairLabelX: ( value: number ) => string;
-	crossHairLabelY: null | ( ( value: number ) => string );
-	keyboard: {
+	onScalingXChange?: ( scalingX: ScalingLinear ) => OrPromise<any>,
+	scaleY?: ScalingLinearOptions,
+	scaleX?: ScalingLinearOptions,
+	uiScaleY?: UiScaleOptions,
+	uiScaleX?: UiScaleOptions,
+	crossHairLabelX?: ( value: number ) => string;
+	crossHairLabelY?: null | ( ( value: number ) => string );
+	keyboard?: {
 		vx: number,
 	},
-	autoScaleY: boolean,
-	autoScaleYMargin: number,
-	yScaleWidth: number,
-	wheelScroll: boolean,
-	readonly tickIndexMin: ( () => any ) | null,
-	readonly tickIndexMax: ( () => number ) | null,
-	uiElements: {
+	autoScaleY?: boolean,
+	autoScaleYMargin?: number,
+	yScaleWidth?: number,
+	wheelScroll?: boolean,
+	readonly tickIndexMin?: ( () => any ) | null,
+	readonly tickIndexMax?: ( () => number ) | null,
+	uiElements?: {
 		buttonGoMaxX?: boolean | HTMLElement,
 	},
-	chartRow: ChartRowOptions,
-	mapTickProps: { [key in TickProp]: keyof Tick},
-	indicators: Readonly<{[key: string]: Indicator }>,
-	isDefaultTick: ( tick: Tick ) => boolean,
+	chartRow?: ChartRowOptions,
+	mapTickProps?: { [key in TickProp]: keyof Tick},
+	indicators?: Readonly<{[key: string]: Indicator }>,
 }
 
 export default class Chart<Tick extends AbstractTick = CandleTick> {
 
 	readonly parentElement: HTMLElement;
 	private _getTick: GetTick<Tick>;
-	private options: Options<Tick> = {
+	private options: Required<Options<Tick>> = {
 		tickWidth: 4,
 		canvas: {
 			imageSmoothingEnabled: false,
@@ -92,8 +91,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		},
 		chartRow: {},
 		mapTickProps: { open: 'open', high: 'high', low: 'low', close: 'close', volume: 'volume' },
-		indicators: indicators as Options<Tick>['indicators'],
-		isDefaultTick: () => false,
+		indicators: indicators as Required<Options<Tick>>['indicators'],
 	};
 
 	private elements: Record<string,HTMLElement> = {};
@@ -135,8 +133,9 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 
 	constructor ( parentElement: HTMLElement | null,
 								public tickStep: number,
+								public defaultTick: Tick,
 								getTick: GetTick<Tick>,
-								options: Partial<Options<Tick>> = {} ){
+								options: Options<Tick> ){
 		
 		if( !parentElement ){
 			throw new Error('parentElement must be a valid HTMLElement');
@@ -407,7 +406,11 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.elements.cross.style.display = this.enabledCrossHair ? 'block' : 'none';
 		return this;
 	}
-	
+
+	isDefaultTick( tick: Tick ){
+		return tick === this.defaultTick;
+	}
+
 	getTick = ( index: number, delta = 0 ) => {
 		const _index = index - delta * this.tickStep;
 		return this._getTick( _index );
@@ -593,9 +596,10 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 
 		while( t <= this.maxRenderX ){
 			tick = this.getTick( t );
+			t += this.tickStep;
+			if( this.isDefaultTick( tick )){ continue;}
 			min = Math.min( min, +this.tickValue( tick, 'low' ) );
 			max = Math.max( max, +this.tickValue( tick, 'high' ) );
-			t += this.tickStep;
 		}
 
 		if( max - min === 0 ){			max += 10;}
@@ -633,7 +637,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		let x = _xStart;
 		while ( x <= _xEnd ){
 			const tick = this.getTick( x );
-			if( !this.options.isDefaultTick( tick )){
+			if( !this.isDefaultTick( tick )){
 				this.drawTick( x, tick );
 			}
 			x += this.tickStep;

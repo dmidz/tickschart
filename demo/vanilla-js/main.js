@@ -66,7 +66,7 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 
 //__
 const rangeLoadMs = ticksPerLoad * timeScaleMs;
-const chart = new Chart( document.getElementById('chart'), timeScaleMs, ( index ) => {
+const chart = new Chart( document.getElementById('chart'), timeScaleMs, defaultTick, ( index ) => {
 	/*__ one would normally pass fetcher.getTick directly, but for the only one file sample
 				we can bypass it to always return a tick from the file ( 1692000000000 ) time range */
 	return fetcher.getMapTicks( index )?.[ sampleTimeStart + index % rangeLoadMs ] || defaultTick;
@@ -90,7 +90,6 @@ const chart = new Chart( document.getElementById('chart'), timeScaleMs, ( index 
 		precisionIn: .001,//__ might be set from current symbol properties
 	},
 	autoScaleY: true,
-	isDefaultTick: ( tick ) => tick === defaultTick,
 } );
 
 chart.addIndicator( new indicator.list.Volume( { maLength: 14, maType: 'ema' } ) );

@@ -175,7 +175,7 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 		if( !res && this.options.fetchOnDemand ){
 			this.mapRefresh.set( t, true );
 			if( !this.mapFetches.get( t ) ){
-				this.fetchTicks( t, t + this.timePerLoad/*, { prefetch: false }*/ );
+				this.fetchTicks( t, t + this.timePerLoad, { prefetch: false } );
 			}
 		}
 		return res;

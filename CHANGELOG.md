@@ -1,3 +1,12 @@
+## [1.4.1](https://github.com/dmidz/tickschart/compare/v1.4.0...v1.4.1) (2025-03-10)
+
+
+### Bug Fixes
+
+* **core:** [TC-28] loading & display fixes ([#21](https://github.com/dmidz/tickschart/issues/21)) ([fb7fbf4](https://github.com/dmidz/tickschart/commit/fb7fbf4383b7684c57f2030ae670ae5d111f7f1e))
+
+
+
 # [1.4.0](https://github.com/dmidz/tickschart/compare/v1.3.2...v1.4.0) (2025-02-14)
 
 

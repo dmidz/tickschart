@@ -85,7 +85,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		yScaleWidth: 100,
 		wheelScroll: true,
 		tickIndexMin: null,
-		tickIndexMax: () => Math.floor( Date.now() / this.tickStep ) * this.tickStep,
+		tickIndexMax: () => Math.ceil( Date.now() / this.tickStep ) * this.tickStep,
 		uiElements: {
 			buttonGoMaxX: true,
 		},
@@ -105,8 +105,8 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 	private uiScaleY: UiScale;
 	private tickWidth = 3;
 	private tickWidthHalf = 2.5;
-	private xStart = 0;
-	private xEnd = 100;
+	public xStart = 0;
+	public xEnd = 100;
 	private drag = false;
 	private cx = 1;
 	private cy = 1;
@@ -456,7 +456,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		return this;
 	}
 	
-	private updateTickIndexMax(){
+	updateTickIndexMax(){
 		this.tickIndexMax = Infinity;
 		if ( this.options.tickIndexMax ){
 			this.tickIndexMax = this.options.tickIndexMax();
@@ -648,12 +648,6 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		this.ctxTicks.clearRect( x, 0, w, this.canvas.height );
 	}
 
-	drawTickClear ( index: number, tick: Tick ){
-		const xPos = this.scalingX.scaleTo( index );
-		this.clearRect( xPos, this.tickWidth );
-		this.drawTick( index, tick );
-	}
-	
 	drawTick( index: number, tick: Tick ){
 
 		const xPos = this.scalingX.scaleTo( index );

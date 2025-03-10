@@ -165,8 +165,17 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 		return res;
 	}
 	
-	getTick = ( time: number ): Tick => {
-		return this.getMapTicks( time )?.[ time ]||this.defaultTick;
+	getTick = ( time: number, defaultTick = this.defaultTick ): Tick => {
+		return this.getMapTicks( time )?.[ time ]||defaultTick;
+	}
+	
+	setTick( time: number, tick: Tick ){
+		let map = this.getMapTicks( time ) as Record<string,Tick>;
+		if( !map ){
+			map = {};
+			this.mapTicks.set( time, map as FetchResult );
+		}
+		map[ `${time}`] = tick;
 	}
 
 	getMapTicks( time: number ): FetchResult | undefined {
@@ -193,6 +202,10 @@ export default class Fetcher<Tick,FetchResult extends Record<string, Tick> = Rec
 
 	beforeDestroy (): void{
 		clearTimeout( this.timeoutRelease );
+	}
+	
+	getOption( name: keyof Options ){
+		return this.options[name];
 	}
 
 	//__ clean cache

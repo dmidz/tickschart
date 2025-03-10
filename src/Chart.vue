@@ -2,8 +2,8 @@
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { Chart, Fetcher, Player, intervalsMs, indicator, ui } from '@/lib';
 
-import Volume2 from './custom-indicators/Volume2';// "custom" indicator sample
-
+// "custom" indicator sample
+import Volume2 from './custom-indicators/Volume2';
 const indicators = { ...indicator.list, Volume2 } as const;
 
 const { m1, h1, d1, w1 } = intervalsMs;
@@ -26,8 +26,8 @@ const ticksURL = SAMPLE_MODE
 	//__ '/api' url requests will be proxied by vite server which will use API_BASE, check vite.config.js server entry
 	: `${ window.location.origin }/api/exch/market-ticks`;
 const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
-// const currentTime = new Date();// initial time position
-const currentTime = new Date( Date.UTC( 2023, 10, 9 ) );
+const currentTime = new Date();// initial time position
+// const currentTime = new Date( Date.UTC( 2023, 10, 9 ) );
 const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 
 const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, { 
 	timeZone: 'UTC',
@@ -44,6 +44,7 @@ let chart: Chart<Tick>;
 let player: Player<Tick>;
 
 const INTERVALS = {
+	'1m': m1,
 	'1h': h1,
 	'4h': h1*4,
 	'1d': d1,
@@ -55,12 +56,9 @@ type Intervals = keyof typeof INTERVALS;
 const interval = ref<Intervals>('4h');
 
 watch([() => interval.value], () => {
-	chart.setTickStep( INTERVALS[ interval.value ] );
 	fetcher.setTimeScale( INTERVALS[ interval.value ] );
+	chart.setTickStep( INTERVALS[ interval.value ] );
 });
-
-let intRealTime;
-let realTimeTick: Tick;
 
 const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 	if( SAMPLE_MODE && sampleTicks ){ return sampleTicks;}
@@ -96,27 +94,6 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 		//__ refresh when new loaded so long indicators ( ex: ma 200 ) have their data progressively without waiting whole loaded
 		if ( loadedRange.refresh ){
 			chart.refresh();
-		}
-
-		//__ fake "real time" last tick
-		if( !intRealTime ){
-			const now = Date.now();
-			if( now >= loadedRange.min && now <= loadedRange.max ){
-				const pr = 1/100;
-				clearInterval( intRealTime );
-				intRealTime = setInterval( () => {
-					let t = Math.floor( Date.now() / chart.tickStep ) * chart.tickStep;
-					if( chart.tickStepDelta){
-						t += -chart.tickStep + chart.tickStepDelta;
-					}
-					if( !realTimeTick || +realTimeTick.time !== t ){
-						realTimeTick = { ...chart.getTick( t ) };
-					}
-					const p = 1 -pr/2 + Math.random() * pr;
-					realTimeTick.close *= p;
-					chart.drawTickClear( t, realTimeTick );
-				}, 1000 );
-			}
 		}
 	},
 	// debug: true,
@@ -185,7 +162,6 @@ onMounted( async () => {
 });
 
 onBeforeUnmount( () => {
-	clearInterval( intRealTime );
 	fetcher?.beforeDestroy();
 	chart?.beforeDestroy();
 	player?.beforeDestroy();

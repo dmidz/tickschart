@@ -1,3 +1,12 @@
+## [1.4.2](https://github.com/dmidz/tickschart/compare/v1.4.1...v1.4.2) (2025-03-11)
+
+
+### Bug Fixes
+
+* **core:** Fetcher getTick remove default tick arg ([15ab2fa](https://github.com/dmidz/tickschart/commit/15ab2fa6937aa68dc0338de4a8ed398711febfab))
+
+
+
 ## [1.4.1](https://github.com/dmidz/tickschart/compare/v1.4.0...v1.4.1) (2025-03-10)
 
 

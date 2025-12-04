@@ -85,7 +85,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		yScaleWidth: 100,
 		wheelScroll: true,
 		tickIndexMin: null,
-		tickIndexMax: () => Math.ceil( Date.now() / this.tickStep ) * this.tickStep,
+		tickIndexMax: () => Math.floor( Date.now() / this.tickStep ) * this.tickStep,
 		uiElements: {
 			buttonGoMaxX: true,
 		},
@@ -621,6 +621,59 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		// console.log('setCanvasOptions', options );
 		Object.assign( this.ctxTicks, options );
 	}
+
+	lastTickInfosHide(){
+		this.elements.lastTickLine.style.display = 'none';
+		this.elements.lastTickLabel.style.display = 'none';
+	}
+	
+	lastTickInfosUpdate( tick: Tick ){
+
+		const now = Date.now() - this.tickStepDelta;
+		const sec = 1000;
+		const timeSec = Math.floor( now / sec );
+		const tickStepSec = this.tickStep / sec;
+		const timeFrame = Math.floor( now / this.tickStep ) * tickStepSec;
+		const deltaTime = tickStepSec - ( timeSec - timeFrame );
+
+		if ( deltaTime === tickStepSec ){
+			this.translateX( this.tickStep );
+		} else {
+			this.autoScaleY();
+		}
+
+		let timeLabel = '';
+		let rest = deltaTime;
+		const h1 = 3600;
+		const d1 = h1 * 24;
+		const dayMode = rest > d1;
+		// console.log('rest', { tickStepSec, timeSec, timeFrame, rest, dayMode });
+		if( dayMode ){
+			//__ days
+			const d = Math.floor( rest / d1 );
+			rest %= d1;
+			timeLabel = `${ d }d `;
+		}
+		if( rest > h1 ){
+			//__ hours
+			const h = Math.floor( rest / h1 );
+			rest %= h1;
+			timeLabel = dayMode ? `${ timeLabel }${ h+1 }h` : `${ timeLabel }${ `${ h }`.padStart( 2, '0' ) }:`;
+		}
+		if( !dayMode ){
+			//__ mins
+			const min = Math.floor( rest / 60 );
+			rest %= 60;
+			//__ secs
+			timeLabel = `${ timeLabel }${ `${ min }`.padStart( 2, '0' ) }:${ `${ rest }`.padStart( 2, '0' ) }`;
+		}
+		
+		this.elements.lastTickLabelTime.innerText = `${ timeLabel }`;
+		this.elements.lastTickLabelPrice.innerText = this.uiScaleY.options.formatLabel( tick.close );
+		const yLabel = Math.round( this.scalingY.scaleTo( tick.close ) );
+		this.elements.lastTickLabel.style.transform = this.elements.lastTickLine.style.transform = `translateY(${ yLabel }px)`;
+		this.elements.lastTickLabel.style.display = this.elements.lastTickLine.style.display = 'flex';
+	}
 	
 	render( xStart: number = this.xStart, xEnd: number = this.xEnd ){
 		if( xEnd < this.xStart || xStart > this.xEnd ){ return;}
@@ -638,6 +691,7 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 		// 	scalingX: this.scalingX } );
 
 		// _xStart = Math.max( _xStart, this.getTickIndexMin() );
+		// console.log( 'render', { maxRenderX: new Date( this.maxRenderX ).toUTCString(), _xEnd: new Date( _xEnd ).toUTCString(), } );
 		_xEnd = Math.min( _xEnd, this.maxRenderX );
 
 		// console.log( '//_________ render', { _xStart: new Date( _xStart ).toUTCString(), _xEnd: new Date( _xEnd ).toUTCString(), } );
@@ -1076,6 +1130,44 @@ export default class Chart<Tick extends AbstractTick = CandleTick> {
 			}
 		} );
 		this.elements.labelY.style.marginTop = `${ -Math.round( this.elements.labelY.clientHeight / 2 ) }px`;
+		//____ last tick label
+		this.elements.lastTickLine = createElement( 'div', {
+			relativeElement: this.elements.main,
+			className: 'last-tick-line',
+			style: {
+				display: 'none', position: 'absolute', zIndex: '90', inset: `0 ${ this.elements.scaleY.style.width } 0 0`,
+				pointerEvents: 'none',
+				borderTop: '1px dashed #0080c5',
+			}
+		} );
+		this.elements.lastTickLabel = createElement( 'div', {
+			relativeElement: this.elements.main,
+			className: 'last-tick',
+			style: {
+				...crossLabelStyle,
+				background: '#0080c5',
+				color: '#fff',
+				right: '0', width: this.elements.scaleY.style.width, zIndex: '200', display: 'flex', flexDirection: 'column',
+			}
+		} );
+		this.elements.lastTickLabelPrice = createElement( 'div', {
+			relativeElement: this.elements.lastTickLabel,
+			innerText: '0.000',
+			className: 'last-tick-price',
+			style: {
+				fontWeight: '400'
+			}
+		} );
+		this.elements.lastTickLabelTime = createElement( 'div', {
+			relativeElement: this.elements.lastTickLabel,
+			innerText: '00:00',
+			className: 'last-tick-time',
+			style: {
+			}
+		} );
+		this.elements.lastTickLabel.style.marginTop = `${ -Math.round( this.elements.lastTickLabel.clientHeight / 2 ) }px`;
+		this.elements.lastTickLabel.style.display = 'none';
+
 		//____ infos
 		this.elements.infos = createElement( 'div', {
 			relativeElement: this.elements.candles,

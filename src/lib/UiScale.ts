@@ -183,7 +183,7 @@ export default class UiScale {
 	}
 
 	private animationFrame = () => {
-		this.moveEvent && this.increaseScale( this.moveEvent[this.moveProp]/100, true );
+		this.moveEvent && this.increaseScale( this.moveEvent[this.moveProp]/1000, true );
 	}
 
 	private render(){

@@ -10,10 +10,21 @@ const { m1, h1, d1, w1 } = intervalsMs;
 
 type Tick = typeof defaultTick;
 type DataTick = Record<string, Tick>;//__ structure of one ticks load
+const INTERVALS = {
+	'1m': m1,
+	'5m': m1 * 5,
+	'1h': h1,
+	'4h': h1 * 4,
+	'1d': d1,
+	'3d': d1 * 3,
+	'1w': w1,
+}
+type Intervals = keyof typeof INTERVALS;
 
 //_____ SETTINGS
 const API_BASE = import.meta.env.VITE_API_BASE;
 const SAMPLE_MODE = !API_BASE;//__ either using unique sample data json file  (true) or normal API mode ( false )
+const interval = ref<Intervals>( '4h' );//__ current timeframe
 const defaultTick = { time: 0, open: 0, high: 0, low: 0, close: 0, vol: 0 };//__ define the structure of your ticks
 // chart works with 5 minimal tick properties: open, high, low, close & volume, if your API returns different format,
 //   adapt the map below to match these needed properties to your tick properties ( notice tick prop 'vol' for 'volume'
@@ -25,7 +36,6 @@ const ticksURL = SAMPLE_MODE
 	//__ WARN: do no use API_BASE here, instead use current location with '/api' prefix to avoid all CORS problems for dev
 	//__ '/api' url requests will be proxied by vite server which will use API_BASE, check vite.config.js server entry
 	: `${ window.location.origin }/api/exch/market-ticks`;
-const timeScaleMs = h1 * 4;// must match time scale of fetched data ( here 4h )
 const currentTime = new Date();// initial time position
 // const currentTime = new Date( Date.UTC( 2023, 10, 9 ) );
 const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 
@@ -36,26 +46,22 @@ const dateFormatCrossHair = new Intl.DateTimeFormat( undefined, {
 //________ /SETTINGS
 
 //___
-const refChartWrapper = ref<HTMLElement>();
+const refChartWrapper = ref<HTMLElement|null>( null );
 
 let sampleTicks: DataTick | null = null;
 
 let chart: Chart<Tick>;
 let player: Player<Tick>;
 
-const INTERVALS = {
-	'1m': m1,
-	'1h': h1,
-	'4h': h1*4,
-	'1d': d1,
-	'3d': d1*3,
-	'1w': w1,
-}
-type Intervals = keyof typeof INTERVALS;
+const timeScaleMs = INTERVALS[ interval.value ];// must match time scale of fetched data
 
-const interval = ref<Intervals>('4h');
-
+let intRealTime: ReturnType<typeof setInterval> | undefined;
+let realTimeTick: Tick | null;
 watch([() => interval.value], () => {
+	clearInterval( intRealTime );
+	intRealTime = undefined;
+	realTimeTick = null;
+	chart.lastTickInfosHide();
 	fetcher.setTimeScale( INTERVALS[ interval.value ] );
 	chart.setTickStep( INTERVALS[ interval.value ] );
 });
@@ -94,6 +100,39 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 		//__ refresh when new loaded so long indicators ( ex: ma 200 ) have their data progressively without waiting whole loaded
 		if ( loadedRange.refresh ){
 			chart.refresh();
+		}
+
+		//__ in API mode, fake "real time" last tick
+		if ( !SAMPLE_MODE  && !intRealTime ){
+			const delay = 1000;
+			const now = Date.now();
+			if ( now >= loadedRange.min && now <= loadedRange.max ){
+				const pr = 1 / 100;
+				clearInterval( intRealTime );
+				intRealTime = setInterval( () => {
+					const tNow = Date.now();
+					let t = Math.floor( tNow / chart.tickStep ) * chart.tickStep;
+					if ( chart.tickStepDelta ){
+						t += -chart.tickStep + chart.tickStepDelta;
+					}
+
+					if ( !realTimeTick || +realTimeTick.time !== t ){
+						realTimeTick = { ...chart.getTick( t ) };
+						if( !realTimeTick.time ){
+							const prev = chart.getTick( t - chart.tickStep );
+							realTimeTick.time = t;
+							realTimeTick.open = realTimeTick.high = realTimeTick.low = realTimeTick.close = prev.close;
+						}
+						fetcher.setTick( t, realTimeTick );// call this with real socket realtime tick
+					}
+					const p = 1 - pr / 2 + Math.random() * pr;
+					realTimeTick.close *= p;
+					realTimeTick.high = Math.max( +realTimeTick.high, +realTimeTick.close );
+					realTimeTick.low = Math.min( +realTimeTick.low, +realTimeTick.close );
+					
+					chart.lastTickInfosUpdate( realTimeTick );// call this with real socket realtime tick
+				}, delay );
+			}
 		}
 	},
 	// debug: true,
@@ -162,6 +201,8 @@ onMounted( async () => {
 });
 
 onBeforeUnmount( () => {
+	clearInterval( intRealTime );
+	intRealTime = undefined;
 	fetcher?.beforeDestroy();
 	chart?.beforeDestroy();
 	player?.beforeDestroy();

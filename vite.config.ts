@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import dts from 'vite-plugin-dts';
+import dts from 'unplugin-dts/vite';
 import { resolve } from 'node:path';
 import { optimizeLodashImports } from "@optimize-lodash/rollup-plugin";
 
@@ -28,9 +28,14 @@ export default defineConfig( ( { command, mode } ) => {
     plugins: [
       vue(),
       dts( {// gently generates *.d.ts files at build :)
+        tsconfigPath: './tsconfig.json',
         pathsToAliases: false,
-        rollupTypes: true,
-        include: [ 'src/lib/**/*.ts', 'src/types.d.ts' ],
+        include: [ 'src/types.d.ts','src/lib/**/*.ts' ],
+        bundleTypes: true,
+        // entryRoot: 'src',
+        // copyDtsFiles: true,
+        // strictOutput: false,
+        // insertTypesEntry: true,
       } ),
       optimizeLodashImports(),
     ],
@@ -44,9 +49,10 @@ export default defineConfig( ( { command, mode } ) => {
         entry: {
           index: res( 'src/lib/index.ts' ),
         },
-        name: 'TicksChart',
         formats: [ 'es' ],
-        // fileName: 'tickschart',
+        cssFileName: 'style',
+        name: 'tickschart',
+        // fileName: 'index',
       },
       rollupOptions: {
         external: [ 'vue' ],// make sure to externalize deps that shouldn't be bundled into your library

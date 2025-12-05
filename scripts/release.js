@@ -1,9 +1,6 @@
 
-/*//// heavily copied from Vue core release script https://github.com/vuejs/core/blob/main/scripts/release.js */
+/*//// inspired from Vue core release script https://github.com/vuejs/core/blob/main/scripts/release.js */
 
-import path from 'node:path';
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import minimist from 'minimist';
 import { execa } from 'execa';
@@ -13,13 +10,13 @@ import enquirer from 'enquirer';
 const { prompt } = enquirer;
 
 //___
-const __dirname = path.dirname( fileURLToPath( import.meta.url ) );
-const currentVersion = createRequire( import.meta.url )( '../package.json' ).version;
+const currentVersion = await packageVersion();
 
 const args = minimist( process.argv.slice( 2 ), {
 	alias: {
 		skipBuild: 'skip-build',
 		skipTests: 'skip-tests',
+		skipPublish: 'skip-publish',
 		skipGit: 'skip-git',
 		skipPrompts: 'skip-prompts',
 	},
@@ -37,13 +34,70 @@ const versionIncrements = [
 		: [] ),
 ];
 
-let versionUpdated = false;
+main( args )
+	.catch( err => {
+		console.error( err );
+		process.exit( 1 );
+	} );
+
+
+async function main ( options = {} ){
+	step('Starting release with options', options );
+	const targetVersion = await pickVersion( options._[ 0 ] );
+
+	await branchSync( 'develop', true );
+
+	//__ create release branch ?
+	// await run( 'git', [ 'checkout','-b',`release/v${targetVersion}` ] );
+
+	if( !options.skipTests ){
+		await runTest();
+	}
+
+	if(!options.skipBuild){
+		await build();
+	}
+
+	await updateVersion( targetVersion );// must update version before changelog
+
+	const changelogGood = await changelog();
+	if( !changelogGood ){ return;}
+
+	if( !options.skipPublish ){
+		await publish( options );
+	}
+
+	if( !options.skipGit ){
+		const anyChanges = await commitRelease( targetVersion );
+		if( !anyChanges ){ return;}
+
+		await pushOrigin( 'develop', targetVersion );
+
+		await branchMerge( 'master', 'develop' );
+
+		await pushOrigin( 'master' );
+
+		await run( 'git', [ 'checkout', 'develop' ] );
+
+	} else {
+		step( `git operations skipped, run git diff to check changes.` );
+		// const { stdout } = await run( 'git', [ 'diff' ], { stdio: 'pipe' } );
+		// console.log( stdout );
+	}
+}
 
 //___
-async function main ( options = {} ){
-	let targetVersion = options._[ 0 ];
+async function packageVersion(){
+	return createRequire( import.meta.url )( '../package.json' ).version;
+	// const { stdout } = await run( 'npm', [ 'pkg', 'get', 'version' ], { stdio: 'pipe' } );// this sh*t incl quotes -_-
+	// return stdout;
+}
+
+async function pickVersion( targetVersion ){
 	
-	if( !targetVersion ){
+	let resVersion = targetVersion;
+
+	if( !resVersion ){
 		// no explicit version, offer suggestions
 		/** @type {{ yes: string }} */
 		const { yes: release } = await prompt( {
@@ -52,7 +106,7 @@ async function main ( options = {} ){
 			message: 'Select release type',
 			choices: versionIncrements
 				.map( i => `${ i } (${ inc( i ) })` )
-				// .concat( [ 'custom' ] ),
+			.concat( [ 'custom' ] ),
 		} );
 
 		if( release === 'custom' ){
@@ -63,141 +117,94 @@ async function main ( options = {} ){
 				message: 'Input custom version',
 				initial: currentVersion,
 			} );
-			targetVersion = result.version;
+			resVersion = result.version;
 		} else {
-			targetVersion = release.match( /\((.*)\)/ )?.[ 1 ] ?? '';
+			resVersion = release.match( /\((.*)\)/ )?.[ 1 ] ?? '';
 		}
 
-		if( !semver.valid( targetVersion ) ){
-			throw new Error( `invalid target version: ${ targetVersion }` );
-		}
+	}
 
-		/** @type {{ yes: boolean }} */
-		// const { yes: confirmRelease } = await prompt( {
-		// 	type: 'confirm',
-		// 	name: 'yes',
-		// 	message: `Confirm release v${ targetVersion } ?`,
-		// } )
-		//
-		// if( !confirmRelease ){
-		// 	return;
-		// }
+	if( !semver.valid( resVersion ) ){
+		throw new Error( `invalid target version: ${ resVersion }` );
+	}
+	
+	/** @type {{ yes: boolean }} */
+	// const { yes: confirmRelease } = await prompt( {
+	// 	type: 'confirm',
+	// 	name: 'yes',
+	// 	message: `Confirm release v${ targetVersion } ?`,
+	// } )
+	//
+	// if( !confirmRelease ){
+	// 	return;
+	// }
 
-		step( 'Syncing local develop with origin...' );
-		await run( 'git', [ 'fetch', '-u', 'origin', 'develop:develop', '--recurse-submodules=no', '--prune' ] );
-		await run( 'git', [ 'checkout', 'develop' ] );
-		//__ create release branch ?
-		// await run( 'git', [ 'checkout','-b',`release/v${targetVersion}` ] );
+	return resVersion;
+}
 
-		// step( 'Running tests...' );
+async function branchSync( branch = 'develop', checkout = true ){
+	if( !branch ){ throw new Error( 'branch is required' );}
 
-		step( 'Update version...' );
-		updatePackageVersion( targetVersion );
-		versionUpdated = true;
-
-		step( 'Building...' );
-		await run( 'npm', [ 'run', 'build' ] );
-
-		step( 'Generating changelog...' );
-		await run( `npm`, [ 'run', 'changelog' ] );
-		/** @type {{ yes: boolean }} */
-		const { yes: changelogOk } = await prompt( {
-			type: 'confirm',
-			name: 'yes',
-			message: `Changelog generated. Does it look good ?`,
-		} )
-		if( !changelogOk ){
-			return;
-		}
-		
-		step( `Publishing ${options.dry?'dry':''}...` );
-		const publishFlags = [];
-		if( options.dry ){
-			publishFlags.push( '--dry-run' );
-		}else{
-			/** @type {{ otp: string }} */
-			const { otp = '' } = await prompt( {
-				type: 'input',
-				name: 'otp',
-				message: `Please enter otp code (leave blank if not required by the npm registry target):`,
-			} );
-
-			if( otp?.length ){
-				publishFlags.push( `--otp=${ otp }` );
-			}
-		}
-		await publish( publishFlags );
-
-		if( !options.dry ){
-			step( 'Commiting changes...' );
-			const { stdout } = await run( 'git', [ 'diff' ], { stdio: 'pipe' } );
-			if( stdout ){
-				await run( 'git', [ 'add', '-A' ] );
-				await run( 'git', [ 'commit', '-m', `release v${ targetVersion }` ] );
-				await run( 'git', [ 'tag', `v${ targetVersion }` ] );
-			} else {
-				console.log( 'No changes to commit.' );
-				return;
-			}
-			/** @type {{ yes: boolean }} */
-			const { yes: pushOriginDev } = await prompt( {
-				type: 'confirm',
-				name: 'yes',
-				message: 'Push to origin develop ?',
-			} )
-
-			if( pushOriginDev ){
-				step( 'Pushing to origin develop...' );
-				await run( 'git', [ 'push' ] );
-				await run( 'git', [ 'push', 'origin', `refs/tags/v${ targetVersion }` ] );
-				// await run( 'git', [ 'push', `--tags` ] );
-			}
-
-			step( 'Merging local develop into local master...' );
-			await run( 'git', [ 'fetch', '-u', 'origin', 'master:master', '--recurse-submodules=no', '--prune' ] );
-			await run( 'git', [ 'checkout', 'master' ] );
-			await run( 'git', [ 'merge', 'develop' ] );
-
-			/** @type {{ yes: boolean }} */
-			const { yes: pushOriginMaster } = await prompt( {
-				type: 'confirm',
-				name: 'yes',
-				message: 'Push to origin master ?',
-			} );
-
-			if( pushOriginMaster ){
-				step( 'Pushing to origin master...' );
-				await run( 'git', [ 'push' ] );
-			}
-
-			await run( 'git', [ 'checkout', 'develop' ] );
-
-		} else {
-			console.log( `Dry run finished, running git diff to see package changes...` );
-			// const { stdout } = await run( 'git', [ 'diff' ], { stdio: 'pipe' } );
-			// console.log( stdout );
-		}
+	step( `Syncing local ${branch} with origin...` );
+	await run( 'git', [ 'fetch', '-u', 'origin', `${branch}:${ branch }`, '--recurse-submodules=no', '--prune' ] );
+	if( checkout ){
+		await run( 'git', [ 'checkout', branch ] );
 	}
 }
 
-main( args )
-.catch( err => {
-	if( versionUpdated ){// revert to current version on failed releases
-		updatePackageVersion( currentVersion );
+async function build (){
+	step( 'Building...' );
+	await run( 'npm', [ 'run', 'build' ] );
+}
+
+async function runTest(){
+	step( 'Running tests...' );
+	await run( 'npm', [ 'run', 'test' ] );
+}
+
+async function updateVersion( version, msg = 'Updating version...' ){
+	if( !version ){	throw new Error('version is required');}
+
+	step( `${msg} [ ${version} ]` );
+	await run( 'npm', [ '--no-git-tag-version', 'version', version ] );
+}
+
+async function changelog(){
+	step( 'Updating changelog...' );
+	await run( `npm`, [ 'run', 'changelog' ] );
+	/** @type {{ yes: boolean }} */
+	const { yes: changelogGood } = await prompt( {
+		type: 'confirm',
+		name: 'yes',
+		message: `Changelog generated. Does it look good ?`,
+	} );
+	return changelogGood;
+}
+
+async function publish( options = {} ){
+	step( `Publishing ${ options.dry ? 'dry' : '' }...` );
+	const publishFlags = [];
+	if( options.dry ){
+		publishFlags.push( '--dry-run' );
+	} else {
+		/** @type {{ otp: string }} */
+		const { otp = '' } = await prompt( {
+			type: 'input',
+			name: 'otp',
+			message: `Please enter otp code (leave blank if not required by the npm registry target):`,
+		} );
+
+		if( otp?.length ){
+			publishFlags.push( `--otp=${ otp }` );
+		}
 	}
-	console.error( err );
-	process.exit( 1 );
-} );
-
-//___
-
-async function publish ( flags ){
+	
 	try {
-		const { stdout } = await run('npm',[
+		const { stdout } = await run( 'npm', [
 				'publish',
 				// ...( releaseTag ? [ '--tag', releaseTag ] : [] ),
 				'--access=public',
-				...flags,
+				...publishFlags,
 			],
 			{
 				// cwd: getPkgRoot( pkgName ),
@@ -215,12 +222,48 @@ async function publish ( flags ){
 	}
 }
 
-function updatePackageVersion ( version ){
-	const pkgPath = path.resolve( __dirname, '../package.json' );
-	/** @type {Package} */
-	const pkg = JSON.parse( fs.readFileSync( pkgPath, 'utf-8' ) );
-	pkg.version = version;
-	fs.writeFileSync( pkgPath, JSON.stringify( pkg, null, 2 ) + '\n' );
+async function commitRelease( version ){
+	if( !version ){ throw new Error( 'version is required' );}
+	step( 'Commiting changes...' );
+	const { stdout } = await run( 'git', [ 'diff' ], { stdio: 'pipe' } );
+	if( stdout ){
+		await run( 'git', [ 'add', '-A' ] );
+		await run( 'git', [ 'commit', '-m', `release v${ version }` ] );
+		await run( 'git', [ 'tag', `v${ version }` ] );
+		return true;
+	} else {
+		console.log( 'No change to commit.' );
+		return false;
+	}
+
+}
+
+async function pushOrigin( branch = 'develop', tagVersion ){
+	if( !branch ){ throw new Error( 'branch is required' );}
+	/** @type {{ yes: boolean }} */
+	const { yes: push } = await prompt( {
+		type: 'confirm',
+		name: 'yes',
+		message: `Push to origin ${branch} ?`,
+	} )
+
+	if( push ){
+		step( `Pushing to origin ${branch}...` );
+		await run( 'git', [ 'push', 'origin', branch ] );
+		if( tagVersion ){
+			await run( 'git', [ 'push', 'origin', `refs/tags/v${ tagVersion }` ] );
+		}
+		// await run( 'git', [ 'push', `--tags` ] );
+	}
+}
+
+async function branchMerge( branchTo, branchFrom = 'develop' ){
+	if( !branchTo ){ throw new Error( 'branchTo is required' );}
+
+	await branchSync( branchTo, true );
+	step( `Merging local ${ branchFrom } into local ${ branchTo }...` );
+	await run( 'git', [ 'merge', branchFrom ] );
+
 }
 
 function inc(/** @type {import('semver').ReleaseType} */ i ){
@@ -235,6 +278,6 @@ async function run (
 	return execa( bin, args, { stdio: 'inherit', ...opts } );
 }
 
-function step(/** @type {string} */ msg ){
-	return console.log( pico.bgGreen( pico.black( '»' ) ), pico.white( pico.bold( msg )) );
+function step(/** @type {string} */ msg, trace = '' ){
+	return console.log( pico.bgGreen( pico.black( '»' ) ), pico.white( pico.bold( msg )), trace );
 }

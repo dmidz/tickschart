@@ -1,3 +1,17 @@
+# [1.5.0](https://github.com/dmidz/tickschart/compare/v1.4.2...v1.5.0) (2025-12-06)
+
+
+### Bug Fixes
+
+* **release:** update release script better version bump ([261cffc](https://github.com/dmidz/tickschart/commit/261cffc072284615786e9b6e14397c7b6710a0e4))
+
+
+### Features
+
+* **core:** add real time last tick label infos ([#22](https://github.com/dmidz/tickschart/issues/22)) ([18608df](https://github.com/dmidz/tickschart/commit/18608dfbaff010428c0e6aed0844a8e56a2c2dc1))
+
+
+
 ## [1.4.2](https://github.com/dmidz/tickschart/compare/v1.4.1...v1.4.2) (2025-03-11)
 
 

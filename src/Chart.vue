@@ -35,7 +35,7 @@ const ticksURL = SAMPLE_MODE
 	? `${ window.location.origin }/tickschart/data/ticks_BTC_4h/${ sampleTimeStart }-${ ticksPerLoad }.json`
 	//__ WARN: do no use API_BASE here, instead use current location with '/api' prefix to avoid all CORS problems for dev
 	//__ '/api' url requests will be proxied by vite server which will use API_BASE, check vite.config.js server entry
-	: `${ window.location.origin }/api/exch/market-ticks`;
+	: `${ window.location.origin }/api/market/ticks`;
 const currentTime = new Date();// initial time position
 // const currentTime = new Date( Date.UTC( 2023, 10, 9 ) );
 const xOriginRatio = .75;// screen width delta ratio, .75 = 3/4 width from left 
@@ -70,7 +70,7 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 	if( SAMPLE_MODE && sampleTicks ){ return sampleTicks;}
 
 	const url = new URL( ticksURL );
-	
+
 	url.search = new URLSearchParams( {// sample of params for API ( useless when SAMPLE_MODE ) 
 		symbol: 'BTCUSDT',
 		interval: interval.value,// if API requires interval as a string choice, of course it must corresponds to timeScaleMs value
@@ -79,7 +79,12 @@ const fetcher = new Fetcher( defaultTick, async ( startTime, limit ) => {
 		token: import.meta.env.VITE_API_TOKEN,// this could be used to easily allow request when protected API
 	} ).toString();
 	
-	const response = await fetch( new Request( url, {  method: 'GET' } ) );
+	const response = await fetch( new Request( url, { 
+		method: 'GET',
+		headers: {
+			'X-Market': 'Binance',
+		}
+	} ) );
 	
 	if( response.ok ){
 		try {
